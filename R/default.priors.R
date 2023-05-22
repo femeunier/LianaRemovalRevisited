@@ -6,8 +6,8 @@ default.priors <- function(names,
 
   if ("power" %in% tolower(names)){
 
-    priors.list[["power"]] <- c(set_prior("normal(2.98,0.3)",  nlpar = "a", coef = "Intercept"),
-                                set_prior("normal(0.56,0.05)", nlpar = "b", coef = "Intercept"))
+    priors.list[["power"]] <- c(set_prior("gamma(7,3)",  nlpar = "a", coef = "Intercept"),
+                                set_prior("gamma(3,10)", nlpar = "b", coef = "Intercept"))
 
     # Power
     if ("all" %in% tolower(params)){
@@ -69,9 +69,9 @@ default.priors <- function(names,
 
   if ("gmm" %in% tolower(names)){
 
-    priors.list[["gmm"]] <- c(set_prior("normal(58,10)",  nlpar = "a", coef = "Intercept"),
-                              set_prior("normal(0.73,0.2)", nlpar = "b", coef = "Intercept"),
-                              set_prior("normal(22,5)", nlpar = "k", coef = "Intercept"))
+    priors.list[["gmm"]] <- c(set_prior("gamma(5,0.1)",  nlpar = "a", coef = "Intercept"),
+                              set_prior("gamma(5,10)", nlpar = "b", coef = "Intercept"),
+                              set_prior("normal(5,0.3)", nlpar = "k", coef = "Intercept"))
 
     # gMM
     if ("all" %in% tolower(params)){
