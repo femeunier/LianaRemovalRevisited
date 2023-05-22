@@ -32,9 +32,9 @@ default.priors <- function(names,
 
   if ("weibull" %in% tolower(names)){
 
-    priors.list[["weibull"]] <- c(set_prior("normal(62,20)",  nlpar = "a", coef = "Intercept"),
-                                  set_prior("normal(0.0352,0.02)", nlpar = "b", coef = "Intercept"),
-                                  set_prior("normal(0.694,0.3)", nlpar = "k", coef = "Intercept"))
+    priors.list[["weibull"]] <-  c(set_prior("gamma(5,0.1)",  nlpar = "a", coef = "Intercept"),
+                                   set_prior("gamma(0.2,10)", nlpar = "b", coef = "Intercept"),
+                                   set_prior("gamma(1,3)", nlpar = "k", coef = "Intercept"))
 
     # Weibull
     if ("all" %in% tolower(params)){

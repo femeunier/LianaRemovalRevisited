@@ -11,7 +11,7 @@ setup.default.lb <- function(model,default_prior){
     lb[with(default_prior,
             nlpar %in% c("a") &
               class == "b" &
-              grepl("liana",coef))]<- as.character(-50)
+              grepl("liana",coef))]<- as.character(-25)
   } else {
 
     lb[with(default_prior,
@@ -22,7 +22,7 @@ setup.default.lb <- function(model,default_prior){
     lb[with(default_prior,
             nlpar %in% c("a") &
               class == "b" &
-              grepl("liana",coef))]<- as.character(-1)
+              grepl("liana",coef))]<- as.character(-2)
 
   }
 
