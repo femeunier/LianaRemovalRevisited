@@ -15,12 +15,6 @@ default.forms <- function(names = c("weibull","power","gmm"),
     fixed.effect.params <- fixed.effect
   }
 
-  if (any(fixed.effect == "all")){
-    fixed.effect.params <- c("a","b","k")
-  } else {
-    fixed.effect.params <- fixed.effect
-  }
-
   if (any(random.effect == "all")){
     random.effect.params <- c("a","b","k")
   } else {
@@ -31,6 +25,11 @@ default.forms <- function(names = c("weibull","power","gmm"),
   mixed.effect.params <- intersect(fixed.effect.params,random.effect.params)
   fixed.effect.params <- setdiff(fixed.effect.params, mixed.effect.params)
   random.effect.params <- setdiff(random.effect.params, mixed.effect.params)
+  missing.params <- setdiff(c("a","b","k"),
+                            c(random.effect.params,
+                              fixed.effect.params,
+                              mixed.effect.params))
+
 
   # Power function form
   if ("power" %in% tolower(names)){
@@ -38,6 +37,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b")]
+    missing.params <- missing.params[missing.params %in% c("a","b")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -60,28 +60,24 @@ default.forms <- function(names = c("weibull","power","gmm"),
                               "~ 1 + (1 | sp)")
     }
 
-
     all.effects <- c(f.mixed.effect,
                      f.fixed.effect,
                      f.random.effect)
+
+    if (length(missing.params) >= 1){
+      all.effects <- c(all.effects,
+                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+    }
 
     if (length(all.effects) == 1){
 
       form.list[["power"]] <- brmsformula(f.functional.form[["power"]],
                                             all.effects[1],
                                             nl = TRUE)
-    } else if (length(all.effects == 2)){
+    } else if (length(all.effects) == 2){
 
       form.list[["power"]] <- brmsformula(f.functional.form[["power"]],
                                             all.effects[1],all.effects[2],
-                                            nl = TRUE)
-    } else if (length(all.effects == 3)){
-
-      form.list[["power"]] <- brmsformula(f.functional.form[["power"]],
-                                            all.effects[1],all.effects[2],all.effects[3],
-                                            nl = TRUE)
-    } else {
-      form.list[["power"]] <- brmsformula(f.functional.form[["power"]],
                                             nl = TRUE)
     }
 
@@ -93,6 +89,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b","k")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b","k")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b","k")]
+    missing.params <- missing.params[missing.params %in% c("a","b","k")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -119,23 +116,26 @@ default.forms <- function(names = c("weibull","power","gmm"),
                      f.fixed.effect,
                      f.random.effect)
 
+
+    if (length(missing.params) >= 1){
+      all.effects <- c(all.effects,
+                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+    }
+
     if (length(all.effects) == 1){
 
       form.list[["weibull"]] <- brmsformula(f.functional.form[["weibull"]],
                                             all.effects[1],
                                             nl = TRUE)
-    } else if (length(all.effects == 2)){
+    } else if (length(all.effects) == 2){
 
       form.list[["weibull"]] <- brmsformula(f.functional.form[["weibull"]],
                                             all.effects[1],all.effects[2],
                                             nl = TRUE)
-    } else if (length(all.effects == 3)){
+    } else if (length(all.effects) == 3){
 
       form.list[["weibull"]] <- brmsformula(f.functional.form[["weibull"]],
                                             all.effects[1],all.effects[2],all.effects[3],
-                                            nl = TRUE)
-    } else {
-      form.list[["weibull"]] <- brmsformula(f.functional.form[["weibull"]],
                                             nl = TRUE)
     }
 
@@ -148,6 +148,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b","k")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b","k")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b","k")]
+    missing.params <- missing.params[missing.params %in% c("a","b","k")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -175,23 +176,26 @@ default.forms <- function(names = c("weibull","power","gmm"),
                      f.fixed.effect,
                      f.random.effect)
 
+
+    if (length(missing.params) >= 1){
+      all.effects <- c(all.effects,
+                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+    }
+
     if (length(all.effects) == 1){
 
       form.list[["gmm"]] <- brmsformula(f.functional.form[["gmm"]],
                                             all.effects[1],
                                             nl = TRUE)
-    } else if (length(all.effects == 2)){
+    } else if (length(all.effects) == 2){
 
       form.list[["gmm"]] <- brmsformula(f.functional.form[["gmm"]],
                                             all.effects[1],all.effects[2],
                                             nl = TRUE)
-    } else if (length(all.effects == 3)){
+    } else if (length(all.effects) == 3){
 
       form.list[["gmm"]] <- brmsformula(f.functional.form[["gmm"]],
                                             all.effects[1],all.effects[2],all.effects[3],
-                                            nl = TRUE)
-    } else {
-      form.list[["gmm"]] <- brmsformula(f.functional.form[["gmm"]],
                                             nl = TRUE)
     }
 
