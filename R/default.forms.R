@@ -4,9 +4,10 @@ default.forms <- function(names = c("weibull","power","gmm"),
 
   form.list <- list()
   f.functional.form <- list(
-    power = "logh ~ log(a*(dbh**b))",
-    weibull = "logh ~ log(a*(1-exp(-b*(dbh**k))))",
-    gmm = "logh ~ log((a*(dbh**b))/(k + dbh**b))")
+    power = "logh ~ a + b*log(dbh)",
+    weibull = "logh ~ a + log(1 - exp(-b*(dbh^k)))",
+    gmm = "logh ~ (a + b * log(dbh))-log(k+(dbh^b))")
+    # gmm = "logh ~ log((a*(dbh**b))/(k + dbh**b))")
 
 
   if (any(fixed.effect == "all")){
