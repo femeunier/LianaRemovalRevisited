@@ -1,13 +1,16 @@
 default.forms <- function(names = c("weibull","power","gmm"),
                           fixed.effect = "all",
-                          random.effect = "all"){
+                          random.effect = "all",
+                          model.output = "logh"){
 
   form.list <- list()
   f.functional.form <- list(
-    power = "logh ~ a + b*log(dbh)",
-    weibull = "logh ~ a + log(1 - exp(-b*(dbh^k)))",
-    gmm = "logh ~ (a + b * log(dbh))-log(k+(dbh^b))")
-    # gmm = "logh ~ log((a*(dbh**b))/(k + dbh**b))")
+    power = paste0(model.output," ~ a + b*log(dbh)"),
+    weibull = paste0(model.output," ~ a + log(1 - exp(-b*(dbh^k)))"),
+    gmm = paste0(model.output," ~ (a + b * log(dbh))-log(k+(dbh^b))"),
+    power.h = paste0(model.output," ~ a + b * log(dbh) + k*log(h)")
+  )
+
 
 
   if (any(fixed.effect == "all")){
@@ -139,8 +142,6 @@ default.forms <- function(names = c("weibull","power","gmm"),
                                             all.effects[1],all.effects[2],all.effects[3],
                                             nl = TRUE)
     }
-
-
   }
 
   # gMM
@@ -199,10 +200,65 @@ default.forms <- function(names = c("weibull","power","gmm"),
                                             all.effects[1],all.effects[2],all.effects[3],
                                             nl = TRUE)
     }
-
-
-
   }
+
+
+  # power.h
+  if ("power.h" %in% tolower(names)){
+    cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b","k")]
+    cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b","k")]
+    crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b","k")]
+    missing.params <- missing.params[missing.params %in% c("a","b","k")]
+
+    if (length(cmixed.effect.params) == 0){
+      f.mixed.effect <- cmixed.effect.params
+    } else{
+      f.mixed.effect <- paste(paste(cmixed.effect.params, collapse = " + "),
+                              "~ 1 + liana.cat + (1 | sp)")
+    }
+
+    if (length(cfixed.effect.params) == 0){
+      f.fixed.effect <- cfixed.effect.params
+    } else{
+      f.fixed.effect <- paste(paste(cfixed.effect.params, collapse = " + "),
+                              "~ 1 + liana.cat")
+    }
+
+    if (length(crandom.effect.params) == 0){
+      f.random.effect <- crandom.effect.params
+    } else{
+      f.random.effect <- paste(paste(crandom.effect.params, collapse = " + "),
+                               "~ 1 + (1 | sp)")
+    }
+
+    all.effects <- c(f.mixed.effect,
+                     f.fixed.effect,
+                     f.random.effect)
+
+
+    if (length(missing.params) >= 1){
+      all.effects <- c(all.effects,
+                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+    }
+
+    if (length(all.effects) == 1){
+
+      form.list[["power.h"]] <- brmsformula(f.functional.form[["power.h"]],
+                                            all.effects[1],
+                                            nl = TRUE)
+    } else if (length(all.effects) == 2){
+
+      form.list[["power.h"]] <- brmsformula(f.functional.form[["power.h"]],
+                                            all.effects[1],all.effects[2],
+                                            nl = TRUE)
+    } else if (length(all.effects) == 3){
+
+      form.list[["power.h"]] <- brmsformula(f.functional.form[["power.h"]],
+                                            all.effects[1],all.effects[2],all.effects[3],
+                                            nl = TRUE)
+    }
+  }
+
 
   return(form.list)
 
