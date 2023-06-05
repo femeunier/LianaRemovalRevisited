@@ -9,17 +9,17 @@ library(dplyr)
 # Helene + Sruthi, Panama
 raw.data <- bind_rows(list(
   read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/2011_Height_Data.csv",stringsAsFactors = FALSE) %>%
-    dplyr::select(Species,DBH_cm,Height,Lianas) %>%
+    dplyr::select(Tag,Species,DBH_cm,Height,Lianas) %>%
     mutate(Species = tolower(Species)) %>%
     mutate(year = 2011),
   read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/new_height_liana_data_2015_no_outliers_q20.csv",stringsAsFactors = FALSE) %>%
-    dplyr::select(Species,DBH_cm,Height,Lianas) %>%
+    dplyr::select(Tag,Species,DBH_cm,Height,Lianas) %>%
     mutate(Lianas = case_when(Lianas == 0 ~ 0,
                               Lianas < 3 ~ 1,
                               TRUE ~ 2)) %>%
     mutate(year = 2015),
   read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/2019_TLS_data.csv",stringsAsFactors = FALSE) %>%
-    dplyr::select(Species,Final.DBH..cm.,Height..m.,Liana) %>%
+    dplyr::select(Tag,Species,Final.DBH..cm.,Height..m.,Liana) %>%
     mutate(year = 2019) %>%
     rename(DBH_cm = Final.DBH..cm.,
            Height = Height..m.,
@@ -39,6 +39,8 @@ df.match <- data.frame(sp = unique(raw.data$Species)) %>%
 raw.data %>% group_by(year) %>%
   summarise(n())
 
+length(raw.data %>% pull(Tag) %>% unique())
+
 BCI.ds <-
   raw.data %>%
   rename(dbh = DBH_cm,
@@ -52,7 +54,7 @@ BCI.ds <-
          !is.na(dbh)) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high"))) %>%
-  dplyr::select(c(dbh,h,year,coi,sp,liana.cat)) %>%
+  dplyr::select(c(Tag,dbh,h,year,coi,sp,liana.cat)) %>%
   mutate(site = "BCI") %>%
   left_join(df.match,
             by = "sp") %>%
@@ -62,8 +64,14 @@ BCI.ds <-
 saveRDS(BCI.ds,
         "./outputs/BCI.COI.data.RDS")
 
-BCI.ds <- BCI.ds %>%
-  dplyr::select(-year)
+BCI.ds2keep <- BCI.ds %>%
+  mutate(year = factor(year,
+                       levels = c(2019,2011,2015))) %>%
+  group_by(Tag) %>%
+  arrange(year) %>%
+  slice_head(n = 1) %>%
+  ungroup() %>%
+  dplyr::select(-c(Tag,year))
 
 
 ####################################################################################################################################
@@ -198,17 +206,28 @@ begum.ds <- read.csv("~/Downloads/tree_frontiers_269.csv") %>%
   dplyr::select(c(dbh,h,coi,sp,site,liana.cat))
 
 
-
 # ggplot(data = begum.ds) +
 #   geom_boxplot(aes(x = liana.cat, fill = liana.cat, y = h)) +
 #   theme_bw()
 
+
+#################################################################################
+Pasoh.ds <- readRDS("./data/Pasoh/data.merged.RDS") %>%
+  rename(h = height,
+         liana.cat = liana.cat.consensus) %>%
+  mutate(site = "Pasoh") %>%
+  filter(!is.na(h),
+         !is.na(dbh),
+         !is.na(liana.cat)) %>%
+  dplyr::select(c(dbh,h,coi,sp,site,liana.cat))
+
 all.df <- bind_rows(list(
-  BCI.ds,
+  BCI.ds2keep,
   Panama.ds,
   Congo.ds,
   Panama2.ds,
   begum.ds,
+  Pasoh.ds,
   Australia.ds %>% mutate(site = "Australia"))) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high")))
@@ -248,6 +267,6 @@ ggplot(data = all.df,
 summary(lm(data = all.df %>% filter(dbh >= 10),
            formula = log(h) ~ log(dbh) + liana.cat))
 
-scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
-scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
 # plot_model int

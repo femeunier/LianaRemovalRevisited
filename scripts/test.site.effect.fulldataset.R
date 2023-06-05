@@ -30,7 +30,7 @@ all.df <- all.df %>%
   group_by(site,sp) %>%
   mutate(N = n()) %>%
   ungroup() %>%
-  mutate(sp = case_when(N <= 10 | sp == "" | tolower(sp) == "other" ~ "OTHER",
+  mutate(sp = case_when(N <= 5 | sp == "" | tolower(sp) == "other" ~ "OTHER",
                         TRUE ~ sp)) %>%
   dplyr::select(-N)
 

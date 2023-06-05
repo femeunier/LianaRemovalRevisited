@@ -6,6 +6,7 @@ rm(list = ls())
 library(dplyr)
 library(ggplot2)
 library(ggrepel)
+library(tidyr)
 library(raster)
 
 sites.Congo <- read.csv("./data/metadata_Congo.csv") %>%
@@ -38,9 +39,14 @@ site.begum <- data.frame(lat = 2+27/60 + 11.87/3600,
                          lon = 17 +2/60 + 32.17/3600,
                          Site = "Loundoungou")
 
+site.pasoh <- data.frame(lat = 2 + 58/60,
+                         lon = 102+18/60,
+                         Site = "Pasoh")
+
 all.sites <-  bind_rows(list(
   all.sites <- bind_rows(
     site.begum %>% mutate(site.common = Site),
+    site.pasoh %>% mutate(site.common = Site),
     site.BCI %>% mutate(site.common = "BCNM"),
     sites.Congo %>% mutate(site.common = Site),
     site.Gigante %>% mutate(site.common = "BCNM"),

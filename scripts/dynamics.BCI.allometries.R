@@ -4,7 +4,6 @@ library(dplyr)
 library(ggplot2)
 library(BCI.AGB)
 library(tidyr)
-library(ncdf4)
 library(raster)
 
 source("http://chave.ups-tlse.fr/pantropical_allometry/readlayers.r")

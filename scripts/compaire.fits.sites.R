@@ -19,9 +19,7 @@ all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
   filter(dbh >= 10)
 
-
 sites <- unique(all.df$site)
-sites <- c("Gigante-Us","Gigante-Joe")
 
 models <- c("weibull")
 model.forms <- c("all","none","a")
@@ -32,7 +30,7 @@ all.possible.files <- crossing(sites, models) %>%
   pull(n)
 
 # Transfer the outputs
-# transfer.files(paste0("Fit.*"),
+# transfer.files(paste0("Fit.Pasoh*"),
 #                source = "outputs")
 
 # Compile the outputs
@@ -106,8 +104,6 @@ for (isite in seq(1,length(sites))){
 }
 
 plot_collection <- grid.arrange(grobs = pp.check.best, nrow = 1, ncol = length(pp.check.best))
-
-stop()
 
 ce <- liana.effect <-
   list()
@@ -193,7 +189,6 @@ temp <- bind_rows((lapply(1:length(sites),
                    print(isite)
                    cdf <- all.df %>%
                      filter(site == sites[isite])
-
 
                    dbhs <- seq(floor(min(cdf$dbh)),
                                ceiling(max(cdf$dbh)),
@@ -323,11 +318,11 @@ ggplot(data = temp.title) +
   facet_wrap(~ site.N, scales = "free") +
   scale_x_log10(limits = c(10,300),
                 breaks = c(10,20,50,100,200)) +
-  scale_y_continuous(limits = c(1,60)) +
+  scale_y_continuous(limits = c(5,60)) +
   labs(x = "DBH (cm)", y = 'Height (m)', color = "Liana infestation", fill = "Liana infestation") +
   theme_bw() +
   theme(text = element_text(size = 20),
-        legend.position = c(0.9,0.18))
+        legend.position = c(0.42,0.56))
 
 
 predict.wide <- temp %>%
