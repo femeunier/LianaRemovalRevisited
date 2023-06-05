@@ -2,7 +2,6 @@ rm(list = ls())
 
 library(ggplot2)
 library(dplyr)
-library(Congo.ED2)
 library(brms)
 library(gridExtra)
 library(abind)
@@ -22,12 +21,15 @@ years <- c(2011,2015,2019)
 models <- c("gmm","weibull","power")
 model.forms <- c("none","all","a","b","ak","bk","k","ab")
 
+models <- c("weibull")
+model.forms <- c("a","none")
+
 all.possible.files <- crossing(years, models) %>%
   mutate(n = paste(as.character(years),
                    as.character(models),sep = ".")) %>%
   pull(n)
 
-# # Transfer the outputs
+# # # Transfer the outputs
 # transfer.files("Fit.BCI.20*",
 #                source = "outputs")
 
@@ -115,14 +117,14 @@ for (iyear in seq(1,length(years))){
 
 
 
-similar.models <- lapply(fit.all.sites, function(x){
+similar.models <- lapply(fit.all.years, function(x){
   names.x = names(x)
   return(x[[which(grepl("weibull_a$",names.x))]])})
 
 
-null.models <- lapply(fit.all.sites, function(x){
+null.models <- lapply(fit.all.years, function(x){
   names.x = names(x)
-  return(x[[which(grepl("weibull_none",names.x))]])})
+  return(x[[which(grepl("weibull_none$",names.x))]])})
 
 
 posteriors <- bind_rows(lapply(similar.models,function(x){
@@ -203,8 +205,8 @@ temp <- bind_rows((lapply(1:length(years),
                             cmodel <- best.model[[iyear]]
                             null.model <- null.models[[iyear]]
 
-                            ccoef <- as.numeric(exp(summary(cmodel)[["spec_pars"]][1]/2))
-                            ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]/2))
+                            ccoef <- as.numeric(exp(summary(cmodel)[["spec_pars"]][1]^2/2))
+                            ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]^2/2))
                             # ccoef <- 1
 
                             pp <- melt(posterior_predict(cmodel,
@@ -284,6 +286,16 @@ temp.title <- temp %>%
   left_join(all.df.title %>% dplyr::select(year,year.N) %>% distinct(),
             by = "year")
 
+# https://bg.copernicus.org/articles/16/847/2019/
+
+dbhs <- seq(floor(min(all.df$dbh)),
+    ceiling(max(all.df$dbh)),
+    length.out = 1000)
+
+df.Helene <-
+  data.frame(dbh = dbhs) %>%
+  mutate(h = 58.04*(dbh**0.73)/(21.8 + (dbh**0.73)))
+
 
 ggplot(data = temp.title) +
   geom_point(data = all.df.title,
@@ -296,10 +308,12 @@ ggplot(data = temp.title) +
   # geom_ribbon(aes(x = dbh, y = h.null.pred.m,
   #                 ymin = h.null.pred.low, ymax = h.null.pred.high), color = NA, alpha = 0.5, fill = "darkgrey") +
   geom_line(aes(x = dbh,y = h.null.pred.m), color = "black") +
+  geom_line(data = df.Helene,
+            aes(x = dbh,y = h), color = "black",linetype = 2) +
   facet_wrap(~ year.N, scales = "free") +
   scale_x_log10(limits = c(20,300),
                 breaks = c(20,50,100,200)) +
-  scale_y_log10(limits = c(10,50)) +
+  scale_y_log10(limits = c(1,100),breaks = c(1,10,100)) +
   labs(x = "DBH (cm)", y = 'Height (m)', color = "Liana infestation") +
   theme_bw() +
   theme(text = element_text(size = 20),
@@ -327,7 +341,7 @@ gg.dist <- ggplot(data = all.df.title) +
   theme(text = element_text(size = 20),panel.grid = element_blank())
 
 gg.effect <- ggplot(data = predict.wide) +
-  geom_line(aes(x = dbh, y = -diff, color = as.factor(year))) +
+  geom_line(aes(x = dbh, y = -diff.rel, color = as.factor(year))) +
   geom_hline(yintercept = 0, linetype = 2, color = "black") +
   theme_bw() +
   labs(x = "DBH (cm)", y = "Relative difference in height (%)") +
@@ -336,3 +350,41 @@ gg.effect <- ggplot(data = predict.wide) +
 
 plot_grid(gg.dist,gg.effect,align = "hv",rel_heights = c(1,2.5),
           ncol = 1)
+
+
+
+predict.wide <- temp %>%
+  dplyr::select(dbh,liana.cat,year,h.m) %>%
+  pivot_wider(names_from = liana.cat,
+              values_from = h.m) %>%
+  mutate(dbh.cat = factor(case_when(dbh <= 30 ~ "Small",
+                                    dbh <= 60 ~ "Intermediate",
+                                    TRUE ~ "Large"),
+                          levels = c("Small","Intermediate","Large"))) %>%
+  mutate(diff.high = high - no,
+         diff.high.rel = (high - no)/no,
+         diff.low = low - no,
+         diff.low.rel = (low - no)/no) %>%
+  pivot_longer(cols = c(diff.high,diff.high.rel,diff.low,diff.low.rel)) %>%
+  mutate(type = case_when(grepl('rel',name) ~ "relative",
+                          TRUE ~ "absolute"),
+         liana.cat = case_when(grepl("high",name) ~ "high",
+                               grepl("low",name) ~ "low",
+                               TRUE ~ "other"))
+
+ggplot(data = predict.wide %>%
+         filter(!is.na(value),
+                type == "absolute")) +
+  geom_line(aes(x = dbh, y = value, color = liana.cat)) +
+  facet_wrap(type ~ (year),nrow = 1) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw()
+
+ggplot(data = predict.wide %>%
+         filter(!is.na(value),
+                type == "relative")) +
+  geom_line(aes(x = dbh, y = value, color = liana.cat)) +
+  facet_wrap(type ~ (year),nrow = 1) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw()
+

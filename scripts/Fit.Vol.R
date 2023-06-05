@@ -29,13 +29,13 @@ saveRDS(data,
 ################################################################################
 # Main params
 
-Names <- c("power.h")
+Names <- c("power")
 overwrite <- TRUE
 re <- "all"
 
 Nchains <- 4
-Niter <- 15000
-control.list <- list(adapt_delta = 0.95,
+Niter <- 5000
+control.list <- list(adapt_delta = 0.8,
                      max_treedepth = 10)
 
 fixed.effect.2.test <- list(power.h = list("a","b","k",
@@ -86,9 +86,11 @@ for (model in Names){
                                random.effect = re,
                                model.output = "logVol")
 
-    priors.list <- default.priors(names = model,
-                                  fixed.effect = cfixed.effect.2.test[[model.form]],
-                                  random.effect = "none")
+    # priors.list <- default.priors(names = model,
+    #                               fixed.effect = cfixed.effect.2.test[[model.form]],
+    #                               random.effect = "none")
+
+    priors.list <- c()
 
 
     cfit <- brm(form.list[[model]],

@@ -23,8 +23,7 @@ library(LianaRemovalRevisited)
 all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
   filter(dbh >= 10) %>%
-  left_join(readRDS("./outputs/BCI.COI.data.RDS")) %>%
-  filter(!(year %in% c(2011,2019)))
+  left_join(readRDS("./outputs/BCI.COI.data.RDS"))
 
 all.df <- all.df %>%
   group_by(site,sp) %>%

@@ -21,21 +21,28 @@ library(LianaRemovalRevisited)
 
 all.df <- readRDS("./outputs/BCI.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
-  filter(dbh >= 10)
+  filter(dbh >= 10) %>%
+  group_by(year,sp) %>%
+  mutate(N = n()) %>%
+  ungroup() %>%
+  mutate(sp = case_when(N <= 5 | sp == "" | tolower(sp) == "other" ~ "OTHER",
+                        TRUE ~ sp)) %>%
+  dplyr::select(-N)
 
 all.df %>%
-  group_by(site) %>%
-  summarise(n())
+  group_by(year) %>%
+  summarise(N = n(),
+            Nsp = length(unique(sp)))
 
 years = unique(all.df$year)
-years = c(2019,2015,2011)
+years = c(2011,2015)
 
 Names <- c("power","weibull","gmm")
 Names <- c("weibull")
 
 Nchains <- 4
-Niter <- 15000
-control.list <- list(adapt_delta = 0.9,
+Niter <- 5000
+control.list <- list(adapt_delta = 0.8,
                      max_treedepth = 20)
 
 overwrite <- TRUE
@@ -92,7 +99,8 @@ for (iyear in seq(1,length(years))){
       # stop()
 
       cfit <- brm(form.list[[model]],
-                  data=cdf %>% slice_head(n = 10) %>%
+                  data=cdf %>%
+
                     mutate(logh = log(h)),
                   cores = min(Nchains,
                               parallel::detectCores() - 1),

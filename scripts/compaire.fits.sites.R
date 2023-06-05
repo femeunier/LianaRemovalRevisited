@@ -220,8 +220,8 @@ temp <- bind_rows((lapply(1:length(sites),
                    cmodel <- best.model[[isite]]
                    null.model <- null.models[[isite]]
 
-                   ccoef <- as.numeric(exp(summary(cmodel)[["spec_pars"]][1]/2))
-                   ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]/2))
+                   ccoef <- as.numeric(exp(summary(cmodel)[["spec_pars"]][1]**2/2))
+                   ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
                    # ccoef <- 1
 
                    pp <- melt(posterior_predict(cmodel,
@@ -356,26 +356,31 @@ gg.effect <- ggplot(data = predict.wide) +
 plot_grid(gg.dist,gg.effect,align = "hv",rel_heights = c(1,2.5),
           ncol = 1)
 
-ggplot(data = predict.wide) +
-  geom_line(aes(x = dbh, y = diff, color = site)) +
-  geom_hline(yintercept = 0, linetype = 2, color = "black") +
-  theme_bw() +
-  labs(x = "DBH (cm)", y = "Height difference in height (m)") +
-  guides(color = "none") +
-  theme(text = element_text(size = 20))
+predict.wide <- temp %>%
+  dplyr::select(dbh,liana.cat,h.m,site) %>%
+  pivot_wider(names_from = liana.cat,
+              values_from = h.m) %>%
+  mutate(dbh.cat = factor(case_when(dbh <= 30 ~ "Small",
+                                    dbh <= 60 ~ "Intermediate",
+                                    TRUE ~ "Large"),
+                          levels = c("Small","Intermediate","Large"))) %>%
+  mutate(diff.high = high - no,
+         diff.high.rel = (high - no)/no,
+         diff.low = low - no,
+         diff.low.rel = (low - no)/no) %>%
+  pivot_longer(cols = c(diff.high,diff.high.rel,diff.low,diff.low.rel)) %>%
+  mutate(type = case_when(grepl('rel',name) ~ "relative",
+                          TRUE ~ "absolute"),
+         liana.cat = case_when(grepl("high",name) ~ "high",
+                               grepl("low",name) ~ "low",
+                               TRUE ~ "other"))
 
-ggplot(data = predict.wide) +
-  geom_line(aes(x = dbh, y = -diff, color = site)) +
-  geom_hline(yintercept = 0, linetype = 2, color = "black") +
+ggplot(data = predict.wide %>%
+         filter(!is.na(value))) +
+  geom_line(aes(x = dbh, y = -value, color = site)) +
+  facet_wrap(type ~ liana.cat, scales = "free") +
+  geom_hline(yintercept = 0, linetype = 2) +
   theme_bw()
-
-
-ggplot(data = predict.wide) +
-  geom_boxplot(aes(x = as.factor(dbh.cat), y = -diff, fill = site)) +
-  geom_hline(yintercept = 0, linetype = 2, color = "black") +
-  labs(x = "") +
-  theme_bw()
-
 
 
 ################################################################################
@@ -396,7 +401,7 @@ temp2 <- bind_rows((lapply(1:length(sites),
 
                          # best_model
                           cmodel <- best.model[[isite]]
-                          ccoef <- as.numeric(exp(summary(cmodel)[["spec_pars"]][1]/2))
+                          ccoef <- as.numeric(exp(summary(cmodel)[["spec_pars"]][1]**2/2))
                           # ccoef <- 1
                           pp <- posterior_predict(cmodel,
                                                   newdata = newdata,
@@ -405,7 +410,7 @@ temp2 <- bind_rows((lapply(1:length(sites),
 
                           # Null_model
                           null.model <- null.models[[isite]]
-                          ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]/2))
+                          ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
                           # ccoef <- 1
                           pp.null <- posterior_predict(null.model,
                                                        newdata = newdata,

@@ -81,8 +81,8 @@ HBmodel.null <- readRDS("./outputs/Fit.BCI.weibull_none.RDS")
 
 load("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/bci.spptable.rdata")
 
-c.liana <- as.numeric(exp(summary(HBmodel.liana)[["spec_pars"]][1]/2))
-c.null <- as.numeric(exp(summary(HBmodel.null)[["spec_pars"]][1]/2))
+c.liana <- as.numeric(exp(summary(HBmodel.liana)[["spec_pars"]][1]**2/2))
+c.null <- as.numeric(exp(summary(HBmodel.null)[["spec_pars"]][1]**2/2))
 
 df.BCI.f <- tree.BCI %>%
   filter(census.time == 2015,

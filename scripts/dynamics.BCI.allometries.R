@@ -149,8 +149,8 @@ df2predict <- trees2keep %>%
 
 N = dim(df2predict)[1] ; step = 1000 ; Nloop <- (ceiling(N/step))
 
-c.mod <- as.numeric(exp(summary(HBmodel.liana)[["spec_pars"]][1]/2))
-c.ref <- as.numeric(exp(summary(HBmodel.ref)[["spec_pars"]][1]/2))
+c.mod <- as.numeric(exp(summary(HBmodel.liana)[["spec_pars"]][1]**2/2))
+c.ref <- as.numeric(exp(summary(HBmodel.ref)[["spec_pars"]][1]**2/2))
 
 hmod <- href <-
   c()

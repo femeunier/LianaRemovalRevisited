@@ -66,7 +66,7 @@ saveRDS(BCI.ds,
 
 BCI.ds2keep <- BCI.ds %>%
   mutate(year = factor(year,
-                       levels = c(2019,2011,2015))) %>%
+                       levels = c(2019,2015,2011))) %>%
   group_by(Tag) %>%
   arrange(year) %>%
   slice_head(n = 1) %>%
