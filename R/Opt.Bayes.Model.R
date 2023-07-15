@@ -8,7 +8,7 @@ Opt.Bayes.Model <- function(dir.name,settings,site.name){
   Niter <- settings[["Niter"]]
   control.list <- settings[["control.list"]]
 
-  data.file <- file.path(dir.name,site.name,
+  data.file <- file.path(dir.name,
                          paste0("data_",site.name,".RDS"))
 
   data <- readRDS(data.file)
