@@ -26,7 +26,7 @@ Opt.Bayes.Model <- function(dir.name,settings,site.name){
       )
 
       cname <- paste(model,paste(cfixed.effect.2.test[[model.form]],collapse = ""),sep = "_")
-      op.file <- file.path(".","outputs",paste0("Fit.",site.name,".",cname,".RDS"))
+      op.file <- file.path(dir.name,paste0("Fit.",site.name,".",cname,".RDS"))
 
       if (!overwrite & file.exists(op.file)){
         next()
