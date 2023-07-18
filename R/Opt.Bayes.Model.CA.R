@@ -53,7 +53,7 @@ Opt.Bayes.Model.CA <- function(dir.name,settings,site.name){
 
       cfit <- brm(form.list[[model]],
                   data=data %>%
-                    mutate(logCA = log(CA),
+                    mutate(logCA = log(area),
                            sp = as.factor(sp)),
                   cores = min(Nchains,
                               parallel::detectCores() - 1),
