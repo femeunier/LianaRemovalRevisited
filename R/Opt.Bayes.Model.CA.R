@@ -37,9 +37,9 @@ Opt.Bayes.Model.CA <- function(dir.name,settings,site.name){
                                  random.effect = re,
                                  model.output = "logCA")
 
-      priors.list <- default.priors(names = model,
-                                    fixed.effect = cfixed.effect.2.test[[model.form]],
-                                    random.effect = "none")
+      priors.list <- default.priors.CA(names = model,
+                                       fixed.effect = cfixed.effect.2.test[[model.form]],
+                                       random.effect = "none")
 
 
       existing.cat <- paste0("liana.cat",unique(data %>%
