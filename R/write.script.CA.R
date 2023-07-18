@@ -1,4 +1,4 @@
-write.script <- function(file.name,
+write.script.CA <- function(file.name,
                          dir.name,
                          site.name,
                          settings.location){
@@ -23,6 +23,6 @@ write.script <- function(file.name,
 
   write("",file=file,append=TRUE)
 
-  write("Opt.Bayes.Model(dir.name,settings,site.name)",file=file,append=TRUE)
+  write("Opt.Bayes.Model.CA(dir.name,settings,site.name)",file=file,append=TRUE)
 
 }
