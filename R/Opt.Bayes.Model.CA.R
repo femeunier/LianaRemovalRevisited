@@ -42,9 +42,10 @@ Opt.Bayes.Model.CA <- function(dir.name,settings,site.name){
                                        random.effect = "none")
 
 
-      existing.cat <- paste0("liana.cat",unique(data %>%
-                                                  filter(liana.cat != "no") %>%
-                                                  pull(liana.cat)))
+      cats <- unique(data %>%
+                       filter(liana.cat != "no") %>%
+                       pull(liana.cat))
+      existing.cat <- paste0("liana.cat",cats)
 
       for (i in seq(1,length(priors.list))){
         priors.list[[i]] <- priors.list[[i]]  %>%
@@ -54,7 +55,9 @@ Opt.Bayes.Model.CA <- function(dir.name,settings,site.name){
       cfit <- brm(form.list[[model]],
                   data=data %>%
                     mutate(logCA = log(area),
-                           sp = as.factor(sp)),
+                           sp = as.factor(sp),
+                           liana.cat = factor(liana.cat,
+                                              levels = c("no",cats))),
                   cores = min(Nchains,
                               parallel::detectCores() - 1),
                   prior = priors.list[[model]],
