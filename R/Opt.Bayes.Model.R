@@ -1,4 +1,4 @@
-Opt.Bayes.Model <- function(dir.name,settings,site.name){
+Opt.Bayes.Model <- function(dir.name,settings,site.name,strong = FALSE){
 
   Names <- settings[["Names"]]
   fixed.effect.2.test <- settings[["fixed.effect.2.test"]]
@@ -38,7 +38,8 @@ Opt.Bayes.Model <- function(dir.name,settings,site.name){
 
       priors.list <- default.priors(names = model,
                                     fixed.effect = cfixed.effect.2.test[[model.form]],
-                                    random.effect = "none")
+                                    random.effect = "none",
+                                    strong)
 
 
       existing.cat <- paste0("liana.cat",unique(data %>%
