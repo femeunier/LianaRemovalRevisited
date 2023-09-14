@@ -2,7 +2,8 @@ write.script <- function(file.name,
                          dir.name,
                          site.name,
                          settings.location,
-                         strong = FALSE){
+                         strong = FALSE,
+                         site.re = FALSE){
 
   file <- file.path(dir.name,file.name)
 
@@ -24,8 +25,12 @@ write.script <- function(file.name,
 
   write("",file=file,append=TRUE)
 
-  if (strong){
-    write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE)",file=file,append=TRUE)
+  if (strong & site.re){
+    write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE)",file=file,append=TRUE)
+  } else if (strong & !site.re){
+    write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE)",file=file,append=TRUE)
+  } else if (!strong & site.re) {
+    write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE)",file=file,append=TRUE)
   } else {
     write("Opt.Bayes.Model(dir.name,settings,site.name)",file=file,append=TRUE)
   }

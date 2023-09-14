@@ -1,4 +1,4 @@
-Opt.Bayes.Model.CA <- function(dir.name,settings,site.name){
+Opt.Bayes.Model.CA <- function(dir.name,settings,site.name,strong = FALSE,site.re = FALSE){
 
   Names <- settings[["Names"]]
   fixed.effect.2.test <- settings[["fixed.effect.2.test"]]
@@ -35,11 +35,13 @@ Opt.Bayes.Model.CA <- function(dir.name,settings,site.name){
       form.list <- default.forms(names = Names,
                                  fixed.effect = cfixed.effect.2.test[[model.form]],
                                  random.effect = re,
-                                 model.output = "logCA")
+                                 model.output = "logCA",
+                                 site.re = site.re)
 
       priors.list <- default.priors.CA(names = model,
                                        fixed.effect = cfixed.effect.2.test[[model.form]],
-                                       random.effect = "none")
+                                       random.effect = "none",
+                                       strong = strong)
 
 
       cats <- unique(data %>%

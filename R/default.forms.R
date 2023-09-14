@@ -1,7 +1,8 @@
 default.forms <- function(names = c("weibull","power","gmm"),
                           fixed.effect = "all",
                           random.effect = "all",
-                          model.output = "logh"){
+                          model.output = "logh",
+                          site.re = FALSE){
 
   form.list <- list()
   f.functional.form <- list(
@@ -35,6 +36,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
                               mixed.effect.params))
 
 
+  addition <- ifelse(site.re,"(1 | site/sp)","(1 | sp)")
+
+
   # Power function form
   if ("power" %in% tolower(names)){
 
@@ -47,7 +51,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.mixed.effect <- cmixed.effect.params
     } else{
       f.mixed.effect <- paste(paste(cmixed.effect.params, collapse = " + "),
-                              "~ 1 + liana.cat + (1 | sp)")
+                              paste0("~ 1 + liana.cat + ",addition))
     }
 
     if (length(cfixed.effect.params) == 0){
@@ -61,7 +65,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.random.effect <- crandom.effect.params
     } else{
       f.random.effect <- paste(paste(crandom.effect.params, collapse = " + "),
-                              "~ 1 + (1 | sp)")
+                              paste0("~ 1 + ",addition))
     }
 
     all.effects <- c(f.mixed.effect,
@@ -99,7 +103,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.mixed.effect <- cmixed.effect.params
     } else{
       f.mixed.effect <- paste(paste(cmixed.effect.params, collapse = " + "),
-                              "~ 1 + liana.cat + (1 | sp)")
+                              paste0("~ 1 + liana.cat + ",addition))
     }
 
     if (length(cfixed.effect.params) == 0){
@@ -113,7 +117,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.random.effect <- crandom.effect.params
     } else{
       f.random.effect <- paste(paste(crandom.effect.params, collapse = " + "),
-                               "~ 1 + (1 | sp)")
+                               paste0("~ 1 + ",addition))
     }
 
     all.effects <- c(f.mixed.effect,
@@ -156,7 +160,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.mixed.effect <- cmixed.effect.params
     } else{
       f.mixed.effect <- paste(paste(cmixed.effect.params, collapse = " + "),
-                              "~ 1 + liana.cat + (1 | sp)")
+                              paste0("~ 1 + liana.cat +",addition))
     }
 
 
@@ -171,7 +175,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.random.effect <- crandom.effect.params
     } else{
       f.random.effect <- paste(paste(crandom.effect.params, collapse = " + "),
-                               "~ 1  + (1 | sp)")
+                               paste0("~ 1  + ",addition))
     }
 
     all.effects <- c(f.mixed.effect,
@@ -214,7 +218,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.mixed.effect <- cmixed.effect.params
     } else{
       f.mixed.effect <- paste(paste(cmixed.effect.params, collapse = " + "),
-                              "~ 1 + liana.cat + (1 | sp)")
+                              paste0("~ 1 + liana.cat + ",addition))
     }
 
     if (length(cfixed.effect.params) == 0){
@@ -228,7 +232,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
       f.random.effect <- crandom.effect.params
     } else{
       f.random.effect <- paste(paste(crandom.effect.params, collapse = " + "),
-                               "~ 1 + (1 | sp)")
+                               paste0("~ 1 + ",addition))
     }
 
     all.effects <- c(f.mixed.effect,
