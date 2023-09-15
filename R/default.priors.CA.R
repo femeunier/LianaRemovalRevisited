@@ -1,6 +1,7 @@
 default.priors.CA <- function(names,
                               fixed.effect = "all",
-                              random.effect = "all"){
+                              random.effect = "all",
+                              strong = FALSE){
 
 
   priors.list <- list()
