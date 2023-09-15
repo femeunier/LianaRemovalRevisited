@@ -1,7 +1,9 @@
 write.script.CA <- function(file.name,
                          dir.name,
                          site.name,
-                         settings.location){
+                         settings.location,
+                         strong = FALSE,
+                         site.re = FALSE){
 
   file <- file.path(dir.name,file.name)
 
@@ -23,6 +25,15 @@ write.script.CA <- function(file.name,
 
   write("",file=file,append=TRUE)
 
-  write("Opt.Bayes.Model.CA(dir.name,settings,site.name)",file=file,append=TRUE)
+
+  if (strong & site.re){
+    write("Opt.Bayes.Model.CA(dir.name,settings,site.name,TRUE,TRUE)",file=file,append=TRUE)
+  } else if (strong & !site.re){
+    write("Opt.Bayes.Model.CA(dir.name,settings,site.name,TRUE,FALSE)",file=file,append=TRUE)
+  } else if (!strong & site.re) {
+    write("Opt.Bayes.Model.CA(dir.name,settings,site.name,FALSE,TRUE)",file=file,append=TRUE)
+  } else {
+    write("Opt.Bayes.Model.CA(dir.name,settings,site.name)",file=file,append=TRUE)
+  }
 
 }
