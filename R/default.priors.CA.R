@@ -8,8 +8,8 @@ default.priors.CA <- function(names,
 
   if ("power" %in% tolower(names)){
 
-    priors.list[["power"]] <- c(set_prior("normal(1,0.3)",  nlpar = "a", coef = "Intercept"),
-                                set_prior("normal(1,0.3)", nlpar = "b", coef = "Intercept"))
+    priors.list[["power"]] <- c(set_prior("normal(0,1)",  nlpar = "a", coef = "Intercept"),
+                                set_prior("normal(1,1)", nlpar = "b", coef = "Intercept"))
 
     # Power
     if ("all" %in% tolower(fixed.effect)){
