@@ -62,7 +62,7 @@ Opt.Bayes.Model.CA <- function(dir.name,settings,site.name,strong = FALSE,site.r
                                               levels = c("no",as.character(cats)))),
                   cores = min(Nchains,
                               parallel::detectCores() - 1),
-                  # prior = priors.list[[model]],
+                  prior = priors.list[[model]],
                   control = control.list,
                   chains = Nchains,
                   iter = Niter,
