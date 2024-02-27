@@ -14,9 +14,19 @@ library(LianaRemovalRevisited)
 library(cowplot)
 library(ggplot2)
 
-# Load the data
-all.df <- readRDS("./data/BCI.Vol.data.RDS")
 
+ch.correction <- readRDS("./data/ch.data.correction.RDS")
+# Load the data
+all.df <-   read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/2019_TLS_data.csv",stringsAsFactors = FALSE) %>%
+  rename(dbh = Final.DBH..cm.) %>%
+  left_join(ch.correction %>%
+              dplyr::select(tag,charea) %>%
+              rename(Tag = tag),
+            by = "Tag") %>%
+  rename(CA = charea) %>%
+  mutate(liana.cat = case_when(Liana == 0 ~ "no",
+                               Liana == 1 ~ "low",
+                               Liana == 2 ~ "high"))
 models <- c("power")
 model.forms <- c("all","none","a","b") # "a","k","b", "ab","ak","bk")
 
@@ -133,24 +143,26 @@ for (ilevel in seq(1,length(levels))){
 ccoef <- as.numeric(exp(summary(best.model)[["spec_pars"]][1]**2/2))
 ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
 
-pp <- melt(posterior_predict(best.model,
+pp <- melt(posterior_epred(best.model,
                              newdata = newdata,
                              re_formula = NA)) %>%
   rename(rep = Var1,
          id = Var2) %>%
   mutate(CA = ccoef*exp(value)) %>%
   group_by(id) %>%
-  summarise(CA.m = mean(CA,na.rm = TRUE),
+  filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
+  summarise(CA.m = median(CA,na.rm = TRUE),
             CA.low = quantile(CA,alpha/2,na.rm = TRUE),
             CA.high = quantile(CA,1 - alpha/2,na.rm = TRUE))
 
-pp.null <- melt(posterior_predict(null.model,
+pp.null <- melt(posterior_epred(null.model,
                                   newdata = newdata,
                                   re_formula = NA)) %>%
   rename(rep = Var1,
          id = Var2) %>%
-  mutate(CA = ccoef*exp(value)) %>%
+  mutate(CA = ccoef.null*exp(value)) %>%
   group_by(id) %>%
+  filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
   summarise(CA.m = mean(CA,na.rm = TRUE),
             CA.low = quantile(CA,alpha/2,na.rm = TRUE),
             CA.high = quantile(CA,1 - alpha/2,na.rm = TRUE))
@@ -159,29 +171,106 @@ pp.null <- melt(posterior_predict(null.model,
 newdata[["CA.m"]] <- pp[["CA.m"]]
 newdata[["CA.null.m"]] <- pp.null[["CA.m"]]
 
-predict.wide <- newdata %>%
-  dplyr::select(dbh,liana.cat,CA.m) %>%
-  pivot_wider(names_from = liana.cat,
-              values_from = CA.m) %>%
-  mutate(dbh.cat = factor(case_when(dbh <= 30 ~ "Small",
-                                    dbh <= 60 ~ "Intermediate",
-                                    TRUE ~ "Large"),
-                          levels = c("Small","Intermediate","Large"))) %>%
-  mutate(diff.high = high - no,
-         diff.high.rel = (high - no)/no,
-         diff.low = low - no,
-         diff.low.rel = (low - no)/no) %>%
-  pivot_longer(cols = c(diff.high,diff.high.rel,diff.low,diff.low.rel)) %>%
-  mutate(type = case_when(grepl('rel',name) ~ "relative",
-                          TRUE ~ "absolute"),
-         liana.cat = case_when(grepl("high",name) ~ "high",
-                               grepl("low",name) ~ "low",
-                               TRUE ~ "other"))
 
-ggplot(data = predict.wide %>%
-         filter(!is.na(value))) +
-  geom_line(aes(x = dbh, y = value, color = liana.cat)) +
-  facet_wrap(~ type, scales = "free") +
-  geom_hline(yintercept = 0, linetype = 2) +
-  theme_bw()
+
+DBH2test <- 150
+alpha = 0.11
+newdata2 <- bind_rows(list(data.frame(
+  dbh = rep(DBH2test,length(levels)),
+  liana.cat = levels)))
+
+newdata2 <- newdata2 %>%
+  mutate(id = 1:length(dbh))
+
+cmodel <- best.model
+null.model <- null.model
+
+ccoef <- as.numeric(exp( (summary(cmodel)[["spec_pars"]][1]**2)/2))
+ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
+
+
+temp2 <- melt(posterior_epred(cmodel,
+                              newdata = newdata2,
+                              re_formula = NA)) %>%
+  rename(rep = Var1,
+         id = Var2) %>%
+  left_join(newdata2 %>%
+              dplyr::select(c(id,dbh,liana.cat)),
+            by = "id") %>%
+  mutate(CA = ccoef*exp(value)) %>%
+  filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
+  ungroup() %>%
+  dplyr::select(-c(value,id)) %>%
+  pivot_wider(names_from = liana.cat,
+              values_from = CA) %>%
+  pivot_longer(cols = c("low","high"),
+               names_to = "liana.cat") %>%
+  group_by(liana.cat) %>%
+  mutate(signif_rel = case_when(quantile((value-no)/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 0.3,
+                                quantile((value-no)/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 0.3,
+                                TRUE ~ 0.2),
+         signif_rel2 = case_when(quantile((value-no)/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 1,
+                                 quantile((value-no)/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 1,
+                                 TRUE ~ 0.4))
+
+ThreeD.CA <- readRDS("./outputs/plot3d.CA.RDS")
+
+
+ggplot() +
+  geom_line(data = newdata,
+            aes(x = dbh, y = CA.m, color = liana.cat)) +
+  geom_point(data = all.df %>%
+               filter(Tag %in% c(ThreeD.CA[["Tag"]])),
+             aes(x = dbh, y = CA, col = liana.cat), alpha = 0.8, size = 2) +
+  geom_point(data = all.df,
+             aes(x = dbh, y = CA, col = liana.cat), alpha = 0.2, size = 2) +
+
+  scale_color_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  scale_x_log10() +
+  scale_y_log10(limits = c(1,2000)) +
+  theme_bw() +
+  theme(text = element_text(size = 30)) +
+  labs(x = "", y = "") +
+  guides(color = "none")
+
+
+ggplot(data = temp2 %>%
+         filter(!is.na(value)),
+       aes(x = 100*(value-no)/no, fill = liana.cat, color = liana.cat, alpha = signif_rel)) +
+  stat_halfeye(alpha = 0.2, color = NA) +
+  stat_pointinterval(aes(y = -0.0,
+                         alpha = signif_rel2),
+                     .width = c(.89),
+                     position = position_dodge(width = 0.02)) +
+  geom_vline(xintercept = 0, linetype = 1) +
+  scale_y_continuous(limits = c(-0.1,1), breaks = c()) +
+  scale_x_continuous(limits = c(-50,25)) +
+  theme_minimal() +
+  labs(y = "", x = "") +
+  theme(legend.position = c(0.9,0.6),
+        text = element_text(size = 24)) +
+  scale_fill_manual(values = c("no" = "darkgreen",
+                               "low" = "orange",
+                               "high"= "darkred")) +
+  scale_color_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  guides(fill = "none", color = "none", alpha = "none")
+
+temp2 %>%
+  filter(!is.na(value)) %>%
+  group_by(liana.cat) %>%
+  summarise(m = 100*median((value-no)/no,na.rm = TRUE),
+            low = 100*quantile((value-no)/no,alpha/2,na.rm = TRUE),
+            high = 100*quantile((value-no)/no,1-alpha/2,na.rm = TRUE),
+
+            m.abs = median((value-no),na.rm = TRUE),
+            low.abs = quantile((value-no),alpha/2,na.rm = TRUE),
+            high.abs = quantile((value-no),1-alpha/2,na.rm = TRUE))
+
+saveRDS(temp2,
+        paste0("./outputs/BCI.CA.TLS.",DBH2test,".RDS"))
+
 

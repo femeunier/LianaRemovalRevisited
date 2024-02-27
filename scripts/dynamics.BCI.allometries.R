@@ -11,7 +11,7 @@ source("http://chave.ups-tlse.fr/pantropical_allometry/readlayers.r")
 data.file <- "/home/femeunier/Documents/projects/LianaBCI/data/2021-09-22_liana_bci_data_V9_0_felicien.csv"
 data <- read.csv(data.file)
 
-threshold <- 1*10 # 1cm = 10mm
+threshold <- 3*10 # 1cm = 10mm
 data.filtered <- data %>%
   filter(DBH >= threshold)
 data.filtered %>% group_by(Census) %>% summarise(Nliving = length(DBH[Status %in% c("L","N")]),
@@ -22,22 +22,23 @@ data.filtered %>% group_by(Census) %>% summarise(Nliving = length(DBH[Status %in
                                                  DBH_large_mean = mean(DBH[Status %in% c("L","N") & DBH >= 50], na.rm = TRUE)/10,
 
                                                  BA_living = sum(pi*DBH[Status %in% c("L","N")]*DBH[Status %in% c("L","N")]/4)/1000/1000,
-
                                                  BA_large_living = sum(pi*DBH[Status %in% c("L","N") & DBH >= 50]*DBH[Status %in% c("L","N") & DBH >= 50]/4)/1000/1000,
 
                                                  .groups = "keep")
 
-Delta_X <- Delta_Y <- 20
-data.patch <- data.filtered %>% filter(PX >= 0 & PX < 1000 &
-                                         PY >= 0 & PY < 500,
-                                       Status %in% c("L","N")) %>% ungroup() %>%
+Delta_X <- Delta_Y <- 10
+
+data.patch <- data.filtered %>%
+  filter(PX >= 0 & PX < 1000 &
+           PY >= 0 & PY < 500,
+         Status %in% c("L","N")) %>% ungroup() %>%
   mutate(patch = LianaBCI::patchnumber_from_position(PX,PY,
                                                      patch_X = Delta_X,patch_Y = Delta_Y,
                                                      extr_x = c(0,1000),
                                                      extr_y = c(0,500))[["patch"]])
 
 patches <- sort(unique(data.patch$patch))
-Npatches <- length(patches)
+Npatches <- (50*100*100/Delta_X/Delta_Y)
 
 Npatch.X = 1000/Delta_X; N.patch.Y = 500/Delta_Y
 
@@ -50,7 +51,7 @@ data.patch.sum <- data.patch %>%
             BA = sum(DBH*DBH,na.rm = TRUE)*pi/4/100/Delta_X/Delta_Y, #cm²/m²
             .groups = "keep") %>%
   ungroup() %>%
-  complete(patch = 1:1250,
+  complete(patch = 1:Npatches,
            Census = 1:2,
            fill = list(N = 0,
                        BA = 0,
@@ -60,15 +61,19 @@ data.patch.sum <- data.patch %>%
   mutate(x = -Delta_X/2 + patch.x*Delta_X,
          y = -Delta_Y/2 + patch.y*Delta_Y)
 
-N2keep <- 25
+alpha = 0.05 ; N2keep = 100
 data.patch.sum.wide <- data.patch.sum %>%
   pivot_wider(names_from = c(Census),
               values_from = -c(patch,Census)) %>%
   mutate(N.mean.geom = sqrt(N_1*N_2),
-         BA.mean.geom = sqrt(BA_1*BA_2)) %>%
-  mutate(liana.cat = case_when(BA.mean.geom >= sort(BA.mean.geom)[Npatches-N2keep] ~ "high",
-                               BA.mean.geom <= sort(BA.mean.geom)[N2keep] ~ "no",
-                          TRUE ~ "other"))
+         BA.mean.geom = sqrt(BA_1*BA_2),
+         N.mean = (N_1 + N_2)/2,
+         BA.mean = (BA_1 + BA_2)/2) %>%
+  mutate(liana.cat = case_when(BA.mean >= quantile(BA.mean, 1- alpha/2) ~ "high",
+                               BA.mean <= quantile(BA.mean,alpha/2) ~ "no",
+                          TRUE ~ "other")) %>%
+  group_by(liana.cat) %>%
+  slice_sample(n = N2keep)
 
 patch2keep <- data.patch.sum.wide %>%
   filter(liana.cat != "other") %>%
@@ -78,7 +83,6 @@ hist(data.patch.sum.wide$DBH.max_2 -
        data.patch.sum.wide$DBH.max_1)
 
 hist(data.patch.sum.wide$BA.mean.geom)
-
 
 data.patch.sum.2.plot <- data.patch.sum %>%
   left_join(data.patch.sum.wide %>%
@@ -104,7 +108,7 @@ ggplot(data = data.patch.sum.2.plot %>%
 
 
 df.BCI.f <- tree.BCI %>%
-  filter(census.time >= 1990,
+  filter(census.time >= 2005,
          status %in% c("A","AM","AD","AR"),
          gx >= 0 & gx < 1000,
          gy >= 0 & gy < 500, !is_liana) %>%
@@ -123,7 +127,7 @@ coord <- cbind(longitude,latitude)
 E <- 0.04635461
 
 # Best HB model for BCI
-HBmodel.liana <- readRDS("./outputs/Fit.BCI.weibull_a.RDS")
+HBmodel.liana <- readRDS("./outputs/Fit.BCI.weibull_all.RDS")
 HBmodel.ref <- readRDS("./outputs/Fit.BCI.weibull_none.RDS")
 
 load("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/bci.spptable.rdata")
@@ -199,8 +203,8 @@ abline(a = 0, b = 1, col = "red",lty = 2)
 trees2keep.sum <- trees2keep.agb %>%
   group_by(census.time,liana.cat,patch) %>%
   summarise(agb.chave = sum(agb.chave,na.rm = TRUE)/Delta_X/Delta_Y/2,    # kgC/m²
-            agb.mod = sum(agb.mod,na.rm = TRUE)/Delta_X/Delta_Y/2, # kgC/m²
-            agb.ref = sum(agb.ref,na.rm = TRUE)/Delta_X/Delta_Y/2, # kgC/m²
+            agb.mod = sum(agb.mod,na.rm = TRUE)/Delta_X/Delta_Y/2,        # kgC/m²
+            agb.ref = sum(agb.ref,na.rm = TRUE)/Delta_X/Delta_Y/2,        # kgC/m²
             .groups = "keep") %>%
   ungroup()
 
@@ -221,7 +225,7 @@ trees2keep.sum.m.long <-
 
 patch2keep <- trees2keep.sum.m.long %>%
   group_by(patch) %>%
-  summarise(keep = mean(agb) < 20) %>%
+  summarise(keep = (agb[1]) < 10) %>%
   filter(keep) %>%
   pull(patch)
 
@@ -252,7 +256,7 @@ trees2keep.sum.m <-
 
             .groups = "keep")
 
-trees2keep.sum.m.long <-
+trees2keep.sum.m.long.long <-
   trees2keep.sum.m %>%
   pivot_longer(cols = -c(census.time,liana.cat),
                names_to = "var",
@@ -263,13 +267,25 @@ trees2keep.sum.m.long <-
   pivot_wider(names_from = metric,
               values_from = value) %>%
   mutate(scenario = relevel(as.factor(scenario),
-                           ref = "ref"))
+                           ref = "ref")) %>%
+  group_by(liana.cat,scenario) %>%
+  mutate(agb.m.rel = agb.m - agb.m[1])
 
-ggplot(data = trees2keep.sum.m.long,
+ggplot(data = trees2keep.sum.m.long.long,
        aes(x = census.time, y = agb.m,
            fill = liana.cat, color = liana.cat)) +
   geom_line() +
   geom_ribbon(aes(ymin = agb.m - agb.se, ymax = agb.m + agb.se),
+              alpha = 0.5, color = NA) +
+  stat_smooth(method = "lm", se = FALSE, linetype = 2) +
+  facet_wrap(~ scenario) +
+  theme_bw()
+
+ggplot(data = trees2keep.sum.m.long.long,
+       aes(x = census.time, y = agb.m.rel,
+           fill = liana.cat, color = liana.cat)) +
+  geom_line() +
+  geom_ribbon(aes(ymin = agb.m.rel - agb.se, ymax = agb.m.rel + agb.se),
               alpha = 0.5, color = NA) +
   stat_smooth(method = "lm", se = FALSE, linetype = 2) +
   facet_wrap(~ scenario) +

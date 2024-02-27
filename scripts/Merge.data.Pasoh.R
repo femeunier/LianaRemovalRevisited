@@ -1,14 +1,65 @@
+# rm(list = ls())
+#
+# c <- read.csv('./data/Pasoh/PasohCrown600FieldDataForm(completed)-1.csv') %>%
+#   mutate_at(c("Dist1","Angle1","Dist2","Angle2",
+#               "Rad1","Rad2","Rad3","Rad4"),as.numeric)
+#
+# for (i in 1:dim(c)[1]) {c$diameter[i]=2*mean(c(c$Rad1[i],c$Rad2[i],c$Rad3[i],c$Rad4[i]),
+#                                              na.rm=T)}
+# for (i in 1:dim(c)[1]) {c$height[i] = ifelse(c$Method[i]=="P",
+#                                              c$Dist1[i],
+#                                              1.6+max(c(c$Dist1[i]*sin(c$Angle1[i]*pi/180),
+#                                                        c$Dist2[i]*sin(c$Angle2[i]*pi/180)),na.rm=T))}
+#
+# plot(c$DBH,c$height)
+# # c=c[,c(1:4,14,15)]
+# # names(c)=c("tag","sp","dbh","exposure","diameter","height")
+# # d=merge(c,b,by=c("sp","tag"),all.x=T,all.y=T)
+# write.table(c %>%
+#               filter(is.finite(diameter) & is.finite(height)),
+#             "./data/Pasoh/Pasoh.crown.leaf.by.ind_mod.txt",row.names=F,sep="\t")
+
 rm(list = ls())
 
 library(ggplot2)
 library(dplyr)
+library(caret)
 
-height.data <- read.table("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Pasoh/Pasoh.crown.leaf.by.ind.txt",
-                          header = TRUE)
+data1 <- read.table("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Pasoh/Pasoh.crown.leaf.by.ind_mod.txt",
+                   header = TRUE) %>%
+  rename(sp = SP.,
+         dbh = DBH,
+         tag = TAG) %>%
+  dplyr::select(sp,tag,dbh,height) %>%
+  mutate(origin = "1")
+
+data2 <- readxl::read_xlsx("./data/Pasoh/dh.data.pasoh.YI.20230109.xlsx") %>%
+  rename(dbh = DBH.mm,
+         height = H.m,
+         sp = SP,
+  ) %>%
+  mutate(dbh = dbh/10) %>%
+  dplyr::select(sp,tag,dbh,height) %>%
+  mutate(origin = "2")
+
+height.data <- bind_rows(
+  data1,
+  data2) %>%
+  group_by(tag) %>%
+  mutate(N = n()) %>%
+  slice_head(n = 1) %>%
+  filter(dbh >= 10)
+
+# wide <- height.data %>%
+#   pivot_wider(names_from = origin,
+#               values_from = c(dbh,height))
+#
+# plot(wide$height_2/wide$height_1)
+
 ggplot(data = height.data) +
-  geom_point(aes(x = dbh, y = height))
+  geom_point(aes(x = dbh, y = height, color = origin)) +
+  theme_bw()
 
-hist(height.data$dbh)
 
 
 # ########################################################################################################################################
@@ -53,7 +104,7 @@ COI.data.filtered <- COI.data %>%
 table(height.data$tag %in% c(COI.data$TAG))
 
 merged.data <- height.data %>%
-  dplyr::select(sp,tag,dbh,height) %>%
+
   left_join(COI.data %>%
               rename(tag = TAG),
             by = "tag") %>%
@@ -87,19 +138,25 @@ merged.data.filtered <- merged.data %>%
                           Lmean == 0 ~ 4,
                           Lmean <= 2 ~ 5,
                           Lmean <= 4 ~ 6,
-                          TRUE ~ 7))
+                          TRUE ~ 7)) #%>%
+  # mutate(liana.cat.consensus = liana.cat.2014)
+
+
 table(merged.data.filtered %>%
         pull(cat))
 
 table(merged.data.filtered %>%
         pull(liana.cat.consensus))
 
+s.data <- merged.data.filtered %>%
+  filter(cat > 3)
 
-(merged.data.filtered %>%
-    filter(cat > 3) %>%
-    dplyr::select(L2002,L2014,Lmean) %>%
-    group_by(L2002,L2014,Lmean) %>%
-    summarise(N = n()) %>% arrange(desc(N)))
+confusionMatrix(data=as.factor(s.data$L2002),
+                reference = as.factor(s.data$L2014))
+
+confusionMatrix(data=as.factor(merged.data.filtered$L2002),
+                reference = as.factor(merged.data.filtered$L2014))
+
 
 ggplot(data = merged.data.filtered %>%
          filter(dbh >= 10,
@@ -107,8 +164,8 @@ ggplot(data = merged.data.filtered %>%
        aes(x = dbh, y = height, color = as.factor(liana.cat.consensus))) +
   geom_point() +
   stat_smooth(method = "lm") +
-  # scale_x_log10() +
-  # scale_y_log10() +
+  scale_x_log10() +
+  scale_y_log10() +
   theme_bw()
 
 saveRDS(merged.data.filtered %>%
@@ -116,3 +173,6 @@ saveRDS(merged.data.filtered %>%
         file = "./data/Pasoh/data.merged.RDS")
 
 nrow(merged.data.filtered %>% filter(!is.na(liana.cat.consensus)))
+
+
+

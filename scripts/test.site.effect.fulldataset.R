@@ -43,19 +43,21 @@ sites <- all.df %>% group_by(site) %>%
             Nspecies = length(unique(sp))) %>%
   arrange(Ndata) %>% pull(site)
 
+# sites <- c("Rio Grande")
+
 Names <- c("weibull")
 
 Nchains <- 4
-Niter <- 15000
-control.list <- list(adapt_delta = 0.9,
+Niter <- 5000
+control.list <- list(adapt_delta = 0.99,
                      max_treedepth = 20)
 
 overwrite <- TRUE
 
 fixed.effect.2.test <- list(power = list("a","none","b",
                                          "all"),
-                            weibull = list("none",
-                                           "a",
+                            weibull = list("a",
+                                           "none",
                                            "all"),
                             gmm = list("none",
                                        "a","b","k",

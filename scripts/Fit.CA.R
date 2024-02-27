@@ -5,37 +5,39 @@ library(brms)
 library(ggplot2)
 library(LianaRemovalRevisited)
 
+
+ch.correction <- readRDS("./data/ch.data.correction.RDS")
 data <-  read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/2019_TLS_data.csv",stringsAsFactors = FALSE) %>%
-    dplyr::select(Species,Final.DBH..cm.,Height..m.,Liana,CPA..m2.,WSG,Total.vol..L.,Biomass..kg.) %>%
+    dplyr::select(Tag,Species,Final.DBH..cm.,Height..m.,Liana,CPA..m2.,WSG,Total.vol..L.,Biomass..kg.) %>%
+  left_join(ch.correction %>%
+              dplyr::select(tag,charea) %>%
+              rename(Tag = tag),
+            by = "Tag") %>%
     rename(dbh = Final.DBH..cm.,
            h = Height..m.,
            sp = Species,
-           CA = CPA..m2.,
+           CA = charea,
            Vol = Total.vol..L.,
            Biomass = Biomass..kg.) %>%
   mutate(liana.cat = factor(case_when(Liana == 0 ~ "no",
                                       Liana == 1 ~ "low",
                                       Liana == 2 ~ "high"),
                             levels = c("no","low","high"))) %>%
-  group_by(sp) %>%
-  mutate(N = n()) %>%
-  mutate(sp = case_when(N <= 10 | sp == "" | tolower(sp) == "other" ~ "OTHER",
-                        TRUE ~ sp)) %>%
-  dplyr::select(-N)
+  dplyr::select(-c(Tag))
 
 ################################################################################
 # Main params
 Names <- c("power")
 
 Nchains <- 4
-Niter <- 5000
-control.list <- list(adapt_delta = 0.8,
+Niter <- 15000
+control.list <- list(adapt_delta = 0.95,
                      max_treedepth = 10)
 
 overwrite <- TRUE
 
-fixed.effect.2.test <- list(power = list("none","b",
-                                         "all"),
+fixed.effect.2.test <- list(power = list("b",
+                                         "none"),
                             weibull = list("none",
                                            "a",
                                            "all"),

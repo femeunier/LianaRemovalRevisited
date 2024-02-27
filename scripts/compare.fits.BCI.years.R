@@ -1,4 +1,5 @@
 rm(list = ls())
+gc()
 
 library(ggplot2)
 library(dplyr)
@@ -9,6 +10,9 @@ library(reshape2)
 library(ggridges)
 library(stringr)
 library(tidyr)
+library(ggforce)
+library(cowplot)
+library(wesanderson)
 
 # Load the data
 all.df <- readRDS("./outputs/BCI.COI.data.RDS") %>%
@@ -22,7 +26,7 @@ models <- c("gmm","weibull","power")
 model.forms <- c("none","all","a","b","ak","bk","k","ab")
 
 models <- c("weibull")
-model.forms <- c("a","none")
+model.forms <- c("a","none","all")
 
 all.possible.files <- crossing(years, models) %>%
   mutate(n = paste(as.character(years),
@@ -30,7 +34,7 @@ all.possible.files <- crossing(years, models) %>%
   pull(n)
 
 # # # Transfer the outputs
-# transfer.files("Fit.BCI.20*",
+# transfer.files("Fit.BCI.2015.weibull_all.RDS",
 #                source = "outputs")
 
 # Compile the outputs
@@ -80,7 +84,7 @@ for (iyear in seq(1,length(years))){
 
   cyear = years[iyear]
   if (length(fit.all.years[[iyear]]) > 1){
-    comparison[[iyear]] <- loo_compare(lapply(fit.all.years[[iyear]], loo))
+    comparison[[iyear]] <- loo_compare(lapply(fit.all.years[[iyear]], LOO))
     best.model.names[iyear] <- rownames(comparison[[iyear]])[1]
   } else {
     comparison[[iyear]] <- NULL
@@ -158,11 +162,11 @@ ggplot(data = posteriors %>%
          mutate(rel.effect = value/mean(value[fac == "Intercept"]),
                 category = sub("^liana.cat","",fac)) %>%
          filter(par.type == "Fixed effect", fac != "Intercept")) +
-  geom_density_ridges(aes(x = rel.effect, fill = category, y = as.factor(year)),
+  geom_density_ridges(aes(x = value, fill = category, y = as.factor(year)),
                       alpha = 0.3) +
   # facet_wrap(~ param, scales = "free") +
   geom_vline(xintercept = 0) +
-  labs(x = "Relative effect on a (Weibull)",
+  labs(x = "Effect on a (Weibull)",
        y = "",
        fill = "Liana category") +
   theme_bw() +
@@ -214,7 +218,7 @@ temp <- bind_rows((lapply(1:length(years),
                                                          re_formula = NA)) %>%
                               rename(rep = Var1,
                                      id = Var2) %>%
-                              mutate(h = ccoef*exp(value)) %>%
+                              mutate(h = ccoef.null*exp(value)) %>%
                               group_by(id) %>%
                               summarise(h.m = mean(h,na.rm = TRUE),
                                         h.low = quantile(h,alpha/2,na.rm = TRUE),
@@ -278,12 +282,15 @@ all.df.title <- all.df %>%
   group_by(year) %>%
   mutate(year.N = paste0(year,", N = ", length(year)," (",length(year[which(liana.cat == "no")]), "-",
                          length(year[which(liana.cat == "low")]), "-",
+                         length(year[which(liana.cat == "high")]), ")"),
+         N = paste0("N = ", length(year)," (",length(year[which(liana.cat == "no")]), "-",
+                         length(year[which(liana.cat == "low")]), "-",
                          length(year[which(liana.cat == "high")]), ")"))
 
 
 
 temp.title <- temp %>%
-  left_join(all.df.title %>% dplyr::select(year,year.N) %>% distinct(),
+  left_join(all.df.title %>% dplyr::select(year,year.N,N) %>% distinct(),
             by = "year")
 
 # https://bg.copernicus.org/articles/16/847/2019/
@@ -313,11 +320,14 @@ ggplot(data = temp.title) +
   facet_wrap(~ year.N, scales = "free") +
   scale_x_log10(limits = c(20,300),
                 breaks = c(20,50,100,200)) +
-  scale_y_log10(limits = c(1,100),breaks = c(1,10,100)) +
+  scale_y_log10(limits = c(10,60),breaks = c(10,50)) +
+  # scale_color_manual(values = wes_palette("Darjeeling1", n = 3)) +
   labs(x = "DBH (cm)", y = 'Height (m)', color = "Liana infestation") +
   theme_bw() +
   theme(text = element_text(size = 20),
-        legend.position = c(0.92,0.18))
+        legend.position = c(0.08,0.88),
+        legend.background=element_rect(fill = alpha("white", 0.5)),
+        strip.background = element_blank())
 
 
 predict.wide <- temp %>%
@@ -383,8 +393,25 @@ ggplot(data = predict.wide %>%
 ggplot(data = predict.wide %>%
          filter(!is.na(value),
                 type == "relative")) +
-  geom_line(aes(x = dbh, y = value, color = liana.cat)) +
-  facet_wrap(type ~ (year),nrow = 1) +
+  geom_line(aes(x = dbh, y = -value*100, color = liana.cat)) +
+  facet_grid( ~ (year)) +
   geom_hline(yintercept = 0, linetype = 2) +
-  theme_bw()
+  theme_bw() +
+  labs(x = "DBH (cm)", y = "Relative effect on height (%)") +
+  theme(legend.position = c(0.9,0.9),
+        text = element_text(size = 20))
+
+
+ggplot(data = predict.wide %>%
+         filter(!is.na(value),
+                year == 2019,
+                type == "relative")) +
+  geom_line(aes(x = dbh, y = -value*100, color = liana.cat)) +
+  # facet_wrap(~ type, scales = "free") +
+  geom_hline(yintercept = 0, linetype = 2) +
+  theme_bw() +
+  labs(x = "DBH (cm)", y = "Relative effect on height (%)") +
+  theme(legend.position = c(0.9,0.6),
+        text = element_text(size = 20)) +
+  guides(color = "none")
 

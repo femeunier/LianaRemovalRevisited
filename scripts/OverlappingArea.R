@@ -1,7 +1,7 @@
 rm(list = ls())
 
 library(lidR)
-library(LidarProcessoR)
+# library(LidarProcessoR)
 library(dplyr)
 library(rgl)
 library(LianaBCI)

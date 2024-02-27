@@ -29,8 +29,16 @@ all.df <- readRDS("./outputs/BCI.COI.data.RDS") %>%
                         TRUE ~ sp)) %>%
   dplyr::select(-N)
 
+
+
 all.df %>%
   group_by(year) %>%
+  summarise(N = n(),
+            Nsp = length(unique(sp)))
+
+all.df %>%
+  filter(year == 2019) %>%
+  group_by(liana.cat) %>%
   summarise(N = n(),
             Nsp = length(unique(sp)))
 

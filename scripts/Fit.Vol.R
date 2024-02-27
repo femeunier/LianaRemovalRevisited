@@ -16,12 +16,7 @@ data <-  read.csv("./data/2019_TLS_data.csv",stringsAsFactors = FALSE) %>%
   mutate(liana.cat = factor(case_when(Liana == 0 ~ "no",
                                       Liana == 1 ~ "low",
                                       Liana == 2 ~ "high"),
-                            levels = c("no","low","high"))) %>%
-  group_by(sp) %>%
-  mutate(N = n()) %>%
-  mutate(sp = case_when(N <= 10 | sp == "" | tolower(sp) == "other" ~ "OTHER",
-                        TRUE ~ sp)) %>%
-  dplyr::select(-N)
+                            levels = c("no","low","high")))
 
 saveRDS(data,
         "./data/BCI.Vol.data.RDS")
@@ -41,7 +36,7 @@ control.list <- list(adapt_delta = 0.8,
 fixed.effect.2.test <- list(power.h = list("a","b","k",
                                            c("a","b"),c("a","k"),c("b","k"),
                                            "none","all"),
-                            power = list("a","none","all"))
+                            power = list("b"))
 
 # Fit Vol
 ggplot(data = data,
