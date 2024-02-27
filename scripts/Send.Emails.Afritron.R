@@ -78,7 +78,7 @@ write.csv(PIteams %>% filter(fullName %in% PIs) %>%
 # #             smtp=list(host.name = "smtp.gmail.com",
 # #                       port = 465,
 # #                       user.name = "felicien.meunier@gmail.com",
-# #                       passwd = "xdixqjogjbuhnwke",
+# #                       passwd = "",
 # #                       ssl = TRUE),
 # #             authenticate=TRUE,
 # #             send = TRUE)
