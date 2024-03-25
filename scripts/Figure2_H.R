@@ -101,6 +101,14 @@ ggplot(data = df.residuals) +
   theme_bw()
 
 
+# Feldspacuh 2011
+
+D <- seq(10,250,length.out = 1000)
+H <- exp(2.4478 + 0.532*log(D/10))
+
+df.Feldspauch <- data.frame(dbh = D,
+                            h = H)
+
 ggplot() +
   geom_point(data = all.df.title,
              aes(x = dbh,y = h, color = as.factor(liana.cat)),
@@ -109,6 +117,9 @@ ggplot() +
   #                 ymin = h.pred.low, ymax = h.pred.high), color = NA, alpha = 0.5) +
   geom_line(data = Model.predictions,
             aes(x = dbh,y = h.pred.m, color = as.factor(liana.cat))) +
+  geom_line(data = df.Feldspauch,
+            aes(x = dbh, y = h),
+            color = "black", linetype = 2) +
 
   # geom_ribbon(aes(x = dbh, y = h.null.pred.m,
   #                 ymin = h.null.pred.low, ymax = h.null.pred.high), color = NA, alpha = 0.5, fill = "darkgrey") +
@@ -123,6 +134,8 @@ ggplot() +
                                 "low" = "orange",
                                 "high"= "darkred")) +
   theme_bw() +
+  # scale_x_log10() +
+  # scale_y_log10() +
   theme(text = element_text(size = 20),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +

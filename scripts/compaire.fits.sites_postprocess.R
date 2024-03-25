@@ -41,6 +41,7 @@ all.df.title <- all.df %>%
          N.tot = length(site))
 
 sites <- unique(all.df.title$site)
+sites <- c("Gigante","BCI")
 # sites <- "Tapajos"
 
 # Compile the outputs
@@ -364,8 +365,8 @@ ggplot(data = temp.title) +
   theme(text = element_text(size = 20),
         legend.position = c(0.8,0.2))
 
-saveRDS(temp.title,
-        "./outputs/Model.predictions.RDS")
+# saveRDS(temp.title,
+#         "./outputs/Model.predictions.RDS")
 
 ################################################################################
 
@@ -374,7 +375,7 @@ Afritron.sites <- readRDS("./data/Afritron/Afritron.metadata.RDS") %>%
 
 alpha <- 0.11
 
-for (DBH2test in c(10,20,30,40,60,200)){
+for (DBH2test in c(50)){
 
   print(DBH2test)
 
@@ -453,8 +454,8 @@ for (DBH2test in c(10,20,30,40,60,200)){
                                    quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 1,
                                    TRUE ~ 0.4))
 
-  saveRDS(
-    temp3.title,paste0("./outputs/Main.OP.",DBH2test,".RDS"))
+  # saveRDS(
+  #   temp3.title,paste0("./outputs/Main.OP.",DBH2test,".RDS"))
 }
 
 

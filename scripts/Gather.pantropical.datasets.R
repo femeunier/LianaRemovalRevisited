@@ -144,7 +144,7 @@ meta.data <- read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
     grepl("Mbam Djerem",ClusterName) ~ "Mbam Djerem",
     grepl("Monts du Cristal",ClusterName) ~ "Monts du Cristal",
     grepl("Nguti Cluster",ClusterName) ~ "Nguti Cluster",
-    grepl("Noubale-Ndoki",ClusterName) ~ "Noubale-Ndoki",
+    grepl("Noubale-Ndoki",ClusterName) ~ "Noubale-Ndoki",  # DONT FORGET TO CHANGE TO Nouabale
     grepl("Ogooue",ClusterName) ~ "Ogooue",
     grepl("Sangha",ClusterName) ~ "Sangha",
     grepl("Kisangani",ClusterName) ~ "Kisangani_all",
@@ -728,6 +728,8 @@ Alain.ds <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
 file <- "./data/TanzaniaData_FoRCE_COI.csv"
 # file <- "./data/TanzaniaData_microFoRCE_COI.csv"
 raw.data.Tan <- read.csv(file)
+
+unique(sort(raw.data.Tan$plotID))
 
 data.Tan <-  raw.data.Tan %>%
   filter(!is.na(height_m)) %>%
