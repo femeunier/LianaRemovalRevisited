@@ -288,6 +288,7 @@ countries <- coords2country(Table %>%
                  dplyr::select(lon,lat))
 Table[["country"]] <- c(as.character(countries),NA)
 
+stop()
 write.csv(Table %>%
             mutate(site = paste0(site," \r\n (",country,")")) %>%
             dplyr::select(-c(lat,lon,country)),

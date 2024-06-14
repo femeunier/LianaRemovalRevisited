@@ -6,29 +6,28 @@ library(rgdal)
 library(raster)
 library(ggplot2)
 
-trees2 <- rgdal::readOGR("/home/femeunier/Downloads/CrownMapsPanama/BCI 50ha plot/BCI 50ha 2020/Crowns_2020_08_01_MergedWithPlotData.shp")
-
-trees <- rgdal::readOGR("/home/femeunier/Downloads/CrownMapsPanama/BCI 50ha plot/BCI 50ha 2020 wcensusinfo/Crowns_2020_08_01_FullyMergedWithPlotData.shp")
-trees$newArea <- area(trees)
+trees <- rgdal::readOGR("./data/BCI/CM2023/crownmap2022_2023_dbh_canopy.shp")
 
 # plot(trees$newArea,trees$crownArea)
 # trees$newArea <- trees$crownArea
 
-spplot(trees, zcol="crownArea")
+spplot(trees, zcol="crown_area")
 
 # # trees.old <- rgdal::readOGR("/home/femeunier/Downloads/CrownMapsPanama/BCI 50ha plot/BCI 50ha 2014 partialfix/BCI_All_Crown_Data_10ha_50ha_partialfix.shp")
 # # trees.old.df <- as.data.frame(trees.old)
 
 trees.df <- as.data.frame(trees) %>%
-  mutate(Lianas = as.numeric(Lianas),
+  mutate(Lianas = as.numeric(lianas),
          tag = as.numeric(tag),
-         crownArea = newArea,
-         Illuminati = as.numeric(Illuminati),
-         DBH =  as.numeric(dbh)/10) %>%
+         crownArea = crown_area,
+         Illuminati = as.numeric(iluminatio),
+         DBH =  as.numeric(dbh)/10,
+         h = max_canopy) %>%
   mutate(liana.cat = case_when(Lianas == 0 ~ "no",
                                Lianas < 3 ~ 'low',
                                TRUE ~ "high")) %>%
-  filter(status == "A")
+  filter(dead == "no",
+         status == "complete")
 
 
 trees.df  %>%
@@ -37,8 +36,11 @@ trees.df  %>%
 
 # All
 ggplot(data = trees.df  %>%
-         filter(crownArea >= 0.01),
-       aes(x = DBH, y = crownArea, color = as.factor(liana.cat)) ) +
+         filter(crownArea >= 0.01,
+                DBH > 0),
+       aes(x = DBH, y = crownArea,
+           color = as.factor(liana.cat),
+           fill = as.factor(liana.cat)) ) +
   geom_point() +
   stat_smooth(method = "lm",
               se = FALSE) +
@@ -52,9 +54,26 @@ CA.thrshold <- 0.0
 
 ggplot(data = trees.df %>% filter(DBH >= DBH.thrshold,
                                   Illuminati >= Illuminati.thrshold,
-                                  !is.na(DBH),!is.na(newArea),
-                                  newArea >= CA.thrshold),
-       aes(x = DBH, y = newArea, color = as.factor(liana.cat)) ) +
+                                  !is.na(DBH),!is.na(crownArea),
+                                  crownArea >= CA.thrshold),
+       aes(x = DBH, y = crownArea,
+           color = as.factor(liana.cat),
+           fill = as.factor(liana.cat)) ) +
+  geom_point(alpha = 0.5,size = 0.5) +
+  stat_smooth(method = "lm",
+              se = TRUE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+
+ggplot(data = trees.df %>% filter(DBH >= DBH.thrshold,
+                                  Illuminati >= Illuminati.thrshold,
+                                  !is.na(DBH),!is.na(crownArea),
+                                  crownArea >= CA.thrshold),
+       aes(x = DBH, y = h,
+           color = as.factor(liana.cat),
+           fill = as.factor(liana.cat)) ) +
   geom_point(alpha = 0.5,size = 0.5) +
   stat_smooth(method = "lm",
               se = FALSE) +
@@ -64,10 +83,9 @@ ggplot(data = trees.df %>% filter(DBH >= DBH.thrshold,
 
 nrow(trees.df %>%
        filter(DBH >= DBH.thrshold,
-              liana.cat == "high",
               Illuminati >= Illuminati.thrshold,
-              !is.na(DBH),!is.na(newArea),
-              newArea >= CA.thrshold))
+              !is.na(DBH),!is.na(crownArea),
+              crownArea >= CA.thrshold))
 
 # trees.df %>%
 #   filter(DBH >= DBH.thrshold,
@@ -83,5 +101,5 @@ nrow(trees.df %>%
 saveRDS(trees.df %>%
           filter(DBH >= DBH.thrshold,
                  Illuminati >= Illuminati.thrshold,
-                 newArea >= CA.thrshold),
-        "./data/BCI/BCI_CA_2020_Helene.RDS")
+                 crownArea >= CA.thrshold),
+        "./data/BCI/BCI_CA_2023_Helene.RDS")

@@ -41,8 +41,12 @@ all.df.title <- all.df %>%
          N.tot = length(site))
 
 sites <- unique(all.df.title$site)
-sites <- c("Gigante","BCI")
-# sites <- "Tapajos"
+
+sites <- c("Casa_Roubik","BCI","group_North",
+           "Canal","group_Metro","Gigante",
+           "Sherman")
+
+sites <- c("129","357")
 
 # Compile the outputs
 fit.all.sites <- list()
@@ -362,8 +366,7 @@ ggplot(data = temp.title) +
   scale_y_log10(limits = c(1,60)) +
   labs(x = "DBH (cm)", y = 'Height (m)', color = "Liana infestation", fill = "Liana infestation") +
   theme_bw() +
-  theme(text = element_text(size = 20),
-        legend.position = c(0.8,0.2))
+  theme(text = element_text(size = 20))
 
 # saveRDS(temp.title,
 #         "./outputs/Model.predictions.RDS")
@@ -438,7 +441,12 @@ for (DBH2test in c(50)){
                              TRUE ~ NA)) %>%
     mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
                                   site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"Tanzania","OKU") ~ "Africa",
-                                  site %in% c("Gigante","BCI") ~ "Panama",
+                                  site %in% c("Gigante","BCI",
+                                              "group_North",
+                                              "Casa_Roubik",
+                                              "Sherman",
+                                              "group_Metro",
+                                              "Canal") ~ "Panama",
                                   site == c("Total") ~ "Total",
                                   TRUE ~ "Amazon")) %>%
     mutate(liana.cat = factor(liana.cat,

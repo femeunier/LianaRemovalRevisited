@@ -33,7 +33,9 @@ all.df.title <- all.df %>%
          N.tot = length(site))
 
 sites <- unique(all.df.title$site)
-sites <- c("Tapajos")
+# sites <- c("Loundoungou")
+sites <- c("Sherman","Canal")
+sites <- c("129","357")
 
 models <- c("weibull","power","gmm")
 model.forms <- c("all","none","a","b","ab","bk","ak","k")

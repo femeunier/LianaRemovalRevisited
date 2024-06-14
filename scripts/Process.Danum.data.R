@@ -61,7 +61,6 @@ corners <- (as.data.frame(mod.plot@polygons[[1]]@Polygons[[1]]@coords) %>%
   rename(X = V1, Y = V2))
 
 
-
 sqrt( sum((corners[2,] - corners[1,])**2))
 sqrt( sum((corners[3,] - corners[2,])**2))
 sqrt( sum((corners[4,] - corners[1,])**2))
@@ -87,7 +86,9 @@ ratio <- (as.vector(st_area(st_intersection(sfplot,sftrees)))/
        as.vector(st_area(sftrees[inters,])))
 
 inters <- inters[ratio >= 0.95]
+trees$num <- 1:724
 
+trees.selected <- trees[trees$num %in% inters,]
 # cplot.sd <- st_as_sf(st_transform(cplot,crs(trees)))
 
 
@@ -173,7 +174,7 @@ for (itree in seq(1,Ntrees)){
   #      add = TRUE)
   # lines(pot.trees$x,pot.trees$y,type = "p",add = TRUE)
 
-  if (nrow(pot.trees)){
+  if (nrow(pot.trees) > 0){
 
     pot.trees <- pot.trees %>%
     #   # mutate(dist = sqrt(( mean(cx) - x)**2 +  ( mean(cy) - y)**2)) %>%
@@ -185,6 +186,7 @@ for (itree in seq(1,Ntrees)){
     ch.max <- max(as.vector(
       mask(chm.crop,tree.vec)),na.rm = TRUE)
     cdbh <- (pot.trees[["DBH"]])[1]
+    secondDBH <- (pot.trees[["DBH"]])[2]
     csp <- pot.trees[["Latin"]][1]
     cTag <- pot.trees[["Tag"]][1]
     cStatus <- pot.trees[["Status"]][1]
@@ -203,6 +205,7 @@ for (itree in seq(1,Ntrees)){
     df.all <- bind_rows(list(df.all,
                              data.frame(ID = itree,
                                         dbh = cdbh,
+                                        secondDBH = secondDBH,
                                         h = ch.max,
                                         sp = csp,
                                         tag = cTag,
@@ -215,6 +218,11 @@ for (itree in seq(1,Ntrees)){
 
   }
 }
+
+head(df.all)
+nrow(df.all)
+nrow(df.all %>%
+       filter(dbh >= 500 & secondDBH < 500))
 
 table(df.all$status)
 hist(df.all$Liana)
@@ -231,7 +239,12 @@ df.selected <- df.all %>%
   mutate(dbh = dbh/10) %>%
   filter(!(dbh < 50 & h > 60)) # too big trees
 
-ggplot(data = df.selected  %>%
+df.selected2 <- df.all %>%
+  filter(dbh >= 500 & secondDBH < 500) %>%
+  mutate(dbh = dbh/10)
+
+
+ggplot(data = df.selected2  %>%
          filter(dbh > 30),
        aes(x = dbh, y = h, color = liana.cat,
            fill = liana.cat)) +
@@ -242,20 +255,45 @@ ggplot(data = df.selected  %>%
               se = TRUE) +
   theme_bw()
 
-ggplot(data = df.selected %>%
+ggplot(data = df.selected2 %>%
          filter(dbh > 30),
-       aes(x = dbh, y = area, color = liana.cat)) +
+       aes(x = dbh, y = area, fill = liana.cat,
+           color = liana.cat)) +
   geom_point() +
   scale_x_log10() +
   scale_y_log10() +
   stat_smooth(method = "lm",
-              se = FALSE) +
+              se = TRUE) +
   theme_bw()
 
 # plot(df.all$Liana,df.all$COI)
 c(table(df.selected$liana.cat),nrow(df.selected),Ntrees)
 # sort(table(df.all$sp))
 
+
+ggplot(data = df.all) +
+  geom_boxplot(aes(x = liana.cat,
+                   y = area,
+                   fill = liana.cat)) +
+  scale_y_log10() +
+  theme_bw()
+
+ggplot(data = df.all,
+       aes(x = h,
+           y = area,
+           color = liana.cat,
+           fill = liana.cat)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  scale_y_log10() +
+  scale_x_log10() +
+  theme_bw()
+
+saveRDS(df.all %>%
+          dplyr::select(sp,h,tag,area,status,Liana,COI,liana.cat),
+        "./data/Danum/h.CA.DV.RDS")
+
+stop()
 saveRDS(df.selected,
         "./data/Danum/DV.processed.RDS")
 

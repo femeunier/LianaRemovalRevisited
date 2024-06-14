@@ -7,6 +7,8 @@ library(ggplot2)
 library(tidyr)
 library(raster)
 library(readxl)
+library(tidyr)
+library(caret)
 
 # Assemble datasets
 ####################################################################################################################################
@@ -403,6 +405,13 @@ Arildo.df <- read.csv("./data/lianas_COI.csv") %>%
   dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
   filter(dbh > 0, h > 0)
 
+###############################################################################
+# Erika (Brazil)
+
+Erika.df <- readRDS("./outputs/Erika_data.RDS") %>%
+  ungroup() %>%
+  mutate(site = as.character(site)) %>%
+  dplyr::select(dbh,h,coi,sp,liana.cat,site)
 
 # ################################################################################
 # # https://www.sciencedirect.com/science/article/pii/S0378112710002689#fig2
@@ -550,7 +559,7 @@ Panama.ds <-
   mutate(site = "Gigante")
 
 ####################################################################################################################################
-# Congo sites
+# Congo sites -- Grace data
 raw.data <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Congo/database.csv",
                             stringsAsFactors = FALSE) %>%
   mutate(liana.cat = case_when(Liana %in% c(0) ~ "no",
@@ -572,19 +581,141 @@ Congo.ds <-
          !is.na(liana.cat)) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high"))) %>%
-  dplyr::select(c(dbh,h,coi,sp,site,liana.cat))
+  dplyr::select(c(dbh,h,coi,sp,site,liana.cat)) %>%
+  filter(site != "Semi-F") %>%
+  mutate(site = case_when(site == "Atla-F" ~ "Luki",
+                          site == "Sand-F" ~ "Mokabi"))
 
 
-ggplot(data = raw.data,
-       aes(x = DBH_cm, y = Cdia_m, color = liana.cat),
+ggplot(data = Congo.ds,
+       aes(x = dbh, y = h, color = liana.cat),
        size = 0.1) +
   geom_point() +
   stat_smooth(method = "lm",
               se = FALSE) +
-  facet_wrap(~ Site) +
+  facet_wrap(~ site) +
   scale_x_log10() +
   scale_y_log10() +
   theme_bw()
+
+
+################################################################################
+# Grace # 2
+
+# part1 <- raw.data %>%
+#   filter(Site == "Semi-F") %>% pull(Liana) %>% table()
+
+part1 <- read_xlsx("./data/Data_Loundoungou.xlsx") %>%
+  mutate(Id_ARB = paste0(Subplot,"_",Tree_ID))
+uniqueIDs <- part1 %>%
+  pull(Id_ARB)
+
+part2 <- read.csv("~/Downloads/tree_frontiers_269.csv")
+uniqueIDs2 <- part2 %>%
+  pull(Id_ARB)
+
+Intersect <- intersect(uniqueIDs,uniqueIDs2)
+
+df1 <- part1 %>%
+  dplyr::select(Id_ARB,species, DBH_cm, Ht_m,Liana_Infestation) %>%
+  rename(sp = species) %>%
+  mutate(dbh = as.numeric(DBH_cm),
+         h = as.numeric(Ht_m),
+         coi = as.integer(Liana_Infestation)) %>%
+  mutate(liana.cat = case_when(coi %in% c(0) ~ "no",
+                               coi %in% c(1,2) ~ "low",
+                               TRUE ~ "high")) %>%
+  filter(!is.na(h),
+         !is.na(dbh),
+         !is.na(liana.cat)) %>%
+  mutate(site = "Loundoungou") %>%
+  mutate(liana.cat = factor(liana.cat,
+                            levels = c("no","low","high"))) %>%
+  dplyr::select(c(Id_ARB,dbh,h,coi,sp,site,liana.cat))
+
+df2 <- part2 %>%
+  mutate(site = "Loundoungou") %>%
+  rename(coi = COI,
+         dbh = diam,
+         h = Height,
+         sp = sp_tree) %>%
+  mutate(liana.cat = case_when(coi %in% c(0) ~ "no",
+                               coi %in% c(1,2) ~ "low",
+                               TRUE ~ "high")) %>%
+  mutate(liana.cat = factor(liana.cat,
+                            levels = c("no","low","high"))) %>%
+  filter(!is.na(h),
+         !is.na(dbh),
+         !is.na(liana.cat)) %>%
+  dplyr::select(c(Id_ARB,dbh,h,coi,sp,site,liana.cat))
+
+df.intersect <- bind_rows(df1 %>%
+  filter(Id_ARB %in% Intersect) %>%
+    mutate(source = "Grace"),
+  df2 %>%
+  filter(Id_ARB %in% Intersect) %>%
+    mutate(source = "Begum"))
+
+df.intersect.wide <- df.intersect %>%
+  pivot_wider(names_from = source,
+             values_from = c(dbh,h,coi,sp,liana.cat))
+
+ggplot(data = df.intersect.wide,
+       aes(y = h_Begum, x = h_Grace)) +
+  geom_point() +
+  geom_abline(slope = 1, linetype = 2, intercept = 0) +
+  stat_smooth(method = "lm") +
+  theme_bw()
+
+ggplot(data = df.intersect.wide,
+       aes(y = dbh_Begum, x = dbh_Grace)) +
+  geom_point() +
+  geom_abline(slope = 1, linetype = 2, intercept = 0) +
+  stat_smooth(method = "lm") +
+  theme_bw()
+
+same.species <- df.intersect.wide %>%
+  mutate(same = sp_Begum == sp_Grace) %>% pull(same) %>% table()
+
+CM <- confusionMatrix(data=as.factor(df.intersect.wide$coi_Begum),
+                      reference = factor(df.intersect.wide$coi_Grace,
+                                            levels = c(0,1,2,3,4)))
+
+CM2 <- confusionMatrix(data=as.factor(df.intersect.wide$liana.cat_Begum),
+                      reference = as.factor(df.intersect.wide$liana.cat_Grace))
+
+begum.ds <- bind_rows(df1 %>%
+                              filter(!(Id_ARB %in% Intersect)),
+                            df2) %>%
+  dplyr::select(-c(Id_ARB))
+
+
+ggplot(data = begum.ds,
+       aes(x = dbh, y = h, color = liana.cat),
+       size = 0.1) +
+  geom_point() +
+  stat_smooth(method = "lm",
+              se = FALSE) +
+  facet_wrap(~ site) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+# begum.ds <- read.csv("~/Downloads/tree_frontiers_269.csv") %>%
+#   mutate(site = "Loundoungou") %>%
+#   rename(coi = COI,
+#          dbh = diam,
+#          h = Height,
+#          sp = sp_tree) %>%
+#   mutate(liana.cat = case_when(coi %in% c(0) ~ "no",
+#                                coi %in% c(1,2) ~ "low",
+#                                TRUE ~ "high")) %>%
+#   mutate(liana.cat = factor(liana.cat,
+#                             levels = c("no","low","high"))) %>%
+#   filter(!is.na(h),
+#          !is.na(dbh),
+#          !is.na(liana.cat)) %>%
+#   dplyr::select(c(dbh,h,coi,sp,site,liana.cat))
 
 
 ####################################################################################################################################
@@ -686,23 +817,6 @@ ggplot(data = Australia.ds.can %>%
 #   dplyr::select(-canopy)
 
 ########################################################################################################################
-begum.ds <- read.csv("~/Downloads/tree_frontiers_269.csv") %>%
-  mutate(site = "Loundoungou") %>%
-  rename(coi = COI,
-         dbh = diam,
-         h = Height,
-         sp = sp_tree) %>%
-  mutate(liana.cat = case_when(coi %in% c(0) ~ "no",
-                               coi %in% c(1,2) ~ "low",
-                               TRUE ~ "high")) %>%
-  mutate(liana.cat = factor(liana.cat,
-                            levels = c("no","low","high"))) %>%
-  filter(!is.na(h),
-         !is.na(dbh),
-         !is.na(liana.cat)) %>%
-  dplyr::select(c(dbh,h,coi,sp,site,liana.cat))
-
-########################################################################################################################
 
 Alain.ds <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
 
@@ -722,6 +836,31 @@ Alain.ds <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
   dplyr::select(c(dbh,h,coi,sp,site,liana.cat)) %>%
   filter(site == "OKU") # The other site does not have high liana infestation data..
 
+# Other plots Panama
+
+cdf.Panama <- readRDS("./outputs/Data.otherplots.Panama.RDS") %>%
+  dplyr::select(-plot) %>%
+  filter(h > 0) %>%
+  rename(site = plot.group)
+
+additional.BCI <- cdf.Panama %>%
+  dplyr::filter(site == "BCI")
+
+ccdf.Panama <- cdf.Panama %>%
+  dplyr::filter(site != "BCI")
+
+
+BCI.ds2keep.addi <- bind_rows(BCI.ds2keep,
+                              additional.BCI)
+
+ggplot(data = additional.BCI,
+       aes(x = dbh, y = h, color = liana.cat,
+      fill = liana.cat)) +
+  geom_point(size = 0.1) +
+  stat_smooth(method = "lm", formula = y ~ x) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
 
 # Tanzanian data
 
@@ -815,12 +954,14 @@ all.df <- bind_rows(list(
   data.tapajos,
   Alain.ds,
   data.Tan,
-  BCI.ds2keep,
+  BCI.ds2keep.addi,
+  ccdf.Panama,
   Panama.ds,
   Karin.df,
   Jocker.df,
   Congo.ds,
   Arildo.df,
+  Erika.df,
   df.Wannes.site %>%
     dplyr::select(-PlotCode,Country) %>%
     dplyr::select(-Country),
@@ -898,94 +1039,103 @@ summary(lm(data = all.df %>%
              filter(dbh >= 10),
            formula = log(h) ~ log(dbh) + liana.cat))
 
-################################################################################
-# # Slenderness
-Slenderness <- all.df %>%
+bind_rows(all.df %>%
   filter(dbh >= 10) %>%
-  mutate(S = (h)/(dbh)) %>%
   group_by(liana.cat) %>%
-  mutate(S.m = mean(S,na.rm = TRUE))
+  summarise(N = n()),
+  all.df %>%
+    filter(dbh >= 10) %>%
+    # group_by(liana.cat) %>%
+    summarise(N = n()) %>% mutate(liana.cat = "total"))
 
-alpha = 0.11
-
-f <- function(x) {
-  r <- quantile(x, probs = c(alpha/2, 0.25, 0.5, 0.75, 1 - alpha/2))
-  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
-  r
-}
-
-ggplot(data = Slenderness,
-       aes(y = S, x = (as.factor(liana.cat)),
-           fill = as.factor(liana.cat),
-           color = as.factor(liana.cat))) +
-
-  stat_summary(fun.data = f,
-               geom="boxplot",
-               width = .15,
-               alpha = 0.5,
-               outlier.shape = NA) +
-
-  ggdist::stat_halfeye(
-    adjust = .5,
-    width = .6,
-    .width = 0,
-    justification = -0.2, alpha = 0.5,
-    point_colour = NA
-  ) +
-  # ggdist::stat_pointinterval(aes(x = as.numeric(as.factor(liana.cat)) + 0.11),
-  #                            .width = c(1-alpha),
-  #                            adjust = .5,
-  #                            width = 1,
-  #                            justification = -0.2, alpha = 1) +
-  scale_fill_manual(values = c("no" = "darkgreen",
-                               "low" = "orange",
-                               "high"= "darkred")) +
-  scale_color_manual(values = c("no" = "darkgreen",
-                               "low" = "orange",
-                               "high"= "darkred")) +
-  scale_y_continuous(limits = c(0,1.8)) +
-  # scale_y_log10(limits = c(0.1,2)) +
-  labs(x = "", y = "Tree slenderness (m/cm)") +
-  scale_x_discrete(labels = c("No","Low \r\n liana infestation","High")) +
-  theme_bw() +
-  guides(fill = "none", color = "none") +
-  theme(text = element_text(size = 24),
-        axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
-        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
-
-Slenderness %>%
-  group_by(liana.cat) %>%
-  summarise(med = median(S))
-
-# summary(aov(data = Slenderness,
-#     formula = S ~ liana.cat))
-
-
-ggplot(data = Slenderness,
-       aes(x = dbh, y = S, color = liana.cat)) +
-  geom_point() +
-  stat_smooth(method = "lm") +
-  scale_x_log10() +
-  scale_y_log10() +
-  # facet_wrap(~ site) +
-  theme_bw()
+# ################################################################################
+# # # Slenderness
+# Slenderness <- all.df %>%
+#   filter(dbh >= 10) %>%
+#   mutate(S = (h)/(dbh)) %>%
+#   group_by(liana.cat) %>%
+#   mutate(S.m = mean(S,na.rm = TRUE))
 #
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/Slenderness.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
-
-# ggplot(data = Slenderness %>%
-#          filter(site == "Pasoh")) +
-#   geom_point(aes(x = dbh, y = S, color = liana.cat)) +
-#   theme_bw()
+# alpha = 0.11
+#
+# f <- function(x) {
+#   r <- quantile(x, probs = c(alpha/2, 0.25, 0.5, 0.75, 1 - alpha/2))
+#   names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+#   r
+# }
+#
+# ggplot(data = Slenderness,
+#        aes(y = S, x = (as.factor(liana.cat)),
+#            fill = as.factor(liana.cat),
+#            color = as.factor(liana.cat))) +
+#
+#   stat_summary(fun.data = f,
+#                geom="boxplot",
+#                width = .15,
+#                alpha = 0.5,
+#                outlier.shape = NA) +
+#
+#   ggdist::stat_halfeye(
+#     adjust = .5,
+#     width = .6,
+#     .width = 0,
+#     justification = -0.2, alpha = 0.5,
+#     point_colour = NA
+#   ) +
+#   # ggdist::stat_pointinterval(aes(x = as.numeric(as.factor(liana.cat)) + 0.11),
+#   #                            .width = c(1-alpha),
+#   #                            adjust = .5,
+#   #                            width = 1,
+#   #                            justification = -0.2, alpha = 1) +
+#   scale_fill_manual(values = c("no" = "darkgreen",
+#                                "low" = "orange",
+#                                "high"= "darkred")) +
+#   scale_color_manual(values = c("no" = "darkgreen",
+#                                "low" = "orange",
+#                                "high"= "darkred")) +
+#   scale_y_continuous(limits = c(0,1.8)) +
+#   # scale_y_log10(limits = c(0.1,2)) +
+#   labs(x = "", y = "Tree slenderness (m/cm)") +
+#   scale_x_discrete(labels = c("No","Low \r\n liana infestation","High")) +
+#   theme_bw() +
+#   guides(fill = "none", color = "none") +
+#   theme(text = element_text(size = 24),
+#         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
+#         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
 #
 # Slenderness %>%
-#   filter(site == "Pasoh") %>%
-#          # dbh >= 10, dbh <= 50) %>%
 #   group_by(liana.cat) %>%
-#   summarise(dbh.m = mean(dbh),
-#             dbh.min = min(dbh),
-#             dbh.max = max(dbh),
-#             h.m = mean(h),
-#             S.m = mean(S))
+#   summarise(med = median(S))
 #
+# # summary(aov(data = Slenderness,
+# #     formula = S ~ liana.cat))
+#
+#
+# ggplot(data = Slenderness,
+#        aes(x = dbh, y = S, color = liana.cat)) +
+#   geom_point() +
+#   stat_smooth(method = "lm") +
+#   scale_x_log10() +
+#   scale_y_log10() +
+#   # facet_wrap(~ site) +
+#   theme_bw()
+# #
+# # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/Slenderness.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+#
+# # ggplot(data = Slenderness %>%
+# #          filter(site == "Pasoh")) +
+# #   geom_point(aes(x = dbh, y = S, color = liana.cat)) +
+# #   theme_bw()
+# #
+# # Slenderness %>%
+# #   filter(site == "Pasoh") %>%
+# #          # dbh >= 10, dbh <= 50) %>%
+# #   group_by(liana.cat) %>%
+# #   summarise(dbh.m = mean(dbh),
+# #             dbh.min = min(dbh),
+# #             dbh.max = max(dbh),
+# #             h.m = mean(h),
+# #             S.m = mean(S))
+# #
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/

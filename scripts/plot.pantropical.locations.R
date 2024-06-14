@@ -12,9 +12,14 @@ library(readxl)
 library(ggthemes)
 library(stringr)
 
+# Add coordinates plot Erika!
+
 sites.Congo <- read.csv("./data/metadata_Congo.csv") %>%
   rename(lat = Lat,
-         lon = Lon)
+         lon = Lon) %>%
+  filter(Site != "Semi-F") %>%
+  mutate(Site = case_when(Site == "Atla-F" ~ "Luki",
+                          Site == "Sand-F" ~ "Mokabi"))
 
 site.tapajos = data.frame(
   lat = -2.755150,
@@ -35,6 +40,13 @@ site.Alain <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
   summarise(lat = mean(plotLat),
             lon = mean(plotLon))
 
+
+site.Panama <- readRDS("./outputs/plots.panama.RDS") %>%
+  group_by(plot.group) %>%
+  summarise(lat = mean(lat),
+            lon = mean(lon)) %>%
+  rename(Site = plot.group) %>%
+  filter(Site != "BCI")
 
 site.Tan <- read.csv("./data/TanzaniaData_FoRCE_COI.csv") %>%
   mutate(site = substr(plotID,1,4)) %>%
@@ -111,7 +123,8 @@ all.COI <- readRDS("./outputs/All.COI.data.RDS")
 
 all.sites <-  bind_rows(list(
   bind_rows(
-    site.Alain  %>% mutate(site.common = Site),
+    site.Alain %>% mutate(site.common = Site),
+    site.Panama %>% mutate(site.common = Site),
     site.Tan %>% mutate(site.common = Site),
     site.tapajos %>% mutate(site.common = Site),
     site.begum %>% mutate(site.common = Site),

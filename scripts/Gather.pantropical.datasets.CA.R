@@ -6,11 +6,12 @@ library(dplyr)
 ################################################################################
 # Multiple sites
 
-data.BCI <- readRDS("./data/BCI/BCI_CA_2015_Helene.RDS") %>%
+data.BCI <- readRDS("./data/BCI/BCI_CA_2023_Helene.RDS") %>%
   rename(sp = spcode,
+         h = MaxHt,
          dbh =  DBH,
          area = Area) %>%
-  dplyr::select(sp,dbh,area,liana.cat) %>%
+  dplyr::select(sp,dbh,h,area,liana.cat) %>%
   mutate(site = "BCI")
 
 
@@ -30,6 +31,8 @@ data.BCI <- data.BCI %>%
   mutate(sp = sp.final) %>%
   dplyr::select(-sp.final)
 
+saveRDS(data.BCI,"./outputs/BCI.h.CA.RDS")
+
 
 data.begum <- read.csv("./data/Begum/tree_frontiers_269.csv") %>%
   rename(coi = COI,
@@ -42,8 +45,10 @@ data.begum <- read.csv("./data/Begum/tree_frontiers_269.csv") %>%
                                TRUE ~ "high")) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high"))) %>%
-  dplyr::select(dbh,sp,area,liana.cat) %>%
+  dplyr::select(dbh,h,sp,area,liana.cat) %>%
   mutate(site = "Loundoungou")
+
+saveRDS(data.begum,"./outputs/Loundoungou.h.CA.RDS")
 
 data.DV <- readRDS("./data/Danum/DV.processed.RDS") %>%
   rename(coi = COI) %>%

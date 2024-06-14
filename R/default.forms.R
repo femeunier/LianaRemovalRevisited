@@ -2,7 +2,8 @@ default.forms <- function(names = c("weibull","power","gmm"),
                           fixed.effect = "all",
                           random.effect = "all",
                           model.output = "logh",
-                          site.re = FALSE){
+                          site.re = FALSE,
+                          site.only = FALSE){
 
   form.list <- list()
   f.functional.form <- list(
@@ -38,6 +39,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
 
   addition <- ifelse(site.re,"(1 | site/sp)","(1 | sp)")
 
+  if (site.only){
+    addition <- "(1 | sp)"
+  }
 
   # Power function form
   if ("power" %in% tolower(names)){

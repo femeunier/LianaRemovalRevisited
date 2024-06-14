@@ -43,7 +43,9 @@ sites <- all.df %>% group_by(site) %>%
   arrange(Ndata) %>% pull(site)
 
 # sites <- c("Pasoh","Asenayo","Rio Grande")
-sites <- c("Tapajos")
+# sites <- c("Loundoungou")
+# sites <- c("Sherman","Canal")
+sites <- c("129","357")
 
 Names <- c("weibull","power","gmm")
 
