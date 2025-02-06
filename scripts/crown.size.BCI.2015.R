@@ -106,7 +106,7 @@ ggplot(data = trees.df,
   # scale_y_log10() +
   theme_bw()
 
-DBH.thrshold <- 0
+DBH.thrshold <- 10
 Illuminati.thrshold <- 5
 CA.thrshold <- 0.0
 
@@ -141,13 +141,11 @@ trees.df %>%
             slope = coef(lm(formula = log(Area) ~ log(DBH)))[2]) %>%
   mutate(CA = exp(intercept)*(50**slope))
 
-
-stop()
-saveRDS(trees.df %>%
-          filter(DBH >= DBH.thrshold,
-                 Illuminati >= Illuminati.thrshold,
-                 Area >= CA.thrshold),
-        "./data/BCI/BCI_CA_2015_Helene.RDS")
+# saveRDS(trees.df %>%
+#           filter(DBH >= DBH.thrshold,
+#                  Illuminati >= Illuminati.thrshold,
+#                  Area >= CA.thrshold),
+#         "./data/BCI/BCI_CA_2015_Helene.RDS")
 
 df.trees  %>%
   mutate(Lianas = as.numeric(Liana_dend),
@@ -157,3 +155,38 @@ df.trees  %>%
                                Lianas < 3 ~ 'low',
                                TRUE ~ "high")) %>%
   filter(status_cen == "alive" & Illuminati == 5)
+
+
+
+final.dataset.h <- trees.df %>%
+  rename(h = MaxHt) %>%
+  filter(DBH >= DBH.thrshold,
+         Illuminati >= 0,
+         !is.na(DBH),!is.na(h),
+         h >= 0)
+
+
+
+ggplot(data = final.dataset.h,
+       aes(x = DBH, y = h,
+           color = as.factor(liana.cat),
+           fill = as.factor(liana.cat)) ) +
+  geom_point(alpha = 0.5,size = 0.5) +
+  stat_smooth(method = "lm",
+              se = FALSE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+saveRDS(final.dataset.h %>%
+          dplyr::select(tag,spcode,DBH,liana.cat,h) %>%
+          rename(Species = spcode,
+                 DBH_cm = DBH,
+                 Height = h) %>%
+          mutate(Lianas = -1 + as.numeric(factor(liana.cat,
+                                                 levels = c("no","low","high")))) %>%
+          mutate(year = 2015) %>%
+          dplyr::select(-liana.cat) %>%
+          arrange(tag),
+        "./data/BCI/BCI_H_2015_Helene.RDS")
+

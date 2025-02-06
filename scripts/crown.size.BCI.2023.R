@@ -11,7 +11,8 @@ trees <- rgdal::readOGR("./data/BCI/CM2023/crownmap2022_2023_dbh_canopy.shp")
 # plot(trees$newArea,trees$crownArea)
 # trees$newArea <- trees$crownArea
 
-spplot(trees, zcol="crown_area")
+spplot(trees,
+       zcol="crown_area")
 
 # # trees.old <- rgdal::readOGR("/home/femeunier/Downloads/CrownMapsPanama/BCI 50ha plot/BCI 50ha 2014 partialfix/BCI_All_Crown_Data_10ha_50ha_partialfix.shp")
 # # trees.old.df <- as.data.frame(trees.old)
@@ -48,14 +49,15 @@ ggplot(data = trees.df  %>%
   scale_y_log10() +
   theme_bw()
 
-DBH.thrshold <- 40
+DBH.thrshold <- 10
 Illuminati.thrshold <- 4
 CA.thrshold <- 0.0
 
 ggplot(data = trees.df %>% filter(DBH >= DBH.thrshold,
                                   Illuminati >= Illuminati.thrshold,
                                   !is.na(DBH),!is.na(crownArea),
-                                  crownArea >= CA.thrshold),
+                                  crownArea >= CA.thrshold) %>%
+         filter(category == "manual"),
        aes(x = DBH, y = crownArea,
            color = as.factor(liana.cat),
            fill = as.factor(liana.cat)) ) +
@@ -68,9 +70,9 @@ ggplot(data = trees.df %>% filter(DBH >= DBH.thrshold,
 
 
 ggplot(data = trees.df %>% filter(DBH >= DBH.thrshold,
-                                  Illuminati >= Illuminati.thrshold,
-                                  !is.na(DBH),!is.na(crownArea),
-                                  crownArea >= CA.thrshold),
+                                  Illuminati >= 0,
+                                  !is.na(DBH),!is.na(h),
+                                  h >= 0),
        aes(x = DBH, y = h,
            color = as.factor(liana.cat),
            fill = as.factor(liana.cat)) ) +
@@ -98,8 +100,26 @@ nrow(trees.df %>%
 #   mutate(CA = exp(intercept)*(50**slope))
 #
 #
-saveRDS(trees.df %>%
-          filter(DBH >= DBH.thrshold,
-                 Illuminati >= Illuminati.thrshold,
-                 crownArea >= CA.thrshold),
+
+final.dataset <- trees.df %>%
+  filter(DBH >= DBH.thrshold,
+         Illuminati >= Illuminati.thrshold,
+         crownArea >= CA.thrshold)
+saveRDS(final.dataset,
         "./data/BCI/BCI_CA_2023_Helene.RDS")
+
+final.dataset.h <- trees.df %>% filter(DBH >= DBH.thrshold,
+                                       Illuminati >= 0,
+                                       !is.na(DBH),!is.na(h),
+                                       h >= 0)
+saveRDS(final.dataset.h %>%
+          dplyr::select(tag,mnemonic,DBH,liana.cat,h) %>%
+          rename(Species = mnemonic,
+                 DBH_cm = DBH,
+                 Height = h) %>%
+          mutate(Lianas = -1 + as.numeric(factor(liana.cat,
+                                               levels = c("no","low","high")))) %>%
+          mutate(year = 2023) %>%
+          dplyr::select(-liana.cat) %>%
+          arrange(tag),
+        "./data/BCI/BCI_H_2023_Helene.RDS")

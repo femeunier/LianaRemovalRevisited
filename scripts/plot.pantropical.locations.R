@@ -12,7 +12,20 @@ library(readxl)
 library(ggthemes)
 library(stringr)
 
-# Add coordinates plot Erika!
+# Forestplot Asia
+
+FP.Asia <- readRDS("./data/Asia/Plot.locations.RDS") %>%
+  rename(lat = Latitude,
+         lon = Longitude) %>%
+  group_by(site.common) %>%
+  summarise(lat = mean(lat),
+            lon = mean(lon),
+            .groups = "keep") %>%
+  mutate(Site = site.common)
+
+sites.Erika <- data.frame(Site = c("129","357"),
+                          lat = c(-2.71,-3.28),
+                          lon = c(-54.75,-54.85))
 
 sites.Congo <- read.csv("./data/metadata_Congo.csv") %>%
   rename(lat = Lat,
@@ -114,10 +127,19 @@ site.DV <- data.frame(lon = 117.7943,
                       lat = 4.9561,
                       Site = "Danum Valley")
 
+# Rainfor request 1
 site.rainfor <- readRDS("./data/ForestPlots/data/RainForMD.RDS") %>%
   rename(Site = group) %>%
   rename(lat = lat.m,
-         lon = lon.m)
+         lon = lon.m) %>%
+  filter(!(Site %in% c("GAU","SAT","VCR","FRP","POA"))) # repeated with the second census
+
+# Rainfor request 2
+site.rainfor2 <- readRDS("./data/rainfor2.md.RDS") %>%
+  rename(Site = group) %>%
+  rename(lat = Latitude,
+         lon = Longitude) %>%
+  dplyr::select(-N)
 
 all.COI <- readRDS("./outputs/All.COI.data.RDS")
 
@@ -126,16 +148,19 @@ all.sites <-  bind_rows(list(
     site.Alain %>% mutate(site.common = Site),
     site.Panama %>% mutate(site.common = Site),
     site.Tan %>% mutate(site.common = Site),
-    site.tapajos %>% mutate(site.common = Site),
+    # site.tapajos %>% mutate(site.common = Site),
     site.begum %>% mutate(site.common = Site),
     site.pasoh %>% mutate(site.common = Site),
     site.Arildo %>% mutate(site.common = Site),
+    sites.Erika %>% mutate(site.common = Site),
+    FP.Asia,
     site.BCI %>% mutate(site.common = Site),
     site.Afritron %>% mutate(site.common = Site),
     site.Karin %>% mutate(site.common = Site),
     sites.Congo %>% mutate(site.common = Site),
-    site.DV %>% mutate(site.common = Site),
+    # site.DV %>% mutate(site.common = Site),
     site.rainfor %>% mutate(site.common = Site),
+    site.rainfor2 %>% mutate(site.common = Site),
     # site.Gigante %>% mutate(site.common = "BCNM"),
     site.Gigante2 %>% mutate(site.common = Site),
     site.Jocker %>% mutate(site.common = Site),
@@ -185,17 +210,17 @@ all.df.md2plot <- all.df.md %>%
   filter(!is.na(N))
 
 # load PFT map
-r <- raster("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/C3S-LC-L4-LCCS-Map-300m-P1Y-2020-v2.1.1_aggr_reclassified.tif")
+r <- raster("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/C3S-LC-L4-LCCS-Map-300m-P1Y-2020-v2.1.1_pantropical_aggr.tif")
 df.r <- as.data.frame(r,xy = TRUE) %>%
   rename(lon =  x,
          lat = y,
-         LU = layer) %>%
+         LU = C3S.LC.L4.LCCS.Map.300m.P1Y.2020.v2.1.1_pantropical_aggr) %>%
   filter(!is.na(LU))
 
 ggplot() +
   geom_raster(data = df.r,
               aes(x = lon, y = lat, fill = as.factor(LU)),
-              alpha = 0.5,show.legend = FALSE) +
+              alpha = 0.4,show.legend = FALSE) +
   geom_sf(data = world,
           fill = NA,
           color = "black",
@@ -203,20 +228,17 @@ ggplot() +
   # geom_point(aes(x = lon, y = lat,size = sqrt(N)),
   #            data = all.df.md2plot, shape = 1) +
   geom_point(aes(x = lon, y = lat),
-             data = all.df.md2plot, shape = 16, size = 2) +
+             data = all.df.md2plot, shape = 1,
+             alpha = 1,
+             size = 1, color = "red") +
   # geom_point(aes(x = lon, y = lat),
-             # data = all.df.md2plot %>%
-               # filter(site.common %in% c("BCI","Loundoungou","Danum Valley")), shape = 16, size = 2, color = "red") +
-  # geom_point(aes(x = lon, y = lat),
-  #            data = all.df.md2plot %>% filter(site.common == "OKU"),
-  #            color = "red",shape = 16) +
-  # geom_label_repel(aes(x = lon, y = lat, label = site.common),
-  #                  size=5,
-  #                  data = all.df.md2plot,
-  #                  segment.color = 'grey50') +
+  #            data = all.df.md2plot %>%
+  #              dplyr::filter(site.common %in% c("BCI")), shape = 1,
+  #            alpha = 1, color = "red",
+  #            size = 1.5) +
   scale_fill_manual(values = c("white",c("#72a83d"),"darkgreen")) +
   scale_y_continuous(limits = c(-30,10)) +
-  scale_x_continuous(limits = c(-85,150),expand = c(0,0)) +
+  scale_x_continuous(limits = c(-85,160),expand = c(0,0)) +
   scale_size_continuous(range = c(0.1, 2)) +
   labs(x = "", y = "") +
   theme_map() +
@@ -224,33 +246,34 @@ ggplot() +
   theme(text = element_text(size = 20))
 
 
-ggplot() +
-  geom_raster(data = df.r,
-              aes(x = lon, y = lat, fill = as.factor(LU)),
-              alpha = 0.3,show.legend = FALSE) +
-  geom_sf(data = world,
-          fill = NA,
-          color = "black",
-          alpha = 0.5) +
-  # geom_point(aes(x = lon, y = lat,size = sqrt(N)),
-  #            data = all.df.md2plot, shape = 1) +
-  geom_point(aes(x = lon, y = lat),
-             data = all.df.md2plot, shape = 16, size = 2) +
-  # geom_point(aes(x = lon, y = lat),
-  #            data = all.df.md2plot %>% filter(site.common == "OKU"),
-  #            color = "red",shape = 16) +
-  # geom_label_repel(aes(x = lon, y = lat, label = site.common),
-  #                  size=5,
-  #                  data = all.df.md2plot,
-  #                  segment.color = 'grey50') +
-  scale_fill_manual(values = c("white",c("#72a83d"),"darkgreen")) +
-  scale_y_continuous(limits = c(8,10)) +
-  scale_x_continuous(limits = c(-80,-70),expand = c(0,0)) +
-  scale_size_continuous(range = c(0.1, 2)) +
-  labs(x = "", y = "") +
-  theme_map() +
-  guides(size = "none") +
-  theme(text = element_text(size = 20))
+# ggplot() +
+#   geom_raster(data = df.r,
+#               aes(x = lon, y = lat, fill = as.factor(LU)),
+#               alpha = 0.3,show.legend = FALSE) +
+#   geom_sf(data = world,
+#           fill = NA,
+#           color = "black",
+#           alpha = 0.5) +
+#   # geom_point(aes(x = lon, y = lat,size = sqrt(N)),
+#   #            data = all.df.md2plot, shape = 1) +
+#   geom_point(aes(x = lon, y = lat),
+#              data = all.df.md2plot, shape = 16, size = 2) +
+#   # geom_point(aes(x = lon, y = lat),
+#   #            data = all.df.md2plot %>% filter(site.common == "OKU"),
+#   #            color = "red",shape = 16) +
+#   # geom_label_repel(aes(x = lon, y = lat, label = site.common),
+#   #                  size=5,
+#   #                  data = all.df.md2plot,
+#   #                  segment.color = 'grey50') +
+#   scale_fill_manual(values = c("white",c("#72a83d"),"darkgreen")) +
+#   scale_y_continuous(limits = c(7,10)) +
+#   scale_x_continuous(limits = c(-85,-75),expand = c(0,0)) +
+#   scale_size_continuous(range = c(0.1, 2)) +
+#   labs(x = "", y = "") +
+#   theme_map() +
+#   guides(size = "none") +
+#   theme(text = element_text(size = 20))
+
 
 
 saveRDS(all.df.md2plot,
@@ -316,7 +339,9 @@ saveRDS(all.df.md2plot,
 saveRDS(all.df.md2plot,
         "./outputs/all.df.md2plot.RDS")
 
-levels.ordered <- all.sites %>% arrange(lon) %>% pull(Site)
+levels.ordered <- all.sites %>%
+  arrange(lon) %>%
+  pull(Site)
 
 summary.num <- readRDS("./outputs/All.COI.data.RDS") %>%
   group_by(site,liana.cat) %>%

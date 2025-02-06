@@ -117,9 +117,9 @@ ggplot() +
   #                 ymin = h.pred.low, ymax = h.pred.high), color = NA, alpha = 0.5) +
   geom_line(data = Model.predictions,
             aes(x = dbh,y = h.pred.m, color = as.factor(liana.cat))) +
-  geom_line(data = df.Feldspauch,
-            aes(x = dbh, y = h),
-            color = "black", linetype = 2) +
+  # geom_line(data = df.Feldspauch,
+  #           aes(x = dbh, y = h),
+  #           color = "black", linetype = 2) +
 
   # geom_ribbon(aes(x = dbh, y = h.null.pred.m,
   #                 ymin = h.null.pred.low, ymax = h.null.pred.high), color = NA, alpha = 0.5, fill = "darkgrey") +

@@ -10,7 +10,12 @@ library(tidyr)
 alpha = 0.11
 
 Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
-  mutate(site = case_when(site == "Kisangani_all" ~ "Yoko",
+  mutate(site = case_when(site == "DAN" ~ "Danum Valley",
+                          site == "LAM" ~ "Lambir",
+                          site == "SGW" ~ "Sungai Wain",
+                          site == "BUL" ~ "	Barito Ulu Nagy",
+
+                          site == "Kisangani_all" ~ "Yoko",
                           site == "ALF" ~ "Parque Cristalino",
                           site == "FLO" ~ "Fazenda Floresta",
                           site == "FRP" ~ "Fazenda Rio Preto",
@@ -23,10 +28,18 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                           site == "SIP" ~ "Sinop",
                           site == "TAN" ~ "Tanguro",
                           site == "VCR" ~ "Vera Cruz",
+                          site == "Casa_Roubik" ~ "Casa Roubik",
+                          site == "group_Metro" ~ "Metropolitano",
+                          site == "group_North" ~ "Plot 32",
+                          site == "Sherman" ~ "Fort Sherman",
                           TRUE ~ site)) %>%
   ungroup() %>%
   mutate(site = factor(site,
-                       levels = sort(unique(site),decreasing = TRUE)))
+                       levels = sort(unique(site),decreasing = TRUE))) %>%
+  filter(site != "Danum Valley") %>%
+  mutate(site.group = case_when(site == "Mokabi" ~ "Africa",
+                                site == "Luki" ~ "Africa",
+                                TRUE ~ site.group))
 
 
 diff.H.sites <- Main.OP %>%
@@ -144,7 +157,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = c(1-alpha),
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-15,5)) +
+  scale_x_continuous(limits = c(-15,20)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +
@@ -187,7 +200,7 @@ ggplot(data = Main.OP %>%
 
 ggplot(data = Main.OP %>%
          filter(site.group == "Africa",
-                (site %in% c("Asenanyo","Atla-F","Cape Three Points","Cavalla"))),
+                (site %in% c("Asenanyo","Cape Three Points","Cavalla","Dadieso"))),
        aes(x = diff_h/no*100,
            y = new.site,
            color = liana.cat,
@@ -215,7 +228,7 @@ ggplot(data = Main.OP %>%
 
 ggplot(data = Main.OP %>%
          filter(site.group == "Africa",
-                !(site %in% c("Asenanyo","Atla-F","Cape Three Points","Cavalla"))),
+                !(site %in% c("Asenanyo","Cape Three Points","Cavalla","Dadieso"))),
        aes(x = diff_h/no*100,
            y = new.site2,
            color = liana.cat,
@@ -254,7 +267,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = 1-alpha,
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-50,5)) +
+  scale_x_continuous(limits = c(-50,15)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +
@@ -281,7 +294,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = c(1-alpha),
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-25,25)) +
+  scale_x_continuous(limits = c(-40,25)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +

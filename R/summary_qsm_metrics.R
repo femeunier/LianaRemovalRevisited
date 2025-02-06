@@ -27,7 +27,24 @@ summary_qsm_metrics <- function (QSMs_path, version = "2.4.1", multiple = FALSE,
                               crown_vol = double(), crown_area_conv = double(),
                               crown_length  = double(),crown_area_alpha = double(),
                               Nbranches = double(),
-                              crown_base_height  = double()
+                              crown_base_height  = double(),
+
+                              branch_number_order = double(),
+                              branch_length_order = double(),
+                              branch_volume_order = double(),
+                              branch_area_order = double(),
+                              ratio_area_volume_order = double(),
+
+                              branch_number_order1 = double(),
+                              branch_length_order1 = double(),
+                              branch_volume_order1 = double(),
+                              branch_area_order1 = double(),
+
+                              branch_number_order2 = double(),
+                              branch_length_order2 = double(),
+                              branch_volume_order2 = double(),
+                              branch_area_order2 = double()
+
                               )
   summary <- summary_means <- summary_sds <- cbind(tree_id = character(),
                                                    results)
@@ -55,7 +72,7 @@ summary_qsm_metrics <- function (QSMs_path, version = "2.4.1", multiple = FALSE,
       }
       else {
         qsm <- LianaRemovalRevisited::read_tree_qsm(paste(QSMs_path, qsms[j],
-                                   sep = ""), version)
+                                                          sep = ""), version)
       }
       position <- tree_position_qsm(qsm$cylinder)
       X_position <- position[1]
@@ -69,6 +86,43 @@ summary_qsm_metrics <- function (QSMs_path, version = "2.4.1", multiple = FALSE,
                                   cylindercutoff)
       trunk_vol <- trunk_volume_qsm(qsm$treedata)
 
+      pos <- (qsm$cylinder$BranchOrder > 0 &
+                qsm$cylinder$BranchOrder < 3)
+
+      branch_number_order <- length(unique(qsm$cylinder$branch[pos]))
+      branch_length_order <- sum(qsm$cylinder$length[pos])
+      branch_volume_order <- sum(qsm$cylinder$length[pos]*pi*
+                                 qsm$cylinder$radius[pos]**2)
+      branch_area_order <- sum(qsm$cylinder$length[pos]*2*pi*
+                                   qsm$cylinder$radius[pos])
+
+
+      pos1 <- (qsm$cylinder$BranchOrder == 1)
+
+      branch_number_order1 <- length(unique(qsm$cylinder$branch[pos1]))
+      branch_length_order1 <- sum(qsm$cylinder$length[pos1])
+      branch_volume_order1 <- sum(qsm$cylinder$length[pos1]*pi*
+                                   qsm$cylinder$radius[pos1]**2)
+      branch_area_order1 <- sum(qsm$cylinder$length[pos1]*2*pi*
+                                 qsm$cylinder$radius[pos1])
+
+      pos2 <- (qsm$cylinder$BranchOrder == 2)
+
+      branch_number_order2 <- length(unique(qsm$cylinder$branch[pos2]))
+      branch_length_order2 <- sum(qsm$cylinder$length[pos2])
+      branch_volume_order2 <- sum(qsm$cylinder$length[pos2]*pi*
+                                    qsm$cylinder$radius[pos2]**2)
+      branch_area_order2 <- sum(qsm$cylinder$length[pos2]*2*pi*
+                                  qsm$cylinder$radius[pos2])
+
+
+      ratio_area_volume_order <- data.frame(branch = qsm$cylinder$branch[pos],
+                                            l = qsm$cylinder$length[pos],
+                                            r = qsm$cylinder$radius[pos]) %>%
+        group_by(branch) %>%
+        summarise(ratio = sum(2*pi*r*l)/sum(pi*(r**2)*l),
+                  .groups = "keep") %>%
+        ungroup() %>% pull(ratio) %>% mean()
 
       cvol <- qsm$treedata$CrownVolumeConv[1]
       clen <- qsm$treedata$CrownLength[1]
@@ -127,7 +181,22 @@ summary_qsm_metrics <- function (QSMs_path, version = "2.4.1", multiple = FALSE,
                          crown_area_conv = ca.conv,
                          crown_length = clen,branch_area = bra,
                          Nbranches = number_bran,
-                         crown_base_height = cbh
+                         crown_base_height = cbh,
+                         branch_number_order,
+                         branch_length_order,
+                         branch_volume_order,
+                         branch_area_order,
+                         ratio_area_volume_order,
+
+                         branch_number_order1,
+                         branch_length_order1,
+                         branch_volume_order1,
+                         branch_area_order1,
+
+                         branch_number_order2,
+                         branch_length_order2,
+                         branch_volume_order2,
+                         branch_area_order2
 
                          )
       trees <- rbind(trees, tree)

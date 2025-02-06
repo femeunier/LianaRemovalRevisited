@@ -32,16 +32,15 @@ all.df.title <- all.df %>%
          N.high = length(site[which(liana.cat == "high")]),
          N.tot = length(site))
 
-sites <- unique(all.df.title %>%
-                  filter(!(N.tot > 500)) %>%
-                  pull(site))
-
-
-sites <- unique(all.df.title$site)
-sites <- c("SIP")
+# sites <- unique(all.df.title %>%
+#                   filter(!(N.tot > 500)) %>%
+#                   pull(site))
+# sites <- readRDS("./data/rainfor2.md.RDS") %>%
+#   pull(group) %>% unique()
+# sites <- unique(all.df.title$site)
+sites <- c("BUL","DAN","LAM","SGW")
 
 models <- c("weibull","power","gmm")
-# model.forms <- c("all","none","a")
 model.forms <- c("all","none","a","b","ab","bk","ak","k")
 
 # Compile the outputs

@@ -141,7 +141,7 @@ null.models <- lapply(fit.all.years, function(x){
   names.x = names(x)
   return(x[[which(grepl("_none",names.x))]])})
 
-alpha = 0.25
+alpha = 0.05
 
 temp <- bind_rows((lapply(1:length(years),
                           function(iyear){
@@ -275,6 +275,8 @@ temp.title <- temp %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high")))
 
+saveRDS(temp.title,
+        paste0("./outputs/Model.Predictions.BCI",".RDS"))
 
 ggplot(data = temp.title) +
   geom_point(data = all.df.title %>%
@@ -346,7 +348,7 @@ temp3 <- bind_rows((lapply(1:length(years),
                            })))
 
 
-alpha <- 0.11
+alpha <- 0.05
 
 temp3.title <- temp3 %>%
   left_join(all.df.title %>% dplyr::select(year,
@@ -431,3 +433,5 @@ ggplot(data = temp3.title %>%
   guides(alpha = "none") +
   theme(legend.position = c(0.1,0.9))
 
+saveRDS(temp3.title,
+        paste0("./outputs/Main.OP.BCI",DBH2test,".RDS"))

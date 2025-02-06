@@ -42,7 +42,7 @@ sites <- all.df %>% group_by(site) %>%
   summarise(Ndata = n(),
             Nspecies = length(unique(sp))) %>%
   arrange(Ndata) %>% pull(site)
-sites <- c("BCI","Loundoungou","Danum Valley")
+# sites <- c("BCI","Loundoungou","Danum Valley")
 
 
 Names <- c("power")
@@ -94,11 +94,22 @@ for (isite in seq(1,length(sites))){
 
   # Create script file
   Rscript.name <- file.path(cdir,script.name <- "Rscript.CA.R")
-  write.script.CA(file.name = script.name,
-                  dir.name = cdir,
-                  site.name = csite.corrected,
-                  settings.location = settings.location,
-                  site.re = FALSE)
+
+
+  if (csite == "Total"){
+    write.script.CA(file.name = script.name,
+                    dir.name = cdir,
+                    site.name = csite.corrected,
+                    settings.location = settings.location,
+                    site.re = TRUE)
+  } else {
+    write.script.CA(file.name = script.name,
+                    dir.name = cdir,
+                    site.name = csite.corrected,
+                    settings.location = settings.location,
+                    site.re = FALSE)
+  }
+
 
   # Create job file
   ED2scenarios::write_jobR(file = file.path(cdir,jobname),

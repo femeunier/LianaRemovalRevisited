@@ -280,3 +280,12 @@ df.r2.all %>%
             .groups = "keep") %>%
   arrange(desc(r2.m))
 
+df.r2.all %>%
+  group_by(target) %>%
+  arrange(desc(r2)) %>%
+  slice_head(n = 1)
+
+df.r2.all %>%
+  filter(variable == "t.sd",
+         variable2 == "MCWD")
+

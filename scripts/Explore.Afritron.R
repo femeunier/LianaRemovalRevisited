@@ -3,12 +3,27 @@ rm(list = ls())
 library(stringr)
 library(dplyr)
 library(ggplot2)
+library(readxl)
 
 data <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Afritron/africa_individualsdata_mainplotview_112017.csv",stringsAsFactors = FALSE)
 
+saveRDS(data %>%
+  filter(Plot.Code %in%
+           c("ASN-02","ASN-04",
+             "CVL-01","CVL-11",
+             "DAD-04","EKO-01",
+             "GBO-04","GBO-11",
+             "GBO-15","GBO-19",
+             "LKM-01","OGI-01")) %>%
+  dplyr::select(Plot.Code,PlotViewID) %>%
+  distinct(),
+  "./outputs/plot.vs.plotviewID")
+
 data.filt <- data %>%
   mutate(coi = as.numeric(substr(LI,1,1)) ) %>%
-  filter(!is.na(D4),!is.na(Height),!is.na(coi)) %>%
+  filter(!is.na(D4),
+         !is.na(Height),
+         !is.na(coi)) %>%
   mutate(liana.cat = case_when(coi == 0 ~ "no",
                                coi < 3 ~ "low",
                                TRUE ~ "high"))
@@ -29,6 +44,22 @@ ggplot(data = data.filt %>%
   facet_wrap(~ Country) +
   theme_bw()
 
+plots <- data.filt %>%
+  filter(D4 >= 100) %>%
+  pull(Plot.Code) %>%
+  unique() %>% sort()
+
+metadata.file <- "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Afritron/africa_metadataforR_112017_extra.xlsx"
+metadata <- read_xlsx(metadata.file) %>%
+  right_join(data.frame(PlotCode = plots),
+             by = "PlotCode") %>%
+  mutate(origin = "Afritron") %>%
+  dplyr::select(origin,PlotCode,ForestMoistureName,ForestElevationName,ForestEdaphicName,`Forest status plotview`) %>%
+  arrange(PlotCode) %>%
+  distinct()
+
+write.csv(metadata,
+          "~/Downloads/test.csv")
 
 # ggplot(data = data.filt %>%
 #          filter(D4 >= 100,
@@ -60,9 +91,6 @@ data.format <- data.filt %>%
 
 saveRDS(data.format,
         "./data/Afritron.RDS")
-
-
-library(readxl)
 
 # Check overlaps with Afritron!
 rainfordb <- read_xlsx("./data/Afritron/ForestPlots_Access_FelicienMunier_19Oct23.xlsx") %>%
@@ -123,5 +151,6 @@ ggplot(data = data2plot,
 
 data2plot %>%
   group_by(liana.cat,origin) %>%
-  summarise(N = n())
+  summarise(N = n(),
+            .groups = "keep")
 

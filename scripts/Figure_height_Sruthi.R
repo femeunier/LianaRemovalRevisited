@@ -15,105 +15,81 @@ library(cowplot)
 library(ggdist)
 library(ggplot2)
 
-
 # Load the data
-
-Afritron.sites <- readRDS("./data/Afritron/Afritron.metadata.RDS") %>%
-  pull(site)
-
-all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
+all.df <- bind_rows(readRDS("./outputs/BCI.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10),
-                    readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>%
-                      mutate(site = "Total.re")) %>%
-  mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
-                                site  == "Total.re" ~ "Total.re",
-                                site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"OKU","Tanzania") ~ "Africa",
-                                site %in% c("Gigante","BCI") ~ "Panama",
-                                TRUE ~ "Amazon"))
-
+                      filter(dbh >= 10)) %>%
+  filter(year == 2019)
 
 all.df.title <- all.df %>%
-  group_by(site.group) %>%
-  mutate(site.group.N = paste0(site.group,", N = ", length(site.group)," (",length(site.group[which(liana.cat == "no")]), "-",
-                         length(site.group[which(liana.cat == "low")]), "-",
-                         length(site.group[which(liana.cat == "high")]), ")"),
-         N.low = length(site.group[which(liana.cat == "low")]),
-         N.high = length(site.group[which(liana.cat == "high")]),
-         N.tot = length(site.group))
+  group_by(year) %>%
+  mutate(year.N = paste0(year,", N = ", length(year)," (",length(year[which(liana.cat == "no")]), "-",
+                         length(year[which(liana.cat == "low")]), "-",
+                         length(year[which(liana.cat == "high")]), ")"),
+         N.low = length(year[which(liana.cat == "low")]),
+         N.high = length(year[which(liana.cat == "high")]),
+         N.tot = length(year))
 
-# sites <- unique(all.df.title$site)
-sites <- c("Total.re")
+
+years <- unique(all.df.title$year)
 
 # Compile the outputs
-fit.all.sites <- list()
+fit.all.years <- list()
 
 print("Reading")
 
-sites2keep <- best.model.names <- c()
-all.diagnosis <- data.frame()
+years2keep <- best.model.names <- c()
+for (iyear in seq(1,length(years))){
 
-for (isite in seq(1,length(sites))){
+  cyear <- years[iyear]
+  cyear.corrected <- gsub(" ", "",cyear, fixed = TRUE)
 
-  csite <- sites[isite]
-  csite.corrected <- gsub(" ", "",csite, fixed = TRUE)
+  print(paste("-",cyear))
+  fit.all.years[[iyear]] <- list()
 
-  print(paste("-",csite))
-  fit.all.sites[[isite]] <- list()
-
-  dir.create(file.path("./outputs/",csite.corrected),
+  dir.create(file.path("./outputs/",paste0("BCI.",cyear.corrected)),
              showWarnings = FALSE)
 
-  # # Check which files
+  # Check which files
   transfer.files("Diagnostics.RDS",
                  base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
-                 source = file.path("data",csite.corrected),
-                 destination = file.path("./outputs/",csite.corrected),
+                 source = file.path("data",paste0("BCI.",cyear.corrected)),
+                 destination = file.path("./outputs/",paste0("BCI.",cyear.corrected)),
                  show.progress = FALSE)
 
 
-  diagnosis.file <- file.path("./outputs/",csite.corrected,"Diagnostics.RDS")
+  diagnosis.file <- file.path("./outputs/",paste0("BCI.",cyear.corrected),"Diagnostics.RDS")
   if (!file.exists(diagnosis.file)) next()
 
-  raw.diagnosis <- readRDS(diagnosis.file)
-
-  all.diagnosis <- bind_rows(list(all.diagnosis,
-                                  raw.diagnosis %>%
-                                    mutate(site = csite)))
-
-  Diagnstocis.Bayesian.site <- raw.diagnosis %>%
+  Diagnstocis.Bayesian.year <- readRDS(diagnosis.file) %>%
     arrange((waic)) %>%
     filter(rhat.max < 1.05)
 
-  Diagnstocis.Bayesian.site.best <-
+  Diagnstocis.Bayesian.year.best <-
     bind_rows(
-      Diagnstocis.Bayesian.site %>%
-        group_by(site) %>%
+      Diagnstocis.Bayesian.year %>%
+        group_by(year) %>%
         filter(fe == "none") %>%
         filter(waic == min(waic)),
-      Diagnstocis.Bayesian.site %>%
-        group_by(site) %>%
+      Diagnstocis.Bayesian.year %>%
+        group_by(year) %>%
         filter(waic == min(waic))) %>%
     distinct()
 
-  all.possible.files <- Diagnstocis.Bayesian.site.best %>%
-    mutate(file = paste0("Fit.",ifelse(csite.corrected == "Total.re",
-                                       "Total",
-                                       csite.corrected),".",model.name,".RDS")) %>%
+  all.possible.files <- Diagnstocis.Bayesian.year.best %>%
+    mutate(file = paste0("Fit.",cyear.corrected,".",model.name,".RDS")) %>%
     pull(file)
 
   # Transfer files
-  dir.create(file.path("./outputs/",csite.corrected),showWarnings = FALSE)
+  dir.create(file.path("./outputs/",cyear.corrected),showWarnings = FALSE)
   transfer.files(all.possible.files,
                  base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
-                 source = file.path("data",csite.corrected),
-                 destination = file.path("./outputs/",csite.corrected),
+                 source = file.path("data",paste0("BCI.",cyear.corrected)),
+                 destination = file.path("./outputs/",paste0("BCI.",cyear.corrected)),
                  show.progress = FALSE)
 
 
-  cfiles <- file.path("./outputs/",csite.corrected,all.possible.files)
+  cfiles <- file.path("./outputs/",paste0("BCI.",cyear.corrected),all.possible.files)
 
   tokeep <- basename(cfiles) %in% all.possible.files
 
@@ -125,54 +101,13 @@ for (isite in seq(1,length(sites))){
   for (ifile in seq(1,length(cfiles.filtered))){
 
     print(paste("--",ifile/length(cfiles.filtered)))
-    fit.all.sites[[isite]][[cnames.filtered[ifile]]] <-  readRDS(paste0(cfiles.filtered[ifile]))
+    fit.all.years[[iyear]][[cnames.filtered[ifile]]] <-  readRDS(paste0(cfiles.filtered[ifile]))
   }
 
-  best.model.names[isite] <- file.path("./outputs/",csite.corrected,paste0("Fit.",ifelse(csite.corrected == "Total.re",
-                                                                                         "Total",
-                                                                                         csite.corrected),".",Diagnstocis.Bayesian.site %>%
-                                                                        group_by(site) %>%
-                                                                             filter(waic == min(waic)) %>% pull(model.name)))
+  best.model.names[iyear] <- file.path("./outputs/",paste0("BCI.",cyear.corrected),paste0("Fit.",cyear.corrected,".",Diagnstocis.Bayesian.year %>%
+                                                                                            group_by(year) %>%
+                                                                                            filter(waic == min(waic)) %>% pull(model.name)))
 }
-
-
-best.model.all <- all.diagnosis %>%
-  filter(rhat.max < 1.05) %>%
-  group_by(site) %>%
-  arrange(waic) %>%
-  slice_head(n = 1) %>%
-  dplyr::select(site,model.name)
-
-check.all.diagnosis <- all.diagnosis %>%
-  group_by(site) %>%
-  summarise(N = length(site),
-            Nsuccessful = length(which(rhat.max <= 1.05))) %>%
-  left_join(best.model.all,
-            by = "site") %>%
-  arrange((Nsuccessful)) %>%
-  left_join(all.df.title %>%
-              group_by(site) %>%
-              summarise(Ntot = length(site)) %>%
-              dplyr::select(site,Ntot),
-            by = "site")
-
-check.all.diagnosis %>%
-  filter(Nsuccessful < N) %>%
-  pull(site) %>% unique()
-
-sum(check.all.diagnosis$Nsuccessful)/sum(check.all.diagnosis$N)
-
-saveRDS(check.all.diagnosis,
-        "./outputs/check.all.diagnosis.SG.RDS")
-
-all.diagnosis %>%
-  filter(rhat.max > 1.05) %>%
-  group_by(model.name) %>%
-  summarise(N = n()) %>%
-  arrange(desc(N))
-
-# system2("scp",paste("hpc:/data/gent/vo/000/gvo00074/felicien/R/data/Makouko/Fit.Makouko.weibull_ab.RDS"))
-
 
 # Select best model
 
@@ -180,45 +115,42 @@ actual.df <- data.frame()
 
 print("Processing")
 best.model <- list()
-for (isite in seq(1,length(sites))){
+for (iyear in seq(1,length(years))){
 
-  csite <- sites[isite]
-  print(paste(csite, "-",isite/length(sites)))
+  cyear <- years[iyear]
+  print(paste(cyear, "-",iyear/length(years)))
 
   actual.df <- bind_rows(list(actual.df,
-                              all.df %>% filter(site.group == csite)))
+                              all.df %>% filter(year == cyear)))
 
-  # if (length(fit.all.sites[[isite]]) > 1){
+  # if (length(fit.all.years[[iyear]]) > 1){
   #
-  #   X <- lapply(fit.all.sites[[isite]],waic)
-  #   comparison[[isite]] <- brms::loo_compare(X)
-  #   best.model.names[isite] <- rownames(comparison[[isite]])[1]
+  #   X <- lapply(fit.all.years[[iyear]],waic)
+  #   comparison[[iyear]] <- brms::loo_compare(X)
+  #   best.model.names[iyear] <- rownames(comparison[[iyear]])[1]
   #
   # } else {
-  #   comparison[[isite]] <- NULL
-  #   best.model.names[isite] <- names(fit.all.sites[[isite]])
+  #   comparison[[iyear]] <- NULL
+  #   best.model.names[iyear] <- names(fit.all.years[[iyear]])
   # }
 
-  best.model[[isite]] <- fit.all.sites[[isite]][[best.model.names[isite]]]
+  best.model[[iyear]] <- fit.all.years[[iyear]][[best.model.names[iyear]]]
 
 }
 
-null.models <- lapply(fit.all.sites, function(x){
+null.models <- lapply(fit.all.years, function(x){
   names.x = names(x)
   return(x[[which(grepl("_none",names.x))]])})
 
-alpha = 0.25
+alpha = 0.05
 
-# null.pred <- residuals(null.models[[1]],re_formula = NA)
-# best.pred <- predict(best.model[[1]])
+temp <- bind_rows((lapply(1:length(years),
+                          function(iyear){
 
-temp <- bind_rows((lapply(1:length(sites),
-                          function(isite){
-
-                            print(isite)
-                            csite <- sites[isite]
+                            print(iyear)
+                            cyear <- years[iyear]
                             cdf <- all.df %>%
-                              filter(site.group == csite)
+                              filter(year == cyear)
 
                             dbhs <- seq(floor(min(cdf$dbh)),
                                         ceiling(max(cdf$dbh)),
@@ -247,10 +179,10 @@ temp <- bind_rows((lapply(1:length(sites),
 
                             newdata <- newdata %>%
                               mutate(id = 1:length(dbh),
-                                     site.group = sites[isite])
+                                     year = years[iyear])
 
-                            cmodel <- best.model[[isite]]
-                            null.model <- null.models[[isite]]
+                            cmodel <- best.model[[iyear]]
+                            null.model <- null.models[[iyear]]
 
                             ccoef <- as.numeric(exp( (summary(cmodel)[["spec_pars"]][1]**2)/2))
                             ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
@@ -265,7 +197,7 @@ temp <- bind_rows((lapply(1:length(sites),
                               group_by(id) %>%
                               filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
                               mutate(h = ccoef*exp(value)) %>%
-                              summarise(h.m = median(h,na.rm = TRUE),
+                              summarise(h.m = mean(h,na.rm = TRUE),
                                         h.low = quantile(h,alpha/2,na.rm = TRUE),
                                         h.high = quantile(h,1 - alpha/2,na.rm = TRUE))
 
@@ -278,7 +210,7 @@ temp <- bind_rows((lapply(1:length(sites),
                               group_by(id) %>%
                               filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
                               mutate(h.null = ccoef.null*exp(value)) %>%
-                              summarise(h.null.m = median(h.null,na.rm = TRUE),
+                              summarise(h.null.m = mean(h.null,na.rm = TRUE),
                                         h.null.low = quantile(h.null,alpha/2,na.rm = TRUE),
                                         h.null.high = quantile(h.null,1 - alpha/2,na.rm = TRUE))
 
@@ -291,7 +223,7 @@ temp <- bind_rows((lapply(1:length(sites),
                               group_by(id) %>%
                               filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
                               mutate(h.pred = ccoef*exp(value)) %>%
-                              summarise(h.pred.m = median(h.pred,na.rm = TRUE),
+                              summarise(h.pred.m = mean(h.pred,na.rm = TRUE),
                                         h.pred.low = quantile(h.pred,alpha/2,na.rm = TRUE),
                                         h.pred.high = quantile(h.pred,1 - alpha/2,na.rm = TRUE))
 
@@ -304,7 +236,7 @@ temp <- bind_rows((lapply(1:length(sites),
                               group_by(id) %>%
                               filter((abs(value - median(value,na.rm = TRUE)) < 2*sd(value,na.rm = TRUE))) %>%
                               mutate(h.null.pred = ccoef.null*exp(value)) %>%
-                              summarise(h.null.pred.m = median(h.null.pred,na.rm = TRUE),
+                              summarise(h.null.pred.m = mean(h.null.pred,na.rm = TRUE),
                                         h.null.pred.low = quantile(h.null.pred,alpha/2,na.rm = TRUE),
                                         h.null.pred.high = quantile(h.null.pred,1 - alpha/2,na.rm = TRUE))
 
@@ -339,48 +271,36 @@ temp <- bind_rows((lapply(1:length(sites),
                           })))
 
 temp.title <- temp %>%
-  left_join(all.df.title %>%
-              ungroup() %>%
-              dplyr::select(site.group,site.group.N) %>% distinct(),
-            by = "site.group") %>%
+  left_join(all.df.title %>% dplyr::select(year,year.N) %>% distinct(),
+            by = "year") %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high")))
-
-
 ggplot(data = temp.title) +
   geom_point(data = all.df.title %>%
-               filter(site.group %in% sites),
+               filter(year %in% years),
              aes(x = dbh,y = h, color = as.factor(liana.cat)),
              size = 0.5, alpha = 0.25) +
-  # geom_ribbon(aes(x = dbh, y = h.pred.m, fill = as.factor(liana.cat),
-  #                 ymin = h.pred.low, ymax = h.pred.high), color = NA, alpha = 0.5) +
-  geom_line(aes(x = dbh,y = h.pred.m, color = as.factor(liana.cat))) +
-
-  # geom_ribbon(aes(x = dbh, y = h.null.pred.m,
-  #                 ymin = h.null.pred.low, ymax = h.null.pred.high), color = NA, alpha = 0.5, fill = "darkgrey") +
-  geom_line(aes(x = dbh,y = h.null.pred.m), color = "black") +
-  facet_wrap(~ site.group.N, scales = "free") +
-  scale_x_log10(limits = c(10,300),
-                breaks = c(10,20,50,100,200)) +
-  scale_y_log10(limits = c(1,60)) +
-  labs(x = "DBH (cm)", y = 'Height (m)', color = "Liana infestation", fill = "Liana infestation") +
+  scale_color_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  geom_line(aes(x = dbh,y = h.pred.m, color = as.factor(liana.cat))) +geom_line(aes(x = dbh,y = h.null.pred.m), color = "black") +
+  scale_x_continuous(limits = c(0,250)) +
+  scale_y_continuous(limits = c(10,55)) +
+  labs(x = "", y = '',color = "Liana infestation", fill = "Liana infestation") +
   theme_bw() +
   theme(text = element_text(size = 20),
-        legend.position = c(0.8,0.2))
-
-saveRDS(temp.title,
-        "./outputs/Model.predictions.sitegroups.RDS")
+        legend.position = "none")
 
 ################################################################################
 
-DBH2test <- 150
+DBH2test <- 50
 
-temp3 <- bind_rows((lapply(1:length(sites),
-                           function(isite){
+temp3 <- bind_rows((lapply(1:length(years),
+                           function(iyear){
 
-                             print(isite)
+                             print(iyear)
                              cdf <- all.df %>%
-                               filter(site.group == sites[isite])
+                               filter(year == years[iyear])
 
 
                              levels <- as.character(unique(cdf$liana.cat))
@@ -391,10 +311,10 @@ temp3 <- bind_rows((lapply(1:length(sites),
 
                              newdata <- newdata %>%
                                mutate(id = 1:length(dbh),
-                                      site = sites[isite])
+                                      year = years[iyear])
 
-                             cmodel <- best.model[[isite]]
-                             null.model <- null.models[[isite]]
+                             cmodel <- best.model[[iyear]]
+                             null.model <- null.models[[iyear]]
 
                              ccoef <- as.numeric(exp( (summary(cmodel)[["spec_pars"]][1]**2)/2))
                              ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
@@ -416,20 +336,17 @@ temp3 <- bind_rows((lapply(1:length(sites),
                                            values_from = h)
 
                              return(pp %>%
-                                      mutate(site = sites[isite]))
+                                      mutate(year = years[iyear]))
                            })))
 
 
-Afritron.sites <- readRDS("./data/Afritron/Afritron.metadata.RDS") %>%
-  pull(site)
-
-alpha <- 0.11
+alpha <- 0.05
 
 temp3.title <- temp3 %>%
-  left_join(all.df.title %>% dplyr::select(site,
+  left_join(all.df.title %>% dplyr::select(year,
                                            N.low,N.high,N.tot) %>% distinct(),
-            by = "site") %>%
-  mutate(site.tot = paste0(site," (N = ",N.tot,")")) %>%
+            by = "year") %>%
+  mutate(year.tot = paste0(year," (N = ",N.tot,")")) %>%
   mutate(high = high - no,
          low = low - no) %>%
   pivot_longer(cols = c(low,high),
@@ -438,25 +355,15 @@ temp3.title <- temp3 %>%
   mutate(N.cat = case_when(liana.cat == "low" ~ N.low,
                            liana.cat == "high" ~ N.high,
                            TRUE ~ NA)) %>%
-  mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
-                                site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"Tanzania","OKU") ~ "Africa",
-                                site %in% c("Gigante","BCI") ~ "Panama",
-                                site == c("Total") ~ "Total",
-                                TRUE ~ "Amazon")) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("low","high"))) %>%
-  mutate(site.group = factor(site.group,
-                             levels = c("Total","Panama",
-                                        "Amazon","Africa","Australasia"))) %>%
-  group_by(site,liana.cat) %>%
+  group_by(year,liana.cat) %>%
   mutate(signif_rel = case_when(quantile(diff_h/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 0.3,
                                 quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 0.3,
                                 TRUE ~ 0.2),
          signif_rel2 = case_when(quantile(diff_h/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 1,
                                  quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 1,
                                  TRUE ~ 0.4))
-
-saveRDS(temp3.title,paste0("./outputs/Main.OP.SG.",DBH2test,".RDS"))
 
 mean.cat <- temp3.title %>%
   group_by(liana.cat) %>%
@@ -465,47 +372,42 @@ mean.cat <- temp3.title %>%
             .groups = "keep")
 
 ggplot(data = temp3.title %>%
-         filter(site %in% sites),
+         filter(year %in% years),
        aes(x = diff_h/no*100,
-           y = site.tot,
+           y = year.tot,
            color = liana.cat,
            fill = liana.cat,
            alpha = signif_rel)) +
   # geom_text(data = temp3.title %>%
-  #              group_by(site.tot,liana.cat) %>%
+  #              group_by(year.tot,liana.cat) %>%
   #              summarise(N.cat = unique(N.cat),
   #                        signif_rel = 1,
   #                        .groups = "keep"),
   #            aes(x = 25, label = paste("N = ",as.character(N.cat))),
   #            color = "black", fill = NA,hjust = 0) +
   geom_vline(xintercept = 0,linetype = 1) +
-  geom_vline(data = mean.cat %>%
-               mutate(signif_rel = 1),
-             aes(xintercept = diff_h_m_rel,
-                 color = liana.cat),
-             linetype = 2) +
+  # geom_vline(data = mean.cat %>%
+  #              mutate(signif_rel = 1),
+  #            aes(xintercept = diff_h_m_rel,
+  #                color = liana.cat),
+  #            linetype = 2) +
   # stat_interval(.width = c(.5, .8, .95)) +
   stat_halfeye(color = NA) +
 
   stat_pointinterval(aes(alpha = signif_rel2),
-                     .width = c(1-alpha),
+                     .width = c(.66, 1-alpha),
                      position = position_dodge(width = 0)) +
-  facet_wrap(~ liana.cat) +
+  # facet_wrap(~ liana.cat) +
   # scale_x_continuous(limits = c(-100,60)) +
   labs(y = "", color = "", fill = "") +
   theme_bw() +
   guides(alpha = "none")
 
-temp3.title %>%
-  group_by(liana.cat) %>%
-  summarise(m = median(diff_h/no*100,na.rm = TRUE),
-            low = quantile(diff_h/no*100,alpha/2,na.rm = TRUE),
-            high = quantile(diff_h/no*100,1-alpha/2,na.rm = TRUE))
 
 ggplot(data = temp3.title %>%
-         filter(site %in% sites),
+         filter(year %in% years),
        aes(x = diff_h/no*100,
-           y = site.tot,
+           y = year.tot,
            color = liana.cat,
            fill = liana.cat,
            alpha = signif_rel)) +
@@ -515,55 +417,95 @@ ggplot(data = temp3.title %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = c(1-alpha),
                      position = position_dodge(width = 0)) +
-  facet_wrap(~ liana.cat) +
-  scale_x_continuous(limits = c(-15,0)) +
+  scale_x_continuous(limits = c(-15,2.5)) +
   labs(y = "", color = "", fill = "") +
-  theme_bw() +
-  facet_wrap(~ site.group, scales = "free_y") +
+  theme_minimal() +
   guides(alpha = "none") +
-  theme(legend.position = c(0.1,0.9))
+  scale_color_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  scale_fill_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  theme(legend.position = "none",
+        text = element_text(size = 20)) +
+  scale_y_discrete(labels = '') +
+  labs(x = "", y = "")
 
-ggplot(data = temp3.title %>%
-         filter(site %in% sites),
-       aes(x = diff_h,
-           y = site,
-           color = liana.cat,
+
+temp3.title %>%
+  filter(year %in% years) %>%
+  dplyr::select(year,liana.cat,signif_rel2,diff_h,no) %>%
+  group_by(liana.cat,year,signif_rel2) %>%
+  summarise(Delta = mean(diff_h/no,na.rm = TRUE),
+            Delta_low = quantile(diff_h/no,0.055,na.rm = TRUE),
+            Delta_high = quantile(diff_h/no,1-0.055,na.rm = TRUE),
+            Delta.h = mean(diff_h,na.rm = TRUE),
+            Delta.h_low = quantile(diff_h,0.055,na.rm = TRUE),
+            Delta.h_high = quantile(diff_h,1-0.055,na.rm = TRUE)) %>%
+  filter(signif_rel2 == 1) %>%
+  arrange((Delta.h))
+
+
+
+
+df.residuals <- all.df %>%
+  mutate(dbh = round(dbh)) %>%
+  left_join(temp.title %>%
+              dplyr::select(dbh,liana.cat,
+                            h.pred.m,h.null.pred.m,year),
+            by = c("dbh","liana.cat","year")) %>%
+  mutate(res_null = (h.null.pred.m-h),
+         res_best = (h.pred.m-h)) %>%
+  mutate(delta.res = abs(res_best) - abs(res_null)) %>%
+  # dplyr::select(liana.cat,res_null,res_best) %>%
+  pivot_longer(cols = c(res_null,res_best)) %>%
+  mutate(model = sub(".*\\_", "", name)) %>%
+  mutate(liana.cat = case_when(model == "null" ~ "null",
+                               TRUE ~ liana.cat))
+
+df.residuals %>%
+  group_by(year,name) %>%
+  summarise(med = median(value),
+            RSE = sqrt(1/(length(value - 3))*sum((value)**2)),
+            RSE2 = sqrt(1/(length(value - 6))*sum((value)**2)),
+            m =  mean(value),
+            m.abs = mean(abs(value)))
+
+
+ggplot(data = all.df %>%
+         mutate(S = h/dbh),
+       aes(x = liana.cat,
+           y = S,
            fill = liana.cat)) +
-  geom_vline(xintercept = 0,linetype = 1) +
-  geom_vline(data = mean.cat,
-             aes(xintercept = diff_h_m,
-                 color = liana.cat),
-             linetype = 2) +
-  # stat_interval(.width = c(.5, .8, .95)) +
-  stat_halfeye(alpha = 0.2, color = NA) +
+  geom_boxplot(alpha = 0.5) +
+  scale_fill_manual(values = c("no" = "darkgreen",
+                               "low" = "orange",
+                               "high"= "darkred")) +
+  theme_bw() +
+  theme(text = element_text(size = 20),
+        legend.position = "none") +
+  scale_x_discrete(labels = c("No",
+                              "Moderate",
+                              "Heavy")) +
+  scale_y_continuous(limits = c(0.2,0.9)) +
+  labs(x = "",y = "")
 
-  stat_pointinterval( .width = c(1-alpha),
-                      position = position_dodge(width = 0.1)) +
-  facet_wrap(~ liana.cat) +
-  # scale_x_continuous(limits = c(-20,10)) +
-  theme_bw()
 
-################################################################################
 
-RE <- ranef(best.model[[1]])
+temp3 %>%
+  mutate(diff_low = low - no,
+         diff_high = high - no) %>%
+  dplyr::select(-c(low,high)) %>%
+  pivot_longer(cols = c(diff_low,diff_high),
+               names_to = "liana.cat",
+               values_to = "diff_h") %>%
+  group_by(liana.cat) %>%
+  summarise(m = 100*median(diff_h/no,na.rm = TRUE),
+            m.low = 100*quantile(diff_h/no,alpha/2,na.rm = TRUE),
+            m.high = 100*quantile(diff_h/no,1-alpha/2,na.rm = TRUE),
 
-library(reshape2)
+            m.abs = median(diff_h,na.rm = TRUE),
+            m.abs.low = quantile(diff_h,alpha/2,na.rm = TRUE),
+            m.abs.high = quantile(diff_h,1-alpha/2,na.rm = TRUE))
 
-df.re <- melt(RE$site) %>%
-  rename(site = Var1,
-         type = Var2,
-         param = Var3) %>%
-  pivot_wider(values_from = value,
-              names_from = type)
-
-ggplot(data = df.re,
-       aes(x = site, y = Estimate, ymin = Q2.5, ymax = Q97.5 )) +
-  geom_point() +
-  geom_errorbar(width = 0) +
-  geom_hline(yintercept = 0,
-             linetype = 2) +
-
-  facet_wrap(~ param) +
-
-  coord_flip() +
-  theme_bw()

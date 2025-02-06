@@ -50,9 +50,6 @@ cols2test <- c("branch_number_order1",
                "branch_area_order2",
                "ratio_area_volume_order_2")
 
-cols2test <- c("branch_len","Nbranches","branch_area",
-               "crown_length","crown_vol","crown_area_conv",
-               "tree_biomass","trunk_biomass","branch_biomass")
 
 data2keep <- data %>%
   dplyr::select(c("dbh","sp","liana.cat",cols2test))
@@ -141,8 +138,8 @@ for (ivar in seq(1,length(cols2test))){
     W <- waic(x)
     return(W$estimates[3,1])})
   rhat.max <- lapply(fit.all[[cvar]],function(x){
-                 R <- rhat(x)
-                 return(max(R))})
+    R <- rhat(x)
+    return(max(R))})
   rhat.m <- lapply(fit.all[[cvar]],function(x){
     R <- rhat(x)
     return(mean(R))})
@@ -151,7 +148,7 @@ for (ivar in seq(1,length(cols2test))){
                       data.frame(files = cnames.filtered,
                                  waic = unlist(waic),
                                  rhat.max = unlist(rhat.max),rhat.m = unlist(rhat.m)
-                                 ))
+                      ))
   best.model.names <- rownames(comparison)[1]
   best.model <- fit.all[[cvar]][[ best.model.names]]
   null.model <- fit.all[[cvar]][[paste0("Fit.",cvar,".power_none")]]
@@ -351,16 +348,16 @@ predictions.long <- newdata %>%
 data.long2plot <- data.long %>%
   mutate(variable.fac = factor(variable,
                                levels = (c("tree_biomass",
-                                                 "trunk_biomass",
-                                                 "branch_biomass",
+                                           "trunk_biomass",
+                                           "branch_biomass",
 
-                                                 "crown_vol",
-                                                 "crown_area_conv",
-                                                 "crown_length",
+                                           "crown_vol",
+                                           "crown_area_conv",
+                                           "crown_length",
 
-                                                 "branch_area",
-                                                 "Nbranches",
-                                                 "branch_len")))) %>%
+                                           "branch_area",
+                                           "Nbranches",
+                                           "branch_len")))) %>%
   mutate(value = case_when(grepl("biomass",variable) ~ value/1e3,
                            TRUE ~ value))
 
@@ -380,6 +377,20 @@ predictions.long2 <- predictions.long %>%
   mutate(value = case_when(grepl("biomass",variable) ~ value/1e3,
                            TRUE ~ value))
 
+data.long2plot <- data.long2plot %>%
+  mutate(var = str_sub(variable,end = -2),
+         order = str_sub(variable, start= -1,end = -1)) %>%
+  mutate(last = str_sub(var, start= -1,end = -1)) %>%
+  mutate(var = case_when(last == "_" ~ str_sub(variable,end = -2),
+                         TRUE ~ var))
+
+predictions.long2 <- predictions.long2 %>%
+  mutate(var = str_sub(variable,end = -2),
+         order = str_sub(variable, start= -1,end = -1)) %>%
+  mutate(last = str_sub(var, start= -1,end = -1)) %>%
+  mutate(var = case_when(last == "_" ~ str_sub(variable,end = -2),
+                         TRUE ~ var))
+
 ggplot() +
   geom_point(data = data.long2plot,
              aes(x = dbh, y = value, color = liana.cat),
@@ -392,8 +403,8 @@ ggplot() +
   scale_x_log10() +
   scale_y_log10() +
   theme_bw() +
-  facet_wrap(~ variable.fac,
-             scales = "free",nrow = 3) +
+  facet_wrap(order ~ var,
+             scales = "free",nrow = 2) +
   scale_color_manual(values = c("no" = "darkgreen",
                                 "low" = "orange",
                                 "high"= "darkred",
@@ -404,8 +415,8 @@ ggplot() +
                                "null" = "black")) +
   guides(color = "none", fill = "none") +
   labs(x = "", y = "") +
-  theme(text = element_text(size = 16),
-        # strip.background = element_blank(),
-        # strip.text = element_blank(),
-        panel.spacing = unit(2, "lines"))
+  theme(text = element_text(size = 20),
+        strip.background = element_blank(),
+        strip.text = element_blank(),
+        panel.spacing = unit(1, "lines"))
 

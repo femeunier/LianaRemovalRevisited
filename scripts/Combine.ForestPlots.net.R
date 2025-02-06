@@ -85,6 +85,7 @@ for (iplot in seq(1,length(plots))){
       }
 
       data.mut <- data %>%
+        # filter(F2 != 1) %>%
         mutate(COI = as.numeric(LI),
                h = as.numeric(Height),
                DBH = D4/10) %>%
@@ -107,6 +108,9 @@ for (iplot in seq(1,length(plots))){
   }
 }
 
+saveRDS(df.all,
+        './data/rainfor.loc.RDS')
+
 df.all2 <- df.all %>%
   group_by(site,TreeID) %>%
   mutate(N = n()) %>%
@@ -116,6 +120,8 @@ df.all2 <- df.all %>%
   group_by(group) %>%
   mutate(group.N = paste0(group,", N = ",length(DBH)))
 
+
+df.all2
 
 print(c(nrow(df.all),
         nrow(df.all2),
@@ -134,6 +140,25 @@ ggplot(df.all.filt %>%
   # scale_y_log10() +
   stat_smooth(se = FALSE, method = "lm") +
   facet_wrap(~ group, scales = "free") +
+  theme_bw()
+
+df.all.filt %>%
+  filter(DBH >= 10) %>%
+  filter(group == "PEA") %>%
+  group_by(site) %>%
+  summarise(N = n())
+
+
+ggplot(df.all.filt %>%
+         filter(DBH >= 10) %>%
+         filter(group == "PEA"),
+       aes(x = DBH, y = h,
+           color = as.factor(liana.cat))) +
+  geom_point() +
+  # scale_x_log10() +
+  # scale_y_log10() +
+  stat_smooth(se = FALSE, method = "lm") +
+  facet_wrap(~ site, scales = "free") +
   theme_bw()
 
 # "ALF" "FLO" "FRP" "GAU" "PEA" "POA" "SAA" "SAT" "SIP" "TAN" "VCR"
@@ -200,8 +225,8 @@ ggplot() +
   theme(text = element_text(size = 20))
 
 
-saveRDS(df.map,
-        "./data/ForestPlots/data/RainForMD.RDS")
-
-saveRDS(df.all.filt,
-        "./data/ForestPlots/data/df.Rainfor.RDS")
+# saveRDS(df.map,
+#         "./data/ForestPlots/data/RainForMD.RDS")
+#
+# saveRDS(df.all.filt,
+#         "./data/ForestPlots/data/df.Rainfor.RDS")

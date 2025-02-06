@@ -6,16 +6,43 @@ library(stringr)
 library(tidyr)
 library(ggdist)
 
+selected.years <- c(2011,2015,2019,2023)
 # Load the data
 all.df <- readRDS("./outputs/BCI.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
-  filter(dbh >= 10)
+  filter(dbh >= 10) %>%
+  filter(year %in% selected.years)
 
 
 # Fits
 
-Model.Predictions.BCI <- readRDS(paste0("./outputs/Model.Predictions.BCI",".RDS"))
+Model.Predictions.BCI <- readRDS(paste0("./outputs/Model.Predictions.BCI",".RDS")) %>%
+  filter(year %in% selected.years)
 
+
+
+ggplot() +
+  geom_point(data = all.df %>%
+               group_by(Tag) %>%
+               slice_head(n = 1),
+             aes(x = dbh,y = h, color = as.factor(liana.cat)),
+             size = 0.1, alpha = 0.5) +
+  geom_line(data = Model.Predictions.BCI,
+            aes(x = dbh,y = h.pred.m,
+                linetype = as.factor(year),
+                color = as.factor(liana.cat))) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(x = "", y = '', color = "Liana infestation", fill = "Liana infestation") +
+  scale_color_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  theme_bw() +
+  theme(text = element_text(size = 20),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
+        axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
+        strip.background = element_blank(),strip.text = element_blank()) +
+  guides(color = "none")
 
 ggplot() +
   geom_point(data = all.df,
@@ -31,8 +58,9 @@ ggplot() +
   geom_line(data = Model.Predictions.BCI,
             aes(x = dbh,y = h.null.pred.m), color = "black") +
   facet_wrap(~ year) +
-  scale_x_log10(breaks = c(1,10,100),limits = c(1,100)) +
-  scale_y_log10(breaks = c(1,10,100),limits = c(1,100)) +
+  scale_x_continuous(limits = c(10,250)) +
+  # scale_x_log10(breaks = c(1,10,100),limits = c(1,100)) +
+  # scale_y_log10(breaks = c(1,10,100),limits = c(1,100)) +
   # scale_x_continuous(limits = c(10,150)) +
   labs(x = "", y = '', color = "Liana infestation", fill = "Liana infestation") +
   scale_color_manual(values = c("no" = "darkgreen",
@@ -42,12 +70,14 @@ ggplot() +
   theme(text = element_text(size = 20),
         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)),
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
-        strip.background = element_blank(),strip.text = element_blank()) +
+        strip.background = element_blank(),strip.text = element_blank(),
+        panel.spacing = unit(2, "lines")) +
   guides(color = "none")
 
 Main.OP.BCI <- readRDS(paste0("./outputs/Main.OP.BCI50.RDS")) %>%
   mutate(signif_rel = case_when(signif_rel > 0.5 ~ 0.3,
-                                TRUE ~ signif_rel))
+                                TRUE ~ signif_rel)) %>%
+  filter(year %in% selected.years)
 
 alpha = 0.11
 
@@ -105,7 +135,7 @@ df.residuals %>%
             m.abs = mean(abs(value)))
 
 all.df %>%
-  group_by(year,liana.cat) %>%
+  group_by(year) %>%
   summarise(N = n())
 
 Main.OP.BCI %>%

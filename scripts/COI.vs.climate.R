@@ -27,7 +27,7 @@ MAT <- t.sd <-
 rastlist <- list.files(path = "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/WorldClim/vapr", pattern='.tif$',
                        all.files=TRUE, full.names=TRUE)
 rastlist2 <- list.files(path = "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/WorldClim/srad", pattern='.tif$',
-                       all.files=TRUE, full.names=TRUE)
+                        all.files=TRUE, full.names=TRUE)
 
 #import all raster files in folder using lapply
 r.vapr <- rast(lapply(rastlist, rast))
@@ -48,8 +48,8 @@ for (isite in seq(1,nrow(site.loc))){
   t.sd[isite] <- sd(t.avg)/MAT[isite]
 
   r.prec <- worldclim_tile("prec",
-                clon,clat,
-                 path = "./data/WorldClim/", version="2.1",res = 0.5)
+                           clon,clat,
+                           path = "./data/WorldClim/", version="2.1",res = 0.5)
   prec.avg <- as.numeric(as.vector(raster::extract(r.prec, xy)))
   e.avg <- days*3.33
   e.avg <- SPEI::thornthwaite(t.avg,clat,verbose = FALSE)
@@ -195,13 +195,16 @@ site.loc %>%
 
 DBHtargets <- c(25,50,100,150)
 
-df.all.effects <- df.r2 <- df.r2.single <- df.model.var <-
-  df.model.all <-
-  data.frame()
 all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd",
               "Prec.sd","srad","srad.sd")
 
-Var1 = "t.sd" ; Var2 = "MCWD"
+Var1 = "MAP" ; Var2 = "MCWD"
+
+alpha = 0.11
+
+df.all.effects <- df.r2 <- df.r2.single <- df.model.var <-
+  df.model.all <-
+  data.frame()
 
 for (iDBHtarget in seq(1,length(DBHtargets))){
 
@@ -210,27 +213,19 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
 
   print(cDBHtarget)
 
-  Main.OP <- readRDS(paste0("./outputs/Main.OP.",cDBHtarget,".RDS"))
-
-  alpha = 0.11
-  diff.H.sites <- Main.OP %>%
-    group_by(site,liana.cat) %>%
-    summarise(m = median(diff_h/no*100,na.rm = TRUE),
-              Qlow = quantile(diff_h/no*100,alpha/2,na.rm = TRUE),
-              Qhigh = quantile(diff_h/no*100,1-alpha/2,na.rm = TRUE),
-
-              m.abs = median(diff_h,na.rm = TRUE),
-              low.abs = quantile(diff_h,alpha/2,na.rm = TRUE),
-              high.abs = quantile(diff_h,1-alpha/2,na.rm = TRUE),
-              .groups = "keep") %>%
-    pivot_wider(names_from = liana.cat,
-                values_from = -c(site,liana.cat))
+  Main.OP <- readRDS(paste0("./outputs/All.COI.data.RDS")) %>%
+    filter(dbh >= cDBHtarget) %>%
+    group_by(site) %>%
+    summarise(coi.m = mean(coi,
+                           na.rm = TRUE),
+              coi.wm = weighted.mean(coi,dbh**2,
+                                     na.rm = TRUE),
+              .groups = "keep")
 
   effect.site <- site.loc %>%
     rename(site = site.common) %>%
-    left_join(diff.H.sites %>%
-                dplyr::select(site,m_high,m.abs_high,
-                              Qlow_high,Qhigh_high),
+    left_join(Main.OP %>%
+                dplyr::select(site,coi.wm,coi.wm),
               by = "site") %>%
     mutate(continent = factor(continent,
                               levels = c("America","Africa","Australasia"))) %>%
@@ -245,7 +240,8 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
   for (var in all.vars){
 
     lm.var <- lm(data = effect.site,
-                 formula = m_high ~ get(var), weights = w)
+                 formula = coi.wm ~ get(var),
+                 weights = w)
 
     df.r2.single <- bind_rows(df.r2.single,
                               data.frame(target = cDBHtarget,
@@ -274,7 +270,7 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
 
 
   LM.all <- lm(data = effect.site,
-               formula = (m_high) ~ get(Var1) + get(Var2),
+               formula = (coi.wm) ~ get(Var1) + get(Var2),
                weights = w)
 
   Sum <- summary(LM.all)
@@ -290,8 +286,8 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
                                 N = nrow(effect.site)))
 
   vars1 <- seq(min(effect.site[[Var1]]),
-              max(effect.site[[Var1]]),
-              length.out=1000)
+               max(effect.site[[Var1]]),
+               length.out=1000)
   varm2 <- weighted.mean(effect.site[[Var2]],
                          effect.site[["Nlarge"]])
 
@@ -308,7 +304,7 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
                        data.frame(A = varm1,
                                   B = vars2,
                                   constant = Var1)
-                       )
+  )
   colnames(newdata)[1:2] <- c(Var1,Var2)
 
   predictions <- predict(LM.all,newdata = newdata,
@@ -334,6 +330,8 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
 }
 
 df.r2
+df.r2.single %>%
+  arrange(desc(r2))
 
 rownames(df.model.var) <- rownames(df.model.all) <- NULL
 
@@ -355,15 +353,15 @@ df.all.effects.long <- df.all.effects %>%
 
 p.values <- df.all.effects.long %>%
   group_by(variable,target) %>%
-  summarise(p.value = summary(lm(formula = m_high ~ value,
-                                     weights = w))[["coefficients"]][2,4],
-            r2 = summary(lm(formula = m_high ~ value,
+  summarise(p.value = summary(lm(formula = coi.wm ~ value,
+                                 weights = w))[["coefficients"]][2,4],
+            r2 = summary(lm(formula = coi.wm ~ value,
                             weights = w))[["r.squared"]],
             .groups = "keep")
 
 
 ggplot(data = df.all.effects) +
-  geom_boxplot(aes(y = m_high,
+  geom_boxplot(aes(y = coi.wm,
                    x = continent, fill = continent)) +
   geom_hline(yintercept = 0,linetype = 2, color = "black") +
   labs(x = "") +
@@ -372,7 +370,7 @@ ggplot(data = df.all.effects) +
 
 
 ggplot(data = df.all.effects) +
-  geom_boxplot(aes(y = m_high, x = forest.type, fill = forest.type)) +
+  geom_boxplot(aes(y = coi.wm, x = forest.type, fill = forest.type)) +
   geom_hline(yintercept = 0,linetype = 2, color = "black") +
   facet_wrap(~ target,nrow = 1) +
   theme_bw()
@@ -381,7 +379,7 @@ ggplot(data = df.all.effects %>%
          mutate(CZ = factor(CZ,
                             levels = c("Humid1700","Humid","Humid_seasonal","Else"))) %>%
          filter(target == DBHtargets[1])) +
-  geom_boxplot(aes(y = m_high, x = CZ, fill = CZ),
+  geom_boxplot(aes(y = coi.wm, x = CZ, fill = CZ),
                alpha = 0.8) +
   geom_hline(yintercept = 0,linetype = 2, color = "black") +
   # facet_wrap(~ target,nrow = 1) +
@@ -390,14 +388,14 @@ ggplot(data = df.all.effects %>%
   guides(fill = "none") +
   theme(text = element_text(size = 24)) +
   scale_fill_manual(values = c(Humid1700 = "#1C2C04",
-                                Humid = "#345C0C",
-                                Humid_seasonal = "#4C8C14",
+                               Humid = "#345C0C",
+                               Humid_seasonal = "#4C8C14",
                                Else = "lightyellow")) +
   scale_x_discrete(labels = c("","","",""))
 
 summary(lm(data = df.all.effects %>%
-         filter(target == DBHtargets[1]),
-       formula = m_high ~ CZ))
+             filter(target == DBHtargets[1]),
+           formula = coi.wm ~ CZ))
 
 df.all.effects %>%
   group_by(target,CZ) %>%
@@ -410,14 +408,14 @@ cols<-brewer.pal(3,"Dark2")
 
 ctarget <- DBHtargets[1]
 ggplot() +
-  geom_errorbar(data = df.all.effects.long %>%
-                  filter(target == ctarget),
-                aes(x = value, y = m_high,color = continent,
-                    ymin = Qlow_high, ymax = Qhigh_high)) +
+  # geom_errorbar(data = df.all.effects.long %>%
+  #                 filter(target == ctarget),
+  #               aes(x = value, y = coi.wm,color = continent,
+  #                   ymin = Qlow_high, ymax = Qhigh_high)) +
 
   geom_point(data = df.all.effects.long %>%
                filter(target == ctarget),
-             aes(x = value, y = m_high,color = continent,size = (Nlarge)),
+             aes(x = value, y = coi.wm,color = continent,size = (Nlarge)),
              alpha = 0.7) +
 
   # stat_smooth(data = df.all.effects.long %>%
@@ -443,14 +441,14 @@ ggplot() +
 
 
 ggplot() +
-  geom_errorbar(data = df.all.effects.long %>%
-                  filter(variable %in% c(Var1)),
-                aes(x = value, y = m_high,color = continent,
-                    ymin = Qlow_high, ymax = Qhigh_high)) +
+  # geom_errorbar(data = df.all.effects.long %>%
+  #                 filter(variable %in% c(Var1)),
+  #               aes(x = value, y = coi.wm,color = continent,
+  #                   ymin = Qlow_high, ymax = Qhigh_high)) +
 
   geom_point(data = df.all.effects.long %>%
                filter(variable %in% c(Var1)),
-             aes(x = value, y = m_high,color = continent,size = (Nlarge)),
+             aes(x = value, y = coi.wm,color = continent,size = (Nlarge)),
              alpha = 0.7) +
 
   geom_hline(yintercept = 0,linetype = 2, color = "black") +
@@ -478,14 +476,14 @@ ggplot() +
 
 
 ggplot() +
-  geom_errorbar(data = df.all.effects.long %>%
-                  filter(variable %in% c(Var2)),
-                aes(x = value, y = m_high,color = continent,
-                    ymin = Qlow_high, ymax = Qhigh_high)) +
+  # geom_errorbar(data = df.all.effects.long %>%
+  #                 filter(variable %in% c(Var2)),
+  #               aes(x = value, y = m_high,color = continent,
+  #                   ymin = Qlow_high, ymax = Qhigh_high)) +
 
   geom_point(data = df.all.effects.long %>%
                filter(variable %in% c(Var2)),
-             aes(x = value, y = m_high,color = continent,size = (Nlarge)),
+             aes(x = value, y = coi.wm,color = continent,size = (Nlarge)),
              alpha = 0.7) +
 
   geom_hline(yintercept = 0,linetype = 2, color = "black") +
@@ -522,16 +520,16 @@ df.model.all.long2plot <-
 
 Target <- DBHtargets[1]
 ggplot() +
-  geom_errorbar(data = df.all.effects.long2plot %>%
-                  filter(target == Target,
-                         variable %in% c(Var1,Var2)),
-                aes(x = value, y = m_high,color = continent,
-                    ymin = Qlow_high, ymax = Qhigh_high)) +
+  # geom_errorbar(data = df.all.effects.long2plot %>%
+  #                 filter(target == Target,
+  #                        variable %in% c(Var1,Var2)),
+  #               aes(x = value, y = m_high,color = continent,
+  #                   ymin = Qlow_high, ymax = Qhigh_high)) +
 
   geom_point(data = df.all.effects.long2plot %>%
                filter(target == Target,
                       variable %in% c(Var1,Var2)),
-             aes(x = value, y = m_high,color = continent,size = (Nlarge)),
+             aes(x = value, y = coi.wm,color = continent,size = (Nlarge)),
              alpha = 1) +
 
   geom_hline(yintercept = 0,linetype = 2, color = "black") +

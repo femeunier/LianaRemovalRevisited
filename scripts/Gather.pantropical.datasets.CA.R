@@ -6,32 +6,38 @@ library(dplyr)
 ################################################################################
 # Multiple sites
 
+# data.BCI <- readRDS("./data/BCI/BCI_CA_2015_Helene.RDS") %>%
+#   rename(sp = spcode,
+#          h = MaxHt,
+#          dbh =  DBH,
+#          area = Area) %>%
+#   dplyr::select(sp,dbh,h,area,liana.cat) %>%
+#   mutate(site = "BCI")
+
 data.BCI <- readRDS("./data/BCI/BCI_CA_2023_Helene.RDS") %>%
-  rename(sp = spcode,
-         h = MaxHt,
-         dbh =  DBH,
-         area = Area) %>%
-  dplyr::select(sp,dbh,h,area,liana.cat) %>%
+  rename(area = crownArea) %>%
+  mutate(dbh = dbh/10) %>%
+  dplyr::select(latin,DBH,h,area,liana.cat) %>%
+  rename(sp = latin,
+         dbh = DBH) %>%
   mutate(site = "BCI")
 
-
-load("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/bci.spptable.rdata")
-
-df.match <- data.frame(sp = unique(data.BCI$sp)) %>%
-  left_join(bci.spptable %>%
-              dplyr::select(sp,Latin),
-            by = "sp") %>%
-  mutate(sp.final = case_when(is.na(Latin) ~ sp,
-                              TRUE ~ Latin)) %>%
-  dplyr::select(sp,sp.final)
-
-data.BCI <- data.BCI %>%
-  left_join(df.match,
-            by = "sp") %>%
-  mutate(sp = sp.final) %>%
-  dplyr::select(-sp.final)
-
-saveRDS(data.BCI,"./outputs/BCI.h.CA.RDS")
+# load("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/bci.spptable.rdata")
+#
+# df.match <- data.frame(sp = unique(data.BCI$sp)) %>%
+#   left_join(bci.spptable %>%
+#               dplyr::select(sp,Latin),
+#             by = "sp") %>%
+#   mutate(sp.final = case_when(is.na(Latin) ~ sp,
+#                               TRUE ~ Latin)) %>%
+#   dplyr::select(sp,sp.final)
+#
+# data.BCI <- data.BCI %>%
+#   left_join(df.match,
+#             by = "sp") %>%
+#   mutate(sp = sp.final) %>%
+#   dplyr::select(-sp.final)
+# saveRDS(data.BCI,"./outputs/BCI.h.CA.RDS")
 
 
 data.begum <- read.csv("./data/Begum/tree_frontiers_269.csv") %>%
@@ -50,31 +56,46 @@ data.begum <- read.csv("./data/Begum/tree_frontiers_269.csv") %>%
 
 saveRDS(data.begum,"./outputs/Loundoungou.h.CA.RDS")
 
-data.DV <- readRDS("./data/Danum/DV.processed.RDS") %>%
-  rename(coi = COI) %>%
-  dplyr::select(c(dbh,area,sp,liana.cat)) %>%
-  mutate(site = "Danum Valley")
+# data.DV <- readRDS("./data/Danum/DV.processed.RDS") %>%
+#   rename(coi = COI) %>%
+#   dplyr::select(c(dbh,area,sp,liana.cat)) %>%
+#   mutate(site = "Danum Valley")
 
 data.all <- bind_rows(
   data.BCI,
   data.begum,
-  data.DV) %>%
+  # data.DV
+  ) %>%
   filter(dbh >= 10) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high")),
          site = factor(site,
-                       levels = c("BCI","Loundoungou","Danum Valley")))
+                       levels = c("BCI","Loundoungou")))
 
 ggplot(data.all,
        aes(x = dbh, y = area,
            color = as.factor(liana.cat),
            fill = as.factor(liana.cat))) +
-  geom_point() +
-  stat_smooth(method = "lm", se = TRUE) +
+  geom_point(alpha = 0.5,size = 0.5) +
+  stat_smooth(method = "lm",
+              se = FALSE) +
   scale_x_log10() +
   scale_y_log10() +
   facet_wrap(~ site) +
   theme_bw()
+
+
+ggplot(data.all,
+       aes(x = dbh, y = area,
+           color = as.factor(liana.cat),
+           fill = as.factor(liana.cat))) +
+  geom_point(alpha = 0.5,size = 0.5) +
+  stat_smooth(method = "lm",
+              se = FALSE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
 
 data.all %>%
   group_by(site, liana.cat) %>%
@@ -150,6 +171,6 @@ ggplot(data = BCI.CA.df,
 saveRDS(BCI.CA.df,
         "./outputs/BCI.CA.data.RDS")
 
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.CA.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.CA.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.CA.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.CA.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
 

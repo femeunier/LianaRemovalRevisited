@@ -9,6 +9,11 @@ all.df <- readRDS("./outputs/All.CA.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
   filter(dbh >= 10)
 
+nrow(all.df)
+all.df %>%
+  group_by(liana.cat) %>%
+  summarise(n())
+
 Main.OP <- bind_rows(readRDS("./outputs/Model.predictions.CA.50.RDS") %>%
                                mutate(target = 50),
                      readRDS("./outputs/Model.predictions.CA.100.RDS") %>%
@@ -16,7 +21,9 @@ Main.OP <- bind_rows(readRDS("./outputs/Model.predictions.CA.50.RDS") %>%
                      readRDS("./outputs/Model.predictions.CA.150.RDS") %>%
                                mutate(target = 150)) %>%
   mutate(site = factor(site,
-                       level = c("Total","BCI","Loundoungou","Danum Valley")))
+                       level = c("Total",
+                                 "BCI",
+                                 "Loundoungou")))
 
 
 ggplot(data = Main.OP %>%

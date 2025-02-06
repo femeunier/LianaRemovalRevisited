@@ -23,6 +23,10 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
                       filter(dbh >= 10) %>% mutate(site = "Total"))
 
+all.df <- bind_rows(readRDS("./outputs/COI.mixed.RDS") %>%
+                      mutate(sp = str_squish(sp)) %>%
+                      filter(dbh >= 10))
+
 all.df.title <- all.df %>%
   group_by(site) %>%
   mutate(site.N = paste0(site,", N = ", length(site)," (",length(site[which(liana.cat == "no")]), "-",
@@ -32,10 +36,13 @@ all.df.title <- all.df %>%
          N.high = length(site[which(liana.cat == "high")]),
          N.tot = length(site))
 
-sites <- unique(all.df.title$site)
+# sites <- unique(all.df.title$site)
+sites <- c("BUL","DAN","LAM","SGW")
 # sites <- c("Loundoungou")
-sites <- c("Sherman","Canal")
-sites <- c("129","357")
+# sites <- c("Sherman","Canal")
+# sites <- c("129","357")
+# sites <- readRDS("./data/rainfor2.md.RDS") %>%
+#   pull(group) %>% unique()
 
 models <- c("weibull","power","gmm")
 model.forms <- c("all","none","a","b","ab","bk","ak","k")

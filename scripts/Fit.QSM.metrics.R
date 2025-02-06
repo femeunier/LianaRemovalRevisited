@@ -13,13 +13,27 @@ data <- readRDS("./outputs/QSM_metrics.RDS") %>%
                             levels = c("no","low","high"))) %>%
   mutate(branch_vol_L = tree_vol_L - trunk_vol_L) %>%
   mutate(branch_biomass = WSG*branch_vol_L,
+         branch_biomass_order = WSG*branch_volume_order,
          tree_biomass = WSG*tree_vol_L,
          trunk_biomass = WSG*trunk_vol_L)
 
 
-cols2test <- c("branch_len","crown_length","crown_vol","Nbranches",
-               "tree_vol_L","trunk_vol_L","branch_vol_L","crown_area_conv","crown_area_alpha",
-               "branch_area")
+cols2test <- c("branch_len","Nbranches","branch_area",
+               "crown_length","crown_vol","crown_area_conv",
+               "tree_vol_L","trunk_vol_L","branch_vol_L")
+
+# cols2test <- c("branch_number_order1",
+#                "branch_length_order1",
+#                "branch_volume_order1",
+#                "branch_area_order1",
+#                "ratio_area_volume_order_1",
+#
+#                "branch_number_order2",
+#                "branch_length_order2",
+#                "branch_volume_order2",
+#                "branch_area_order2",
+#                "ratio_area_volume_order_2")
+
 
 data2keep <- data %>%
   dplyr::select(c("dbh","sp","liana.cat",cols2test))

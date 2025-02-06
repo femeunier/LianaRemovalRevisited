@@ -30,29 +30,7 @@ data <- readRDS("./outputs/QSM_metrics.RDS") %>%
 
 WD = mean(data$WSG)
 
-# cols2test <- c("crown_area_conv","crown_length","crown_vol",
-#                "branch_biomass","trunk_biomass","tree_biomass",
-#                "branch_volume_order",
-#                "branch_length_order",
-#                "branch_area_order",
-#                "branch_number_order",
-#                "ratio_area_volume_order2")
-
-cols2test <- c("branch_number_order1",
-               "branch_length_order1",
-               "branch_volume_order1",
-               "branch_area_order1",
-               "ratio_area_volume_order_1",
-
-               "branch_number_order2",
-               "branch_length_order2",
-               "branch_volume_order2",
-               "branch_area_order2",
-               "ratio_area_volume_order_2")
-
-cols2test <- c("branch_len","Nbranches","branch_area",
-               "crown_length","crown_vol","crown_area_conv",
-               "tree_biomass","trunk_biomass","branch_biomass")
+cols2test <- c("tree_biomass","trunk_biomass","branch_biomass")
 
 data2keep <- data %>%
   dplyr::select(c("dbh","sp","liana.cat",cols2test))
@@ -141,8 +119,8 @@ for (ivar in seq(1,length(cols2test))){
     W <- waic(x)
     return(W$estimates[3,1])})
   rhat.max <- lapply(fit.all[[cvar]],function(x){
-                 R <- rhat(x)
-                 return(max(R))})
+    R <- rhat(x)
+    return(max(R))})
   rhat.m <- lapply(fit.all[[cvar]],function(x){
     R <- rhat(x)
     return(mean(R))})
@@ -151,7 +129,7 @@ for (ivar in seq(1,length(cols2test))){
                       data.frame(files = cnames.filtered,
                                  waic = unlist(waic),
                                  rhat.max = unlist(rhat.max),rhat.m = unlist(rhat.m)
-                                 ))
+                      ))
   best.model.names <- rownames(comparison)[1]
   best.model <- fit.all[[cvar]][[ best.model.names]]
   null.model <- fit.all[[cvar]][[paste0("Fit.",cvar,".power_none")]]
@@ -188,7 +166,7 @@ for (ivar in seq(1,length(cols2test))){
   #
   # RSE <- data.frame(model = "best",
   #                   residual = (pp.resi$var.m-pp.resi$AGB))
-
+  #
 
   pp.null <- melt(posterior_epred(null.model,
                                   newdata = newdata,
@@ -201,21 +179,25 @@ for (ivar in seq(1,length(cols2test))){
               var.low = quantile(var,alpha/2,na.rm = TRUE),
               var.high = quantile(var,1 - alpha/2,na.rm = TRUE))
 
-  # pp.null.resi <-  pp <- melt(posterior_epred(null.model,
-  #                                        newdata = data[,c("dbh","sp")],
-  #                                        re_formula = NA)) %>%
-  #   rename(rep = Var1,
-  #          id = Var2) %>%
-  #   mutate(var = ccoef*exp(value)) %>%
-  #   group_by(id) %>%
-  #   summarise(var.m = mean(var,na.rm = TRUE),
-  #             var.low = quantile(var,alpha/2,na.rm = TRUE),
-  #             var.high = quantile(var,1 - alpha/2,na.rm = TRUE)) %>%
-  #   bind_cols(AGB = data$Biomass)
-  #
-  # RSE <- bind_rows(RSE,
-  #                  data.frame(model = "null",
-  #                   residual = (pp.null.resi$var.m-pp.resi$AGB)))
+#   pp.null.resi <-  pp <- melt(posterior_epred(null.model,
+#                                          newdata = data[,c("dbh","sp")],
+#                                          re_formula = NA)) %>%
+#     rename(rep = Var1,
+#            id = Var2) %>%
+#     mutate(var = ccoef*exp(value)) %>%
+#     group_by(id) %>%
+#     summarise(var.m = mean(var,na.rm = TRUE),
+#               var.low = quantile(var,alpha/2,na.rm = TRUE),
+#               var.high = quantile(var,1 - alpha/2,na.rm = TRUE)) %>%
+#     bind_cols(AGB = data$Biomass)
+#
+#   RSE <- bind_rows(RSE,
+#                    data.frame(model = "null",
+#                     residual = (pp.null.resi$var.m-pp.resi$AGB)))
+#
+#   RSE %>%
+#     group_by(model) %>%
+#     summarise(RMSE = sqrt(1/length(model)*sum((residual)**2)))
 
   newdata[[paste0(cvar,".m")]] <- pp[["var.m"]]
   newdata[[paste0(cvar,".null.m")]] <- pp.null[["var.m"]]
@@ -257,12 +239,6 @@ for (ivar in seq(1,length(cols2test))){
   }
 }
 
-# # saveRDS(newdata,"./outputs/newdata_order.RDS")
-# saveRDS(newdata2,"./outputs/newdata_order2.RDS")
-
-# newdata <- readRDS("./outputs/newdata.RDS")
-# newdata2 <- readRDS("./outputs/newdata2.RDS")
-
 data2plot <- newdata2 %>%
   filter(!is.na(value)) %>%
   group_by(target,liana.cat,variable) %>%
@@ -303,27 +279,34 @@ data2plot <- newdata2 %>%
 
 
 
-ggplot(mapping = aes(x = 100*(value-no)/no, y = variable.fac,
+ggplot(mapping = aes(x = 100*(value-no)/no,
+                     y = 1,
                      fill = liana.cat, color = liana.cat, alpha = signif_rel)) +
-  stat_pointinterval(data = data2plot,
-                     aes(alpha = signif_rel2,y = as.factor(variable.fac)),
+  stat_pointinterval(data = data2plot %>%
+                       filter(variable != "trunk_biomass"),
+                     aes(alpha = signif_rel2,
+                         y = 1),
                      .width = c(1 - alpha),
-                     position = position_dodge(width = 0.02),
                      alpha = 0.) +
   geom_density_ridges(data = data2plot %>%
+                        filter(variable != "trunk_biomass") %>%
                         group_by(variable.fac) %>%
                         filter(!all((value - no) == 0)), color = NA,
                       scale = 0.6 ) +
-  stat_pointinterval(data = data2plot,
-                     aes(alpha = signif_rel2,y = as.factor(variable.fac)),
-                     .width = c(1 - alpha),
-                     position = position_dodge(width = 0.02)) +
+  stat_pointinterval(data = data2plot %>%
+                       filter(variable != "trunk_biomass"),
+                     aes(alpha = signif_rel2,
+                         y = 1),
+                     .width = c(1 - alpha)) +
   geom_vline(xintercept = 0, linetype = 1) +
-  scale_x_continuous(limits = c(-60,20)) +
   theme_minimal() +
   labs(y = "", x = "") +
+  facet_wrap(~ variable.fac,
+             scales = "free") +
+  scale_y_continuous(limits = c(1,1.07),
+                     breaks = NULL) +
   theme(legend.position = c(0.9,0.6),
-        text = element_text(size = 16)) +
+        text = element_text(size = 20)) +
   scale_fill_manual(values = c("no" = "darkgreen",
                                "low" = "orange",
                                "high"= "darkred")) +
@@ -351,16 +334,16 @@ predictions.long <- newdata %>%
 data.long2plot <- data.long %>%
   mutate(variable.fac = factor(variable,
                                levels = (c("tree_biomass",
-                                                 "trunk_biomass",
-                                                 "branch_biomass",
+                                           "trunk_biomass",
+                                           "branch_biomass",
 
-                                                 "crown_vol",
-                                                 "crown_area_conv",
-                                                 "crown_length",
+                                           "crown_vol",
+                                           "crown_area_conv",
+                                           "crown_length",
 
-                                                 "branch_area",
-                                                 "Nbranches",
-                                                 "branch_len")))) %>%
+                                           "branch_area",
+                                           "Nbranches",
+                                           "branch_len")))) %>%
   mutate(value = case_when(grepl("biomass",variable) ~ value/1e3,
                            TRUE ~ value))
 
@@ -381,11 +364,13 @@ predictions.long2 <- predictions.long %>%
                            TRUE ~ value))
 
 ggplot() +
-  geom_point(data = data.long2plot,
+  geom_point(data = data.long2plot %>%
+               filter(variable != "tree_biomass"),
              aes(x = dbh, y = value, color = liana.cat),
-             alpha = 0.2, size = 2) +
+             alpha = 0.2, size = 0.5) +
 
-  geom_line(data = predictions.long2,
+  geom_line(data = predictions.long2 %>%
+              filter(variable != "tree_biomass"),
             aes(x = dbh,y = value,
                 color = liana.cat)) +
 
@@ -393,7 +378,7 @@ ggplot() +
   scale_y_log10() +
   theme_bw() +
   facet_wrap(~ variable.fac,
-             scales = "free",nrow = 3) +
+             scales = "free",nrow = 1) +
   scale_color_manual(values = c("no" = "darkgreen",
                                 "low" = "orange",
                                 "high"= "darkred",
@@ -404,8 +389,22 @@ ggplot() +
                                "null" = "black")) +
   guides(color = "none", fill = "none") +
   labs(x = "", y = "") +
-  theme(text = element_text(size = 16),
-        # strip.background = element_blank(),
-        # strip.text = element_blank(),
+  theme(text = element_text(size = 20),
+        strip.background = element_blank(),
+        strip.text = element_blank(),
         panel.spacing = unit(2, "lines"))
+
+newdata2 %>%
+  mutate(diff_h = value - no) %>%
+  group_by(variable,target,liana.cat) %>%
+  summarise(m = 100*median(diff_h/no,na.rm = TRUE),
+            m.low = 100*quantile(diff_h/no,alpha/2,na.rm = TRUE),
+            m.high = 100*quantile(diff_h/no,1-alpha/2,na.rm = TRUE),
+
+            m.abs = median(diff_h,na.rm = TRUE),
+            m.abs.low = quantile(diff_h,alpha/2,na.rm = TRUE),
+            m.abs.high = quantile(diff_h,1-alpha/2,na.rm = TRUE))
+
+
+# Plus Figure3_QSM
 

@@ -10,6 +10,13 @@ library(readxl)
 library(tidyr)
 library(caret)
 
+########################################################
+# Australasia, forestplots
+raw.data.FP.Asia <- readRDS("./data/Asia/raw.data.RDS") %>%
+  dplyr::select(DBH,Species,h,COI,liana.cat,site.common) %>%
+  rename(dbh = DBH, coi = COI,sp = Species, site = site.common)
+
+
 # Assemble datasets
 ####################################################################################################################################
 # Helene + Sruthi, Panama for height
@@ -21,18 +28,21 @@ raw.data <- bind_rows(list(
 
 
   # To replace with most recent dataset
-  read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/new_height_liana_data_2015_no_outliers_q20.csv",stringsAsFactors = FALSE) %>%
-    dplyr::select(Tag,Species,DBH_cm,Height,Lianas) %>%
-    mutate(Lianas = case_when(Lianas == 0 ~ 0,
-                              Lianas < 3 ~ 1,
-                              TRUE ~ 2)) %>%
-    mutate(year = 2015),
+  readRDS("./data/BCI/BCI_H_2015_Helene.RDS") %>%
+    rename(Tag = tag) %>%
+    group_by(Tag) %>%
+    slice_head(n = 1),
   read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/2019_TLS_data.csv",stringsAsFactors = FALSE) %>%
     dplyr::select(Tag,Species,Final.DBH..cm.,Height..m.,Liana) %>%
     mutate(year = 2019) %>%
     rename(DBH_cm = Final.DBH..cm.,
            Height = Height..m.,
-           Lianas = Liana)))
+           Lianas = Liana),
+  readRDS("./data/BCI/BCI_H_2023_Helene.RDS") %>%
+    rename(Tag = tag) %>%
+    group_by(Tag) %>%
+    slice_head(n = 1)
+  ))
 # BCI, Helene and Sruthi, CA
 load("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/bci.spptable.rdata")
 
@@ -94,7 +104,8 @@ df.match <- data.frame(sp = unique(raw.data$Species)) %>%
   dplyr::select(sp,sp.final)
 
 
-raw.data %>% group_by(year) %>%
+raw.data %>%
+  group_by(year) %>%
   summarise(n(),
             .groups = "keep")
 
@@ -120,12 +131,22 @@ BCI.ds <-
   mutate(sp = sp.final) %>%
   dplyr::select(-sp.final)
 
+ggplot(data = BCI.ds,
+       aes(x = dbh,y = h, color = liana.cat, fill = liana.cat)) +
+  geom_point(size = 0.1) +
+  scale_x_log10() +
+  scale_y_log10() +
+  stat_smooth(method = "lm") +
+  facet_wrap(~year) +
+  theme_bw()
+
+
 saveRDS(BCI.ds,
         "./outputs/BCI.COI.data.RDS")
 
 BCI.ds2keep <- BCI.ds %>%
   mutate(year = factor(year,
-                       levels = c(2019,2015,2011))) %>%
+                       levels = c(2023,2019,2015,2011))) %>%
   group_by(Tag) %>%
   arrange(year) %>%
   slice_head(n = 1) %>%
@@ -133,10 +154,27 @@ BCI.ds2keep <- BCI.ds %>%
   dplyr::select(-c(Tag,year))
 
 
+ggplot(data = BCI.ds2keep,
+       aes(x = dbh,y = h, color = liana.cat, fill = liana.cat)) +
+  geom_point(size = 0.1) +
+  scale_x_log10() +
+  scale_y_log10() +
+  stat_smooth(method = "lm") +
+  theme_bw()
+
 ################################################################################
 # Wannes Data
 
 df.Wannes <- readRDS("./data/Afritron.RDS")
+
+# write.csv(read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
+#   filter(PlotID %in% df.Wannes[["PlotID"]]) %>%
+#   dplyr::select(PlotCode,ForestMoistureName,ForestEdaphicName,ForestElevationName) %>%
+#     distinct() %>%
+#     arrange(PlotCode),
+#   "~/Documents/Afritron.csv")
+#
+#
 meta.data <- read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
   filter(PlotID %in% df.Wannes[["PlotID"]]) %>%
   dplyr::select(PlotCode,PlotID,Country,ClusterName,LatitudeDecimal,LongitudeDecimal) %>%
@@ -159,6 +197,11 @@ meta.data <- read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
 # write.csv(data.frame(ID = 1:length(AAA),
 #                      plot = AAA),
 #           "./data/Afritron.plots.csv")
+
+saveRDS(meta.data %>%
+  dplyr::select(PlotCode,ClusterName,site) %>%
+  mutate(group = substr(PlotCode,1,3)),
+  "./data/Afritron.eq.RDS")
 
 r <- raster("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/C3S-LC-L4-LCCS-Map-300m-P1Y-2020-v2.1.1_aggr_reclassified.tif")
 df.r <- as.data.frame(r,xy = TRUE) %>%
@@ -284,32 +327,32 @@ ggplot() +
   guides(size = "none") +
   theme(text = element_text(size = 20))
 
-################################################################################
-# Tapajos
-
-data <- read.csv("./data/Tapajos.csv") %>%
-  rename(sp = Species,
-         dbh = DBH_2014,
-         h = Height_2014) %>%
-  mutate(coi = case_when(Liana_load == 0 ~ 0,
-                         Liana_load <= 25 ~ 1,
-                         Liana_load <= 50 ~ 2,
-                         Liana_load <= 75 ~ 3,
-                         Liana_load <= 100 ~ 4,
-                         TRUE ~ NA_integer_)) %>%
-  mutate(liana.cat = case_when(coi == 0 ~ "no",
-                               coi <= 2 ~ "low",
-                               coi <= 4 ~ "high",
-                               TRUE ~ NA_character_)) %>%
-  dplyr::select(dbh,h,coi,sp,liana.cat) %>%
-  mutate(site = "Tapajos")
+# ################################################################################
+# # Tapajos
+#
+# data <- read.csv("./data/Tapajos.csv") %>%
+#   rename(sp = Species,
+#          dbh = DBH_2014,
+#          h = Height_2014) %>%
+#   mutate(coi = case_when(Liana_load == 0 ~ 0,
+#                          Liana_load <= 25 ~ 1,
+#                          Liana_load <= 50 ~ 2,
+#                          Liana_load <= 75 ~ 3,
+#                          Liana_load <= 100 ~ 4,
+#                          TRUE ~ NA_integer_)) %>%
+#   mutate(liana.cat = case_when(coi == 0 ~ "no",
+#                                coi <= 2 ~ "low",
+#                                coi <= 4 ~ "high",
+#                                TRUE ~ NA_character_)) %>%
+#   dplyr::select(dbh,h,coi,sp,liana.cat) %>%
+#   mutate(site = "Tapajos")
 
 # table(data$Plot)
 # table(data$liana.cat)
 
-data.tapajos <- data %>%
-  filter(dbh >= 10,
-         !is.na(liana.cat))
+# data.tapajos <- data %>%
+#   filter(dbh >= 10,
+#          !is.na(liana.cat))
 
 # ggplot(data = data.filt,
 #        aes(x = dbh,
@@ -329,7 +372,19 @@ Rainfor.df <- readRDS("./data/ForestPlots/data/df.Rainfor.RDS") %>%
          sp = Species,
          coi = COI) %>%
   dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
-  filter(dbh > 0, h > 0)
+  filter(dbh > 0, h > 0) %>%
+  filter(!(site %in% c("GAU","SAT","VCR","FRP","POA"))) # Repeated from the other data from forestplots
+
+
+
+Rainfor2.df <- readRDS("./data/rainfor2.trees.RDS") %>%
+  ungroup() %>%
+  mutate(site = group) %>%
+  rename(sp = Species,
+         coi = COI) %>%
+  dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
+  filter(dbh > 0, h > 0) %>%
+  filter(dbh < 300) # weird big tree
 
 ################################################################################
 # Karin Santos
@@ -853,7 +908,7 @@ ccdf.Panama <- cdf.Panama %>%
 BCI.ds2keep.addi <- bind_rows(BCI.ds2keep,
                               additional.BCI)
 
-ggplot(data = additional.BCI,
+ggplot(data = BCI.ds2keep.addi,
        aes(x = dbh, y = h, color = liana.cat,
       fill = liana.cat)) +
   geom_point(size = 0.1) +
@@ -951,33 +1006,38 @@ Pasoh.ds <- readRDS("./data/Pasoh/data.merged.RDS") %>%
 
 all.df <- bind_rows(list(
   Rainfor.df,
-  data.tapajos,
+  Rainfor2.df,
+  # data.tapajos,
   Alain.ds,
   data.Tan,
   BCI.ds2keep.addi,
   ccdf.Panama,
   Panama.ds,
   Karin.df,
-  Jocker.df,
+  Jocker.df %>%
+    mutate(coi = coi - 1),
   Congo.ds,
   Arildo.df,
-  Erika.df,
+  raw.data.FP.Asia,
+  Erika.df %>%
+    mutate(coi = coi/25),
   df.Wannes.site %>%
-    dplyr::select(-PlotCode,Country) %>%
+    dplyr::select(-PlotCode,-Plot.Code,Country) %>%
     dplyr::select(-Country),
-  data.DV,
+  # data.DV,
   # Panama2.ds,   # We don't include it for the upscaling
   begum.ds,
   Pasoh.ds %>%
     ungroup() %>%
-    dplyr::select(-tag),
+    dplyr::select(-tag) %>%
+    mutate(coi = round(coi + 0.1)),
   Australia.ds %>%
     dplyr::select(-canopy) %>%
     mutate(site = "Australia"))) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high")))
 
-saveRDS(all.df,
+saveRDS(all.df ,
         "./outputs/All.COI.data.RDS")
 
 all.df %>%
@@ -1048,64 +1108,71 @@ bind_rows(all.df %>%
     # group_by(liana.cat) %>%
     summarise(N = n()) %>% mutate(liana.cat = "total"))
 
+
+df.Hannes <- all.df %>%
+  filter(dbh >= 10)
+
+# saveRDS(df.Hannes,
+#         "./outputs/All.sites.COI.RDS")
+
 # ################################################################################
 # # # Slenderness
-# Slenderness <- all.df %>%
-#   filter(dbh >= 10) %>%
-#   mutate(S = (h)/(dbh)) %>%
-#   group_by(liana.cat) %>%
-#   mutate(S.m = mean(S,na.rm = TRUE))
+Slenderness <- all.df %>%
+  filter(dbh >= 10) %>%
+  mutate(S = (h)/(dbh)) %>%
+  group_by(liana.cat) %>%
+  mutate(S.m = mean(S,na.rm = TRUE))
+
+alpha = 0.11
+
+f <- function(x) {
+  r <- quantile(x, probs = c(alpha/2, 0.25, 0.5, 0.75, 1 - alpha/2))
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+ggplot(data = Slenderness,
+       aes(y = S, x = (as.factor(liana.cat)),
+           fill = as.factor(liana.cat),
+           color = as.factor(liana.cat))) +
+
+  stat_summary(fun.data = f,
+               geom="boxplot",
+               width = .15,
+               alpha = 0.5,
+               outlier.shape = NA) +
+
+  ggdist::stat_halfeye(
+    adjust = .5,
+    width = .6,
+    .width = 0,
+    justification = -0.2, alpha = 0.5,
+    point_colour = NA
+  ) +
+  # ggdist::stat_pointinterval(aes(x = as.numeric(as.factor(liana.cat)) + 0.11),
+  #                            .width = c(1-alpha),
+  #                            adjust = .5,
+  #                            width = 1,
+  #                            justification = -0.2, alpha = 1) +
+  scale_fill_manual(values = c("no" = "darkgreen",
+                               "low" = "orange",
+                               "high"= "darkred")) +
+  scale_color_manual(values = c("no" = "darkgreen",
+                               "low" = "orange",
+                               "high"= "darkred")) +
+  scale_y_continuous(limits = c(0,1.8)) +
+  # scale_y_log10(limits = c(0.1,2)) +
+  labs(x = "", y = "Tree slenderness (m/cm)") +
+  scale_x_discrete(labels = c("No","Low \r\n liana infestation","High")) +
+  theme_bw() +
+  guides(fill = "none", color = "none") +
+  theme(text = element_text(size = 24),
+        axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
+        axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
 #
-# alpha = 0.11
-#
-# f <- function(x) {
-#   r <- quantile(x, probs = c(alpha/2, 0.25, 0.5, 0.75, 1 - alpha/2))
-#   names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
-#   r
-# }
-#
-# ggplot(data = Slenderness,
-#        aes(y = S, x = (as.factor(liana.cat)),
-#            fill = as.factor(liana.cat),
-#            color = as.factor(liana.cat))) +
-#
-#   stat_summary(fun.data = f,
-#                geom="boxplot",
-#                width = .15,
-#                alpha = 0.5,
-#                outlier.shape = NA) +
-#
-#   ggdist::stat_halfeye(
-#     adjust = .5,
-#     width = .6,
-#     .width = 0,
-#     justification = -0.2, alpha = 0.5,
-#     point_colour = NA
-#   ) +
-#   # ggdist::stat_pointinterval(aes(x = as.numeric(as.factor(liana.cat)) + 0.11),
-#   #                            .width = c(1-alpha),
-#   #                            adjust = .5,
-#   #                            width = 1,
-#   #                            justification = -0.2, alpha = 1) +
-#   scale_fill_manual(values = c("no" = "darkgreen",
-#                                "low" = "orange",
-#                                "high"= "darkred")) +
-#   scale_color_manual(values = c("no" = "darkgreen",
-#                                "low" = "orange",
-#                                "high"= "darkred")) +
-#   scale_y_continuous(limits = c(0,1.8)) +
-#   # scale_y_log10(limits = c(0.1,2)) +
-#   labs(x = "", y = "Tree slenderness (m/cm)") +
-#   scale_x_discrete(labels = c("No","Low \r\n liana infestation","High")) +
-#   theme_bw() +
-#   guides(fill = "none", color = "none") +
-#   theme(text = element_text(size = 24),
-#         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0)),
-#         axis.title.y = element_text(margin = margin(t = 0, r = 10, b = 0, l = 0)))
-#
-# Slenderness %>%
-#   group_by(liana.cat) %>%
-#   summarise(med = median(S))
+Slenderness %>%
+  group_by(liana.cat) %>%
+  summarise(med = median(S))
 #
 # # summary(aov(data = Slenderness,
 # #     formula = S ~ liana.cat))
@@ -1136,6 +1203,7 @@ bind_rows(all.df %>%
 # #             dbh.max = max(dbh),
 # #             h.m = mean(h),
 # #             S.m = mean(S))
-# #
+
+
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/

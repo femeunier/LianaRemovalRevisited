@@ -25,8 +25,6 @@ all.df <- all.df %>%
   group_by(year,sp) %>%
   mutate(N = n()) %>%
   ungroup() %>%
-  # mutate(sp = case_when(N <= 5 | sp == "" | tolower(sp) == "other" ~ "OTHER",
-  #                       TRUE ~ sp)) %>%
   dplyr::select(-N)
 
 all.df %>% group_by(year) %>%
@@ -39,6 +37,7 @@ years <- all.df %>% group_by(year) %>%
             Nspecies = length(unique(sp))) %>%
   arrange(Ndata) %>% pull(year)
 
+years <- 2015
 
 Names <- c("weibull","gmm","power")
 
@@ -47,7 +46,7 @@ Niter <- 15000
 control.list <- list(adapt_delta = 0.99,
                      max_treedepth = 10)
 
-overwrite <- FALSE
+overwrite <- TRUE
 
 fixed.effect.2.test <- list(power = list("a","none","b",
                                          "all"),

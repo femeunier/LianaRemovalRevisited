@@ -61,7 +61,6 @@ ggplot(data = all.df.title,
   theme_bw()
 
 sites <- unique(all.df$site)
-sites <- c("BCI","Loundoungou","Danum Valley")
 # sites <- "Total"
 # sites <- "BCI"
 
@@ -162,7 +161,6 @@ for (isite in seq(1,length(sites))){
 
 }
 
-stop()
 
 # best.model[[1]] <- fit.all.sites[[isite]][[1]]
 # plot_collection <- grid.arrange(grobs = pp.check.best, nrow = 1, ncol = length(pp.check.best))
@@ -551,7 +549,7 @@ saveRDS(temp.title,
 
 ################################################################################
 alpha <- 0.11
-DBH2test <- 150
+DBH2test <- 25
 
 temp3 <- bind_rows((lapply(1:length(sites),
                            function(isite){

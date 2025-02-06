@@ -14,7 +14,8 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
   readRDS("./outputs/All.COI.data.RDS") %>%
     mutate(sp = str_squish(sp)) %>%
     filter(dbh >= 10) %>%
-    mutate(site = "Total"))
+    mutate(site = "Total")) %>%
+  filter(site != "Danum Valley")
 
 # Best models
 check.all.diagnosis <- readRDS("./outputs/check.all.diagnosis.RDS")
@@ -31,6 +32,7 @@ Model.predictions <- readRDS("./outputs/Main.OP.50.RDS")  %>%
             .groups = "keep")
 
 Model.predictions %>%
+  filter(site != "Danum Valley") %>%
   group_by(liana.cat) %>%
   summarise(Nneg = sum(m < 0),
             Nneg.sign = sum(CIhigh < 0 & m < 0),
@@ -174,7 +176,7 @@ locations <-readRDS("./outputs/all.df.md2plot.RDS") %>%
          lon = round(lon,digits = 1),) %>%
   rename(site = site.common)
 
-Table1 <- all.df %>%
+df1 <- all.df %>%
   ungroup() %>%
   mutate(site = factor(site,
                        levels = sites.fac)) %>%
@@ -216,7 +218,9 @@ Table1 <- all.df %>%
               dplyr::select(-c(m,CIlow,CIhigh)) %>%
               pivot_wider(names_from = liana.cat,
                           values_from = delta_h),
-            by = "site")  %>%
+            by = "site")
+
+Table1 <- df1 %>%
   left_join(locations %>%
               dplyr::select(site,lat,lon) %>%
               mutate(coord = paste0(abs(lat),ifelse(sign(lat) == 1, "°N - ","°S - "),
@@ -288,8 +292,14 @@ countries <- coords2country(Table %>%
                  dplyr::select(lon,lat))
 Table[["country"]] <- c(as.character(countries),NA)
 
-stop()
+
 write.csv(Table %>%
+            mutate(site = case_when(site == "group_North" ~ "Plot 32",
+                                    site == "Casa_Roubik" ~ "Casa Roubik",
+                                    site == "group_Metro" ~ "Metropolitano",
+                                    site == "Sherman" ~ "Fort Sherman",
+                                    TRUE ~ site)) %>%
+            arrange(site) %>%
             mutate(site = paste0(site," \r\n (",country,")")) %>%
             dplyr::select(-c(lat,lon,country)),
           "./outputs/Table1.csv")

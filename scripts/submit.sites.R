@@ -17,12 +17,16 @@ library(rstan)
 library(LianaRemovalRevisited)
 library(ED2scenarios)
 
-# system2("scp",paste("./outputs/BCI.COI.data.RDS",
-#                     "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/"))
+system2("scp",paste("./outputs/All.COI.data.RDS",
+                    "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/"))
 
 all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
   filter(dbh >= 10)
+
+# all.df <- readRDS("./outputs/COI.mixed.RDS") %>%
+#   mutate(sp = str_squish(sp)) %>%
+#   filter(dbh >= 10)
 
 all.df <- all.df %>%
   group_by(site,sp) %>%
@@ -37,15 +41,20 @@ all.df %>% group_by(site) %>%
             Nspecies = length(unique(sp))) %>%
   arrange(Ndata)
 
-sites <- all.df %>% group_by(site) %>%
-  summarise(Ndata = n(),
-            Nspecies = length(unique(sp))) %>%
-  arrange(Ndata) %>% pull(site)
+sites <- sort(unique(all.df$site))
+# sites <- all.df %>% group_by(site) %>%
+#   summarise(Ndata = n(),
+#             Nspecies = length(unique(sp))) %>%
+#   arrange(Ndata) %>% pull(site)
+# sites <- readRDS("./data/rainfor2.md.RDS") %>%
+#   pull(group) %>% unique()
+
 
 # sites <- c("Pasoh","Asenayo","Rio Grande")
 # sites <- c("Loundoungou")
 # sites <- c("Sherman","Canal")
-sites <- c("129","357")
+# sites <- c("BCI")
+sites <- c("BUL","DAN","LAM","SGW")
 
 Names <- c("weibull","power","gmm")
 
@@ -114,33 +123,6 @@ for (isite in seq(1,length(sites))){
 
 }
 
-# # Last run with all data together
-# csite.corrected <- csite <- "Total"
-# cdir <- file.path(dir.name,csite.corrected)
-# cdf <- all.df
-#
-# # Create data file
-# dir.create(cdir,
-#            showWarnings = FALSE)
-# saveRDS(cdf,
-#         file.path(cdir,
-#                   paste0("data_",csite.corrected,".RDS")))
-#
-#
-# # Create script file
-# Rscript.name <- file.path(cdir,script.name <- "Rscript.R")
-# write.script(file.name = script.name,
-#              dir.name = cdir,
-#              site.name = csite.corrected,
-#              settings.location = settings.location)
-#
-# # Create job file
-# ED2scenarios::write_jobR(file = file.path(cdir,jobname),
-#                          nodes = 1,ppn = 4,mem = 25,walltime = 24,
-#                          prerun = "ml purge ; ml R-bundle-Bioconductor/3.15-foss-2021b-R-4.2.0",
-#                          CD = "/data/gent/vo/000/gvo00074/felicien/R/",
-#                          Rscript = Rscript.name)
-# list_dir[[csite]] = cdir
 
 dumb <- write_bash_submission(file = file.path(getwd(),"sites_jobs_Bayesian.sh"),
                               list_files = list_dir,

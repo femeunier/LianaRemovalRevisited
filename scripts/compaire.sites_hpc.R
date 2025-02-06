@@ -15,37 +15,42 @@ library(cowplot)
 library(ggdist)
 library(ggplot2)
 
-
 # Load the data
-
-Afritron.sites <- readRDS("./data/Afritron/Afritron.metadata.RDS") %>%
-  pull(site)
-
 all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
                       filter(dbh >= 10),
                     readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>%
-                      mutate(site = "Total.re")) %>%
-  mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
-                                site  == "Total.re" ~ "Total.re",
-                                site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"OKU","Tanzania") ~ "Africa",
-                                site %in% c("Gigante","BCI") ~ "Panama",
-                                TRUE ~ "Amazon"))
+                      filter(dbh >= 10) %>% mutate(site = "Total"))
 
+all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
+                      mutate(sp = str_squish(sp)) %>%
+                      filter(dbh >= 10))
+
+all.df %>%
+  group_by(liana.cat) %>%
+  summarise(N = n())
 
 all.df.title <- all.df %>%
-  group_by(site.group) %>%
-  mutate(site.group.N = paste0(site.group,", N = ", length(site.group)," (",length(site.group[which(liana.cat == "no")]), "-",
-                         length(site.group[which(liana.cat == "low")]), "-",
-                         length(site.group[which(liana.cat == "high")]), ")"),
-         N.low = length(site.group[which(liana.cat == "low")]),
-         N.high = length(site.group[which(liana.cat == "high")]),
-         N.tot = length(site.group))
+  group_by(site) %>%
+  mutate(site.N = paste0(site,", N = ", length(site)," (",length(site[which(liana.cat == "no")]), "-",
+                         length(site[which(liana.cat == "low")]), "-",
+                         length(site[which(liana.cat == "high")]), ")"),
+         N.low = length(site[which(liana.cat == "low")]),
+         N.high = length(site[which(liana.cat == "high")]),
+         N.tot = length(site))
 
-# sites <- unique(all.df.title$site)
-sites <- c("Total.re")
+sites <- unique(all.df.title$site)
+# sites <- c(readRDS("./data/rainfor2.md.RDS") %>%
+#   pull(group) %>% unique())
+# sites <- c("TGS","TAM","STN",
+#            "STL","STD","SAT","PND","PUY","PEC","JUV")
+
+# sites <- c("Casa_Roubik","BCI","group_North",
+#            "Canal","group_Metro","Gigante",
+#            "Sherman")
+#
+# sites <- c("129","357")
 
 # Compile the outputs
 fit.all.sites <- list()
@@ -60,21 +65,22 @@ for (isite in seq(1,length(sites))){
   csite <- sites[isite]
   csite.corrected <- gsub(" ", "",csite, fixed = TRUE)
 
-  print(paste("-",csite))
+
+  print(paste("-",csite,"-",isite/length(sites)))
   fit.all.sites[[isite]] <- list()
 
   dir.create(file.path("./outputs/",csite.corrected),
              showWarnings = FALSE)
 
   # # Check which files
-  transfer.files("Diagnostics.RDS",
-                 base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
-                 source = file.path("data",csite.corrected),
-                 destination = file.path("./outputs/",csite.corrected),
-                 show.progress = FALSE)
+  # transfer.files("Diagnostics.RDS",
+  #                base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
+  #                source = file.path("data",csite.corrected),
+  #                destination = file.path("./outputs/",csite.corrected),
+  #                show.progress = FALSE)
 
 
-  diagnosis.file <- file.path("./outputs/",csite.corrected,"Diagnostics.RDS")
+  diagnosis.file <- file.path("./data/",csite.corrected,"Diagnostics.RDS")
   if (!file.exists(diagnosis.file)) next()
 
   raw.diagnosis <- readRDS(diagnosis.file)
@@ -105,15 +111,15 @@ for (isite in seq(1,length(sites))){
     pull(file)
 
   # Transfer files
-  dir.create(file.path("./outputs/",csite.corrected),showWarnings = FALSE)
-  transfer.files(all.possible.files,
-                 base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
-                 source = file.path("data",csite.corrected),
-                 destination = file.path("./outputs/",csite.corrected),
-                 show.progress = FALSE)
+  dir.create(file.path("./data/",csite.corrected),showWarnings = FALSE)
+  # transfer.files(all.possible.files,
+  #                base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
+  #                source = file.path("data",csite.corrected),
+  #                destination = file.path("./outputs/",csite.corrected),
+  #                show.progress = FALSE)
 
 
-  cfiles <- file.path("./outputs/",csite.corrected,all.possible.files)
+  cfiles <- file.path("./data/",csite.corrected,all.possible.files)
 
   tokeep <- basename(cfiles) %in% all.possible.files
 
@@ -128,13 +134,13 @@ for (isite in seq(1,length(sites))){
     fit.all.sites[[isite]][[cnames.filtered[ifile]]] <-  readRDS(paste0(cfiles.filtered[ifile]))
   }
 
-  best.model.names[isite] <- file.path("./outputs/",csite.corrected,paste0("Fit.",ifelse(csite.corrected == "Total.re",
-                                                                                         "Total",
-                                                                                         csite.corrected),".",Diagnstocis.Bayesian.site %>%
-                                                                        group_by(site) %>%
-                                                                             filter(waic == min(waic)) %>% pull(model.name)))
+  best.model.names[isite] <- file.path("./data/",csite.corrected,
+                                       paste0("Fit.",ifelse(csite.corrected == "Total.re",
+                                                            "Total",
+                                                            csite.corrected),".",Diagnstocis.Bayesian.site %>%
+                                                group_by(site) %>%
+                                                filter(waic == min(waic)) %>% pull(model.name)))
 }
-
 
 best.model.all <- all.diagnosis %>%
   filter(rhat.max < 1.05) %>%
@@ -163,7 +169,7 @@ check.all.diagnosis %>%
 sum(check.all.diagnosis$Nsuccessful)/sum(check.all.diagnosis$N)
 
 saveRDS(check.all.diagnosis,
-        "./outputs/check.all.diagnosis.SG.RDS")
+        "./outputs/check.all.diagnosis.RDS")
 
 all.diagnosis %>%
   filter(rhat.max > 1.05) %>%
@@ -186,7 +192,7 @@ for (isite in seq(1,length(sites))){
   print(paste(csite, "-",isite/length(sites)))
 
   actual.df <- bind_rows(list(actual.df,
-                              all.df %>% filter(site.group == csite)))
+                              all.df %>% filter(site == csite)))
 
   # if (length(fit.all.sites[[isite]]) > 1){
   #
@@ -203,12 +209,15 @@ for (isite in seq(1,length(sites))){
 
 }
 
+alpha = 0.25
+
+
 null.models <- lapply(fit.all.sites, function(x){
   names.x = names(x)
   return(x[[which(grepl("_none",names.x))]])})
 
-alpha = 0.25
 
+# stop()
 # null.pred <- residuals(null.models[[1]],re_formula = NA)
 # best.pred <- predict(best.model[[1]])
 
@@ -218,7 +227,7 @@ temp <- bind_rows((lapply(1:length(sites),
                             print(isite)
                             csite <- sites[isite]
                             cdf <- all.df %>%
-                              filter(site.group == csite)
+                              filter(site == csite)
 
                             dbhs <- seq(floor(min(cdf$dbh)),
                                         ceiling(max(cdf$dbh)),
@@ -247,7 +256,7 @@ temp <- bind_rows((lapply(1:length(sites),
 
                             newdata <- newdata %>%
                               mutate(id = 1:length(dbh),
-                                     site.group = sites[isite])
+                                     site = sites[isite])
 
                             cmodel <- best.model[[isite]]
                             null.model <- null.models[[isite]]
@@ -339,17 +348,15 @@ temp <- bind_rows((lapply(1:length(sites),
                           })))
 
 temp.title <- temp %>%
-  left_join(all.df.title %>%
-              ungroup() %>%
-              dplyr::select(site.group,site.group.N) %>% distinct(),
-            by = "site.group") %>%
+  left_join(all.df.title %>% dplyr::select(site,site.N) %>% distinct(),
+            by = "site") %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high")))
 
 
 ggplot(data = temp.title) +
   geom_point(data = all.df.title %>%
-               filter(site.group %in% sites),
+               filter(site %in% sites),
              aes(x = dbh,y = h, color = as.factor(liana.cat)),
              size = 0.5, alpha = 0.25) +
   # geom_ribbon(aes(x = dbh, y = h.pred.m, fill = as.factor(liana.cat),
@@ -359,104 +366,112 @@ ggplot(data = temp.title) +
   # geom_ribbon(aes(x = dbh, y = h.null.pred.m,
   #                 ymin = h.null.pred.low, ymax = h.null.pred.high), color = NA, alpha = 0.5, fill = "darkgrey") +
   geom_line(aes(x = dbh,y = h.null.pred.m), color = "black") +
-  facet_wrap(~ site.group.N, scales = "free") +
+  facet_wrap(~ site.N, scales = "free") +
   scale_x_log10(limits = c(10,300),
                 breaks = c(10,20,50,100,200)) +
   scale_y_log10(limits = c(1,60)) +
   labs(x = "DBH (cm)", y = 'Height (m)', color = "Liana infestation", fill = "Liana infestation") +
   theme_bw() +
-  theme(text = element_text(size = 20),
-        legend.position = c(0.8,0.2))
+  theme(text = element_text(size = 20))
 
 saveRDS(temp.title,
-        "./outputs/Model.predictions.sitegroups.RDS")
+        "./outputs/Model.predictions.RDS")
 
 ################################################################################
 
-DBH2test <- 150
-
-temp3 <- bind_rows((lapply(1:length(sites),
-                           function(isite){
-
-                             print(isite)
-                             cdf <- all.df %>%
-                               filter(site.group == sites[isite])
-
-
-                             levels <- as.character(unique(cdf$liana.cat))
-
-                             newdata <- bind_rows(list(data.frame(
-                               dbh = rep(DBH2test,length(levels)),
-                               liana.cat = levels)))
-
-                             newdata <- newdata %>%
-                               mutate(id = 1:length(dbh),
-                                      site = sites[isite])
-
-                             cmodel <- best.model[[isite]]
-                             null.model <- null.models[[isite]]
-
-                             ccoef <- as.numeric(exp( (summary(cmodel)[["spec_pars"]][1]**2)/2))
-                             ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
-                             # ccoef <- 1
-
-                             pp <- melt(posterior_epred(cmodel,
-                                                        newdata = newdata,
-                                                        re_formula = NA)) %>%
-                               rename(rep = Var1,
-                                      id = Var2) %>%
-                               left_join(newdata %>%
-                                           dplyr::select(c(id,liana.cat)),
-                                         by = "id") %>%
-                               mutate(h = ccoef*exp(value)) %>%
-                               filter((abs(value - median(value,na.rm = TRUE)) < 1.5*sd(value,na.rm = TRUE))) %>%
-                               ungroup() %>%
-                               dplyr::select(-c(value,id)) %>%
-                               pivot_wider(names_from = liana.cat,
-                                           values_from = h)
-
-                             return(pp %>%
-                                      mutate(site = sites[isite]))
-                           })))
-
-
-Afritron.sites <- readRDS("./data/Afritron/Afritron.metadata.RDS") %>%
+Afritron.sites <- readRDS("./data/Afritron.metadata.RDS") %>%
   pull(site)
 
 alpha <- 0.11
 
-temp3.title <- temp3 %>%
-  left_join(all.df.title %>% dplyr::select(site,
-                                           N.low,N.high,N.tot) %>% distinct(),
-            by = "site") %>%
-  mutate(site.tot = paste0(site," (N = ",N.tot,")")) %>%
-  mutate(high = high - no,
-         low = low - no) %>%
-  pivot_longer(cols = c(low,high),
-               names_to = "liana.cat",
-               values_to = "diff_h") %>%
-  mutate(N.cat = case_when(liana.cat == "low" ~ N.low,
-                           liana.cat == "high" ~ N.high,
-                           TRUE ~ NA)) %>%
-  mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
-                                site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"Tanzania","OKU") ~ "Africa",
-                                site %in% c("Gigante","BCI") ~ "Panama",
-                                site == c("Total") ~ "Total",
-                                TRUE ~ "Amazon")) %>%
-  mutate(liana.cat = factor(liana.cat,
-                            levels = c("low","high"))) %>%
-  mutate(site.group = factor(site.group,
-                             levels = c("Total","Panama",
-                                        "Amazon","Africa","Australasia"))) %>%
-  group_by(site,liana.cat) %>%
-  mutate(signif_rel = case_when(quantile(diff_h/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 0.3,
-                                quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 0.3,
-                                TRUE ~ 0.2),
-         signif_rel2 = case_when(quantile(diff_h/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 1,
-                                 quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 1,
-                                 TRUE ~ 0.4))
+for (DBH2test in c(25,50,100,150)){
 
-saveRDS(temp3.title,paste0("./outputs/Main.OP.SG.",DBH2test,".RDS"))
+  print(DBH2test)
+
+  temp3 <- bind_rows((lapply(1:length(sites),
+                             function(isite){
+
+                               print(isite)
+                               cdf <- all.df %>%
+                                 filter(site == sites[isite])
+
+
+                               levels <- as.character(unique(cdf$liana.cat))
+
+                               newdata <- bind_rows(list(data.frame(
+                                 dbh = rep(DBH2test,length(levels)),
+                                 liana.cat = levels)))
+
+                               newdata <- newdata %>%
+                                 mutate(id = 1:length(dbh),
+                                        site = sites[isite])
+
+                               cmodel <- best.model[[isite]]
+                               null.model <- null.models[[isite]]
+
+                               ccoef <- as.numeric(exp( (summary(cmodel)[["spec_pars"]][1]**2)/2))
+                               ccoef.null <- as.numeric(exp(summary(null.model)[["spec_pars"]][1]**2/2))
+                               # ccoef <- 1
+
+                               pp <- melt(posterior_epred(cmodel,
+                                                          newdata = newdata,
+                                                          re_formula = NA)) %>%
+                                 rename(rep = Var1,
+                                        id = Var2) %>%
+                                 left_join(newdata %>%
+                                             dplyr::select(c(id,liana.cat)),
+                                           by = "id") %>%
+                                 mutate(h = ccoef*exp(value)) %>%
+                                 filter((abs(value - median(value,na.rm = TRUE)) < 1.5*sd(value,na.rm = TRUE))) %>%
+                                 ungroup() %>%
+                                 dplyr::select(-c(value,id)) %>%
+                                 pivot_wider(names_from = liana.cat,
+                                             values_from = h)
+
+                               return(pp %>%
+                                        mutate(site = sites[isite]))
+                             })))
+
+  temp3.title <- temp3 %>%
+    left_join(all.df.title %>% dplyr::select(site,
+                                             N.low,N.high,N.tot) %>% distinct(),
+              by = "site") %>%
+    mutate(site.tot = paste0(site," (N = ",N.tot,")")) %>%
+    mutate(high = high - no,
+           low = low - no) %>%
+    pivot_longer(cols = c(low,high),
+                 names_to = "liana.cat",
+                 values_to = "diff_h") %>%
+    mutate(N.cat = case_when(liana.cat == "low" ~ N.low,
+                             liana.cat == "high" ~ N.high,
+                             TRUE ~ NA)) %>%
+    mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
+                                  site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"Tanzania","OKU") ~ "Africa",
+                                  site %in% c("Gigante","BCI",
+                                              "group_North",
+                                              "Casa_Roubik",
+                                              "Sherman",
+                                              "group_Metro",
+                                              "Canal") ~ "Panama",
+                                  site == c("Total") ~ "Total",
+                                  TRUE ~ "Amazon")) %>%
+    mutate(liana.cat = factor(liana.cat,
+                              levels = c("low","high"))) %>%
+    mutate(site.group = factor(site.group,
+                               levels = c("Total","Panama",
+                                          "Amazon","Africa","Australasia"))) %>%
+    group_by(site,liana.cat) %>%
+    mutate(signif_rel = case_when(quantile(diff_h/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 0.3,
+                                  quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 0.3,
+                                  TRUE ~ 0.2),
+           signif_rel2 = case_when(quantile(diff_h/no*100,probs = 1-alpha/2,na.rm = TRUE) < 0 ~ 1,
+                                   quantile(diff_h/no*100,probs = alpha/2,na.rm = TRUE) > 0 ~ 1,
+                                   TRUE ~ 0.4))
+
+  saveRDS(
+    temp3.title,paste0("./outputs/Main.OP.",DBH2test,".RDS"))
+}
+
 
 mean.cat <- temp3.title %>%
   group_by(liana.cat) %>%
@@ -498,9 +513,7 @@ ggplot(data = temp3.title %>%
 
 temp3.title %>%
   group_by(liana.cat) %>%
-  summarise(m = median(diff_h/no*100,na.rm = TRUE),
-            low = quantile(diff_h/no*100,alpha/2,na.rm = TRUE),
-            high = quantile(diff_h/no*100,1-alpha/2,na.rm = TRUE))
+  summarise(m = median(diff_h/no*100,na.rm = TRUE))
 
 ggplot(data = temp3.title %>%
          filter(site %in% sites),
@@ -516,12 +529,12 @@ ggplot(data = temp3.title %>%
                      .width = c(1-alpha),
                      position = position_dodge(width = 0)) +
   facet_wrap(~ liana.cat) +
-  scale_x_continuous(limits = c(-15,0)) +
+  scale_x_continuous(limits = c(-45,25)) +
   labs(y = "", color = "", fill = "") +
   theme_bw() +
   facet_wrap(~ site.group, scales = "free_y") +
   guides(alpha = "none") +
-  theme(legend.position = c(0.1,0.9))
+  theme(legend.position = c(0.1,0.2))
 
 ggplot(data = temp3.title %>%
          filter(site %in% sites),
@@ -543,27 +556,4 @@ ggplot(data = temp3.title %>%
   # scale_x_continuous(limits = c(-20,10)) +
   theme_bw()
 
-################################################################################
-
-RE <- ranef(best.model[[1]])
-
-library(reshape2)
-
-df.re <- melt(RE$site) %>%
-  rename(site = Var1,
-         type = Var2,
-         param = Var3) %>%
-  pivot_wider(values_from = value,
-              names_from = type)
-
-ggplot(data = df.re,
-       aes(x = site, y = Estimate, ymin = Q2.5, ymax = Q97.5 )) +
-  geom_point() +
-  geom_errorbar(width = 0) +
-  geom_hline(yintercept = 0,
-             linetype = 2) +
-
-  facet_wrap(~ param) +
-
-  coord_flip() +
-  theme_bw()
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/compaire.sites_hpc.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
