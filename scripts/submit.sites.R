@@ -17,8 +17,8 @@ library(rstan)
 library(LianaRemovalRevisited)
 library(ED2scenarios)
 
-system2("scp",paste("./outputs/All.COI.data.RDS",
-                    "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/"))
+# system2("scp",paste("./outputs/All.COI.data.RDS",
+#                     "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/"))
 
 all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%

@@ -201,10 +201,9 @@ df.all.effects <- df.r2 <- df.r2.single <- df.model.var <-
 all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd",
               "Prec.sd","srad","srad.sd")
 
-Var1 = "t.sd" ; Var2 = "MCWD"
+Var1 = "MAP" ; Var2 = "MCWD"
 
 for (iDBHtarget in seq(1,length(DBHtargets))){
-
 
   cDBHtarget <- DBHtargets[iDBHtarget]
 
@@ -392,8 +391,7 @@ ggplot(data = df.all.effects %>%
   scale_fill_manual(values = c(Humid1700 = "#1C2C04",
                                 Humid = "#345C0C",
                                 Humid_seasonal = "#4C8C14",
-                               Else = "lightyellow")) +
-  scale_x_discrete(labels = c("","","",""))
+                               Else = "lightyellow"))
 
 summary(lm(data = df.all.effects %>%
          filter(target == DBHtargets[1]),

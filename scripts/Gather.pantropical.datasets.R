@@ -1035,7 +1035,9 @@ all.df <- bind_rows(list(
     dplyr::select(-canopy) %>%
     mutate(site = "Australia"))) %>%
   mutate(liana.cat = factor(liana.cat,
-                            levels = c("no","low","high")))
+                            levels = c("no","low","high"))) %>%
+  mutate(sp = case_when(is.na(sp) ~ "Unknown",
+                        TRUE ~ sp))
 
 saveRDS(all.df ,
         "./outputs/All.COI.data.RDS")

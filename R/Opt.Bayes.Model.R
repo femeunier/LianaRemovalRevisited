@@ -1,4 +1,9 @@
-Opt.Bayes.Model <- function(dir.name,settings,site.name,strong = FALSE,site.re = FALSE){
+Opt.Bayes.Model <- function(dir.name,
+                            settings,
+                            site.name,
+                            strong = FALSE,
+                            site.re = FALSE,
+                            threads = FALSE){
 
   Names <- settings[["Names"]]
   fixed.effect.2.test <- settings[["fixed.effect.2.test"]]
@@ -52,17 +57,31 @@ Opt.Bayes.Model <- function(dir.name,settings,site.name,strong = FALSE,site.re =
           filter(coef %in% c("","Intercept",existing.cat))
       }
 
-      cfit <- brm(form.list[[model]],
-                  data=data %>%
-                    mutate(logh = log(h),
-                           sp = as.factor(sp)),
-                  cores = min(Nchains,
-                              parallel::detectCores() - 1),
-                  prior = priors.list[[model]],
-                  control = control.list,
-                  chains = Nchains,
-                  iter = Niter,
-                  silent = 2)
+      if (!(threads)){
+        cfit <- brm(form.list[[model]],
+                    data=data %>%
+                      mutate(logh = log(h),
+                             sp = as.factor(sp)),
+                    cores = min(Nchains,
+                                parallel::detectCores() - 1),
+                    prior = priors.list[[model]],
+                    control = control.list,
+                    chains = Nchains,
+                    iter = Niter,
+                    silent = 2)
+      } else{
+        cfit <- brm(form.list[[model]],
+                    data=data %>%
+                      mutate(logh = log(h),
+                             sp = as.factor(sp)),
+                    cores = Nchains,
+                    prior = priors.list[[model]],
+                    control = control.list,
+                    chains = Nchains,
+                    threads = threading(floor(parallel::detectCores())/Nchains),
+                    iter = Niter,
+                    silent = 2)
+      }
 
       saveRDS(cfit,op.file)
     }

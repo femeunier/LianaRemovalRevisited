@@ -3,7 +3,8 @@ write.script <- function(file.name,
                          site.name,
                          settings.location,
                          strong = FALSE,
-                         site.re = FALSE){
+                         site.re = FALSE,
+                         threads = FALSE){
 
   file <- file.path(dir.name,file.name)
 
@@ -25,15 +26,25 @@ write.script <- function(file.name,
 
   write("",file=file,append=TRUE)
 
-  if (strong & site.re){
-    write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE)",file=file,append=TRUE)
-  } else if (strong & !site.re){
-    write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE)",file=file,append=TRUE)
-  } else if (!strong & site.re) {
-    write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE)",file=file,append=TRUE)
+  if (!threads){
+    if (strong & site.re){
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE)",file=file,append=TRUE)
+    } else if (strong & !site.re){
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE)",file=file,append=TRUE)
+    } else if (!strong & site.re) {
+      write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE)",file=file,append=TRUE)
+    } else {
+      write("Opt.Bayes.Model(dir.name,settings,site.name)",file=file,append=TRUE)
+    }
   } else {
-    write("Opt.Bayes.Model(dir.name,settings,site.name)",file=file,append=TRUE)
+    if (strong & site.re){
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE,TRUE)",file=file,append=TRUE)
+    } else if (strong & !site.re){
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE,TRUE)",file=file,append=TRUE)
+    } else if (!strong & site.re) {
+      write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE,TRUE)",file=file,append=TRUE)
+    } else {
+      write("Opt.Bayes.Model(dir.name,settings,site.name,threads = TRUE)",file=file,append=TRUE)
+    }
   }
-
-
 }
