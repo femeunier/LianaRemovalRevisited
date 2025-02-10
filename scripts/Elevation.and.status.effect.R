@@ -31,6 +31,8 @@ afritron.plots <- df.afritron %>%
   unique() %>%
   sort()
 
+df.Asia <- readRDS("./data/Asia/raw.data.all.RDS")
+
 #######################################################
 
 
@@ -47,7 +49,12 @@ all.inds <- bind_rows(df.rainfor %>%
 
                       df.afritron %>%
                         rename(plot = Plot.Code) %>%
-                        mutate(dbh = dbh/10)
+                        mutate(dbh = dbh/10),
+
+                      df.Asia %>%
+                        dplyr::select(DBH,h,liana.cat,site) %>%
+                        rename(dbh = DBH,
+                               plot = site)
 
                       ) %>%
   ungroup() %>%
@@ -83,12 +90,13 @@ all.plots %>%
 # Now we load metadata
 
 metadata <-
-  bind_rows(read.xlsx("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/FP/africa_metadataforR_112017_extra.xlsx",
-            sheetName = "africa_metadataforR_112017") %>%
+  bind_rows(read.xlsx("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/FP/ForestPlots_Access_FelicienMunier_19Oct23.xlsx",
+            sheetName = "AcceptedCensuses_with_LI") %>%
   dplyr::select(PlotCode,ForestMoistureName,
                 ForestEdaphicName,ForestElevationName,
-                Forest.status.plotview,PlotViewID) %>%
-  rename(plot = PlotCode) %>%
+                ForestStatusName) %>%
+  rename(plot = PlotCode,
+         Forest.status.plotview = ForestStatusName) %>%
     mutate(origin = "afritron"),
 
   read.xlsx("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/FP/Rainfor1.xlsx",sheetName = "Sheet1") %>%
@@ -96,6 +104,15 @@ metadata <-
                   ForestEdaphicName,ForestElevationName,
                   Forest.status.plotview) %>%
     mutate(origin = "rainfor"),
+
+  read.xlsx("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/FPAccess_FelicienMeunier_04Feb25.xlsx",sheetName = "AsiaAustPlots_with LI_Height") %>%
+    dplyr::select(PlotCode,ForestMoistureName,
+                  ForestEdaphicName,ForestElevationName,
+                  ForestStatusName) %>%
+    rename(plot = PlotCode,
+           Forest.status.plotview = ForestStatusName) %>%
+    mutate(origin = "Asia"),
+
 
   read.xlsx("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/FP/PITeamEmailTracker_SruthiKrishnaMoorthy_030724_complete.xlsx",
             sheetName = "LastCensus_withHeight_AND_LI") %>%
@@ -127,9 +144,10 @@ metadata.nodoublons <- bind_rows(
     filter(!(plot %in% plots.with.multiple.conditions[["plot"]])),
 
   metadata %>%
-    filter(plot %in% plots.with.multiple.conditions[["plot"]]) %>%
-    filter(PlotViewID %in% c(Afritron.plotviewID[["PlotViewID"]]))) %>%
-  dplyr::select(-PlotViewID) %>%
+    filter(plot %in% plots.with.multiple.conditions[["plot"]])
+    # filter(PlotViewID %in% c(Afritron.plotviewID[["PlotViewID"]]))
+  ) %>%
+  # dplyr::select(-PlotViewID) %>%
   distinct()
 
 metadata.nodoublons %>%

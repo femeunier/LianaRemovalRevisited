@@ -25,9 +25,9 @@ all.df.title <- all.df %>%
          N.high = length(site[which(liana.cat == "high")]),
          N.tot = length(site))
 
-Model.predictions <- readRDS("./outputs/Model.predictions.sitegroups.RDS") %>%
+Model.predictions <- readRDS("./outputs/Model.predictions.RDS") %>%
   ungroup() %>%
-  filter(site.group == "Total.re")
+  filter(site == "Total")
 
 
 df.residuals <- all.df %>%
@@ -35,8 +35,8 @@ df.residuals <- all.df %>%
   mutate(dbh = round(dbh)) %>%
   left_join(Model.predictions %>%
                dplyr::select(dbh,liana.cat,
-                             h.pred.m,h.null.pred.m,site.group),
-            by = c("dbh","liana.cat","site.group")) %>%
+                             h.pred.m,h.null.pred.m,site),
+            by = c("dbh","liana.cat","site")) %>%
   mutate(res_null = (h.null.pred.m-h),
          res_best = (h.pred.m-h)) %>%
   mutate(delta.res = abs(res_best) - abs(res_null)) %>%

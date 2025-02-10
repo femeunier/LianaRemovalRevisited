@@ -78,7 +78,7 @@ Opt.Bayes.Model <- function(dir.name,
                     prior = priors.list[[model]],
                     control = control.list,
                     chains = Nchains,
-                    threads = threading(floor(parallel::detectCores())/Nchains),
+                    threads = threading(floor(parallel::detectCores()/Nchains)),
                     iter = Niter,
                     silent = 2)
       }

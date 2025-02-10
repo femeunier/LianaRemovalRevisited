@@ -42,6 +42,8 @@ all.df %>% group_by(site) %>%
   arrange(Ndata)
 
 sites <- sort(unique(all.df$site))
+sites <- readRDS("./data/rainfor.sites.RDS")
+sites <- c("Dja North","Kisangani_all")
 # sites <- all.df %>% group_by(site) %>%
 #   summarise(Ndata = n(),
 #             Nspecies = length(unique(sp))) %>%
@@ -54,7 +56,7 @@ sites <- sort(unique(all.df$site))
 # sites <- c("Loundoungou")
 # sites <- c("Sherman","Canal")
 # sites <- c("BCI")
-sites <- c("BUL","DAN","LAM","SGW")
+# sites <- c("BUL","DAN","LAM","SGW")
 
 Names <- c("weibull","power","gmm")
 

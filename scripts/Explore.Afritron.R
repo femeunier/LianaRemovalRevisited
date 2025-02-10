@@ -5,7 +5,8 @@ library(dplyr)
 library(ggplot2)
 library(readxl)
 
-data <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Afritron/africa_individualsdata_mainplotview_112017.csv",stringsAsFactors = FALSE)
+data <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/Afritron/africa_individualsdata_mainplotview_112017.csv",stringsAsFactors = FALSE) %>%
+  filter(F5 > 1)
 
 saveRDS(data %>%
   filter(Plot.Code %in%

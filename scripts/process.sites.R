@@ -21,11 +21,12 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       filter(dbh >= 10),
                     readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>% mutate(site = "Total"))
+                      filter(dbh >= 10) %>%
+                      mutate(site = "Total"))
 
-all.df <- bind_rows(readRDS("./outputs/COI.mixed.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10))
+# all.df <- bind_rows(readRDS("./outputs/COI.mixed.RDS") %>%
+#                       mutate(sp = str_squish(sp)) %>%
+#                       filter(dbh >= 10))
 
 all.df.title <- all.df %>%
   group_by(site) %>%
@@ -36,8 +37,9 @@ all.df.title <- all.df %>%
          N.high = length(site[which(liana.cat == "high")]),
          N.tot = length(site))
 
-# sites <- unique(all.df.title$site)
-sites <- c("BUL","DAN","LAM","SGW")
+sites <- unique(all.df.title$site)
+sites <- "Total"
+# sites <- c("BUL","DAN","LAM","SGW")
 # sites <- c("Loundoungou")
 # sites <- c("Sherman","Canal")
 # sites <- c("129","357")

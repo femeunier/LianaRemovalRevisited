@@ -4,7 +4,7 @@ library(dplyr)
 library(ggplot2)
 library(ggthemes)
 
-df <- readRDS("./data/rainfor2.loc.RDS") %>%
+df <- readRDS("./outputs/All.rainfor.RDS") %>%
   mutate(group = substr(site,1,3)) %>%
   filter(DBH >= 10) %>%
   filter(!is.na(DBH)) %>%
@@ -77,14 +77,16 @@ df2keep <- df %>%
 
 summary(df2keep$h)
 
-ggplot(data = df2keep,
+groups <- unique(df2keep$group)
+
+ggplot(data = df2keep ,
        aes(x = dbh, y = h,
            color = as.factor(liana.cat))) +
   geom_point(size = 0.1) +
   scale_x_log10() +
   scale_y_log10() +
   stat_smooth(se = FALSE, method = "lm") +
-  facet_wrap(~ group, scales = "free") +
+  # facet_wrap(~ group, scales = "free") +
   theme_bw()
 
 saveRDS(df2keep,

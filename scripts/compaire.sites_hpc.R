@@ -21,11 +21,12 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       filter(dbh >= 10),
                     readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>% mutate(site = "Total"))
+                      filter(dbh >= 10) %>%
+                      mutate(site = "Total"))
 
-all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10))
+# all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
+#                       mutate(sp = str_squish(sp)) %>%
+#                       filter(dbh >= 10))
 
 all.df %>%
   group_by(liana.cat) %>%
@@ -445,7 +446,8 @@ for (DBH2test in c(25,50,100,150)){
     mutate(N.cat = case_when(liana.cat == "low" ~ N.low,
                              liana.cat == "high" ~ N.high,
                              TRUE ~ NA)) %>%
-    mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia") ~ "Australasia",
+    mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia",
+                                              "SGW","LAM","DAN","BUL") ~ "Australasia",
                                   site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"Tanzania","OKU") ~ "Africa",
                                   site %in% c("Gigante","BCI",
                                               "group_North",

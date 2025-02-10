@@ -52,7 +52,8 @@ for (iplot in seq(1,length(plots))){
 
     df.all <- bind_rows(list(df.all,
                              data.mut %>%
-                               dplyr::select(TreeID, Census.Date, Tag.No,DBH,liana.cat,COI,h,Species) %>%
+                               mutate(F5 = as.numeric(F5)) %>%
+                               dplyr::select(TreeID, Census.Date, Tag.No,DBH,liana.cat,COI,h,Species,F5) %>%
                                mutate(site = plots[iplot],
                                       census = c.census)))
 
@@ -60,11 +61,18 @@ for (iplot in seq(1,length(plots))){
   }
 }
 
+hist(df.all$F5)
+
 df.all.site <- df.all %>%
   mutate(site.common = str_sub(site,1,3)) %>%
   filter(!is.na(DBH),!is.na(h),!is.na(liana.cat)) %>%
    filter(!(DBH > 50 & h < 10))  # Fishy tree (height < POM..)
 
+AAA <- df.all.site %>%
+  dplyr::select(DBH,liana.cat,COI,h,Species,site)
+
+saveRDS(AAA,
+        "./data/Asia/raw.data.all.RDS")
 
 sites2keep <- df.all.site %>%
   group_by(site.common) %>%

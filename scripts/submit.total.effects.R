@@ -47,7 +47,7 @@ saveRDS(all.df,
 
 Names <- c("gmm","weibull","power")
 
-Nchains <- 4
+Nchains <- 6
 Niter <- 5000
 control.list <- list(adapt_delta = 0.8,
                      max_treedepth = 10)
@@ -96,7 +96,8 @@ for (iname in seq(1,length(Names))){
                  dir.name = cdir,
                  site.name = csite.corrected,
                  settings.location = settings.location,
-                 site.re = TRUE)
+                 site.re = TRUE,
+                 threads = TRUE)
 
 
     # Create job file
@@ -108,7 +109,7 @@ for (iname in seq(1,length(Names))){
                    cjobname)
 
     ED2scenarios::write_jobR(file = file.path(cdir,cjobname),
-                             nodes = 1,ppn = 16,mem = 25,walltime = 72,
+                             nodes = 1,ppn = 24,mem = 25,walltime = 72,
                              prerun = "ml purge ; ml R-bundle-Bioconductor/3.15-foss-2021b-R-4.2.0",
                              CD = "/data/gent/vo/000/gvo00074/felicien/R/",
                              Rscript = Rscript.name)
@@ -118,7 +119,8 @@ for (iname in seq(1,length(Names))){
   }
 }
 
-dumb <- write_bash_submission(file = file.path(getwd(),"all_jobs_Bayesian.sh"),
+dumb <- write_bash_submission(file = file.path(getwd(),
+                                               "all_jobs_Bayesian.sh"),
                               list_files = list_dir,
                               job_name = job.names)
 

@@ -273,6 +273,9 @@ df.Wannes.site <- df.Wannes.mut %>%
          length(which(liana.cat == "low")) > 10,
          length(which(liana.cat == "no")) > 10)
 
+# df.Wannes.site %>%
+#   filter(grepl("YGB",Plot.Code))
+
 sort(unique(df.Wannes.mut$site)[!(unique(df.Wannes.mut$site) %in% df.Wannes.site$site)])
 
 # %>%
@@ -373,9 +376,10 @@ Rainfor.df <- readRDS("./data/ForestPlots/data/df.Rainfor.RDS") %>%
          coi = COI) %>%
   dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
   filter(dbh > 0, h > 0) %>%
-  filter(!(site %in% c("GAU","SAT","VCR","FRP","POA"))) # Repeated from the other data from forestplots
+  filter(!(site %in% c("VCR","GAU"))) # Repeated from the other data from forestplots
 
 
+# All.rainfor.RDS
 
 Rainfor2.df <- readRDS("./data/rainfor2.trees.RDS") %>%
   ungroup() %>%
@@ -384,7 +388,39 @@ Rainfor2.df <- readRDS("./data/rainfor2.trees.RDS") %>%
          coi = COI) %>%
   dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
   filter(dbh > 0, h > 0) %>%
-  filter(dbh < 300) # weird big tree
+  filter(dbh < 300) %>% # weird big tree
+  mutate(h = case_when(h> 50 & dbh < 25 ~ h/10,
+                       TRUE  ~ h)) %>%
+  filter(h > 3) %>%
+  filter(!(site %in% c("POA","SAT","FRP"))) # Repeated from the other data from forestplots
+
+
+
+# verify plots from both rainfor sources
+a <- unique(Rainfor.df$site)
+b <- unique(Rainfor2.df$site)
+intersect(a,b)
+
+All.rainfor <- bind_rows(Rainfor.df,
+                         Rainfor2.df)
+
+saveRDS(All.rainfor %>%
+          dplyr::pull(site) %>%
+          unique(),
+        "./data/rainfor.sites.RDS")
+
+ggplot(data = All.rainfor %>%
+         filter(dbh > 10),
+       aes(x = dbh, y = h,
+           color = as.factor(liana.cat))) +
+  geom_point(size = 0.1) +
+  scale_x_log10() +
+  scale_y_log10() +
+  stat_smooth(se = FALSE, method = "lm") +
+  facet_wrap(~ site, scales = "free") +
+  theme_bw()
+
+
 
 ################################################################################
 # Karin Santos
@@ -1208,4 +1244,5 @@ Slenderness %>%
 
 
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/data/rainfor.sites.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/

@@ -67,12 +67,6 @@ ggplot(data = diff.H.sites) +
                color = "red", linetype = 2) +
   theme_bw()
 
-ggplot(diff.H.sites,
-       aes(x = m_low, y = m_high)) +
-  geom_point() +
-  stat_smooth(method = "lm") +
-  theme_bw()
-
 summary(diff.H.sites$m_high - diff.H.sites$m_low)
 
 
@@ -80,33 +74,6 @@ diff.H.sites %>%
   ungroup() %>%
   summarise(N = length(which(m_low < m_high)),
             N2 = length(which(m_low > m_high)))
-
-ggplot(data = Main.OP %>%
-         filter(site == "BCI"),
-       aes(x = diff_h/no*100,
-           y = site,
-           color = liana.cat,
-           fill = liana.cat,
-           alpha = 0.7)) +
-  geom_vline(xintercept = 0,linetype = 1) +
-  stat_halfeye(color = NA) +
-  stat_pointinterval(aes(alpha = signif_rel2),
-                     .width = c(1-alpha),
-                     position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-15,5), breaks = 0) +
-  labs(y = "", color = "", fill = "",x = "") +
-  theme_minimal_hgrid() +
-  # facet_wrap(~ site.group, scales = "free_y") +
-  guides(alpha = "none", fill = "none", color = "none") +
-  theme(legend.position = c(0.1,0.9),
-        text = element_text(size = 24)) +
-  scale_color_manual(values = c("no" = "darkgreen",
-                                "low" = "orange",
-                                "high"= "darkred")) +
-  scale_fill_manual(values = c("no" = "darkgreen",
-                               "low" = "orange",
-                               "high"= "darkred"))
-
 
 # ggplot(data = Main.OP %>%
 #          filter(site.group == "Panama"),
@@ -282,8 +249,39 @@ ggplot(data = Main.OP %>%
                                "high"= "darkred"))
 
 
+Rainfor.md <- readRDS("./outputs/All.rainfor.RDS")
+
 ggplot(data = Main.OP %>%
-         filter(site.group == "Amazon"),
+         filter(site.group == "Amazon") %>%
+         filter(!(site %in% c(Rainfor.md$group))),
+       aes(x = diff_h/no*100,
+           y = new.site2,
+           color = liana.cat,
+           fill = liana.cat,
+           alpha = 0.5)) +
+  geom_vline(xintercept = 0,linetype = 1) +
+  stat_halfeye(color = NA, aes(alpha = signif_rel)) +
+  stat_pointinterval(aes(alpha = signif_rel2),
+                     .width = c(1-alpha),
+                     position = position_dodge(width = 0)) +
+  scale_x_continuous(limits = c(-40,25)) +
+  labs(y = "", color = "", fill = "",x = "") +
+  theme_minimal_hgrid() +
+  # facet_wrap(~ site.group, scales = "free_y") +
+  guides(alpha = "none", fill = "none", color = "none") +
+  theme(legend.position = c(0.1,0.9),
+        text = element_text(size = 24)) +
+  scale_color_manual(values = c("no" = "darkgreen",
+                                "low" = "orange",
+                                "high"= "darkred")) +
+  scale_fill_manual(values = c("no" = "darkgreen",
+                               "low" = "orange",
+                               "high"= "darkred"))
+
+
+ggplot(data = Main.OP %>%
+         filter(site.group == "Amazon") %>%
+         filter((site %in% c(Rainfor.md$group))),
        aes(x = diff_h/no*100,
            y = new.site2,
            color = liana.cat,
@@ -359,3 +357,20 @@ Main.OP %>%
   filter(signif_rel2 == 1) %>%
   filter(liana.cat == "low") %>%
   arrange((Delta.h))
+
+
+Main.OP %>%
+  filter(site != 'Total') %>%
+  filter((site %in% c(unique(Rainfor.md$group)))) %>%
+  dplyr::select(site,liana.cat,signif_rel2,diff_h,no) %>%
+  group_by(liana.cat,site) %>%
+  summarise(Delta = mean(diff_h/no,na.rm = TRUE),
+            Delta_low = quantile(diff_h/no,0.055,na.rm = TRUE),
+            Delta_high = quantile(diff_h/no,1-0.055,na.rm = TRUE)) %>%
+  filter(liana.cat == "high") %>%
+  summarise(Nsignif.low = length(which((Delta_high < 0))),
+            Nnoliana = length(which((Delta_high == 0))),
+            Nsignif.high = length(which((Delta_low > 0))),
+            Nnosignif = length(which((Delta_low < 0) & (Delta_high > 0))))
+
+

@@ -379,7 +379,8 @@ ggplot(data = summary.num) +
                                "high"= "darkred")) +
   guides(fill = FALSE)
 
-length(unique(summary.num$Site))
+length(unique(summary.num %>%
+                na.omit() %>% pull(Site)))
 
 bind_rows(summary.num %>%
   group_by(liana.cat) %>%
