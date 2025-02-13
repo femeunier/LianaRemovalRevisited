@@ -590,29 +590,29 @@ Jocker.df <- read.csv(
 
 #################################################################################
 
-data.DV <- readRDS("./data/Danum/DV.processed.RDS") %>%
-  rename(coi = COI) %>%
-  # mutate(dbh = dbh/10) %>%
-  # filter(dbh >= 30) %>%
-  dplyr::select(c(dbh,h,coi,sp,liana.cat)) %>%
-  mutate(site = "Danum Valley")
+# data.DV <- readRDS("./data/Danum/DV.processed.RDS") %>%
+#   rename(coi = COI) %>%
+#   # mutate(dbh = dbh/10) %>%
+#   # filter(dbh >= 30) %>%
+#   dplyr::select(c(dbh,h,coi,sp,liana.cat)) %>%
+#   mutate(site = "Danum Valley")
 
-data.DV %>%
-  group_by(sp) %>%
-  mutate(Ntot = n()) %>%
-  group_by(liana.cat,
-           sp) %>%
-  summarise(N = n(),
-            Ntot = Ntot[1]) %>%
-  arrange(desc(Ntot))
-
-ggplot(data = data.DV %>%
-         filter(dbh >= 10),
-       aes(x = dbh, y = h, color = as.factor(liana.cat),
-           fill = as.factor(liana.cat))) +
-  geom_point() +
-  stat_smooth(method = "lm") +
-  theme_bw()
+# data.DV %>%
+#   group_by(sp) %>%
+#   mutate(Ntot = n()) %>%
+#   group_by(liana.cat,
+#            sp) %>%
+#   summarise(N = n(),
+#             Ntot = Ntot[1]) %>%
+#   arrange(desc(Ntot))
+#
+# ggplot(data = data.DV %>%
+#          filter(dbh >= 10),
+#        aes(x = dbh, y = h, color = as.factor(liana.cat),
+#            fill = as.factor(liana.cat))) +
+#   geom_point() +
+#   stat_smooth(method = "lm") +
+#   theme_bw()
 
 ####################################################################################################################################
 # Joe, Panama
@@ -634,9 +634,12 @@ Panama.ds <-
             by = "sp") %>%
   mutate(sp = sp.final) %>%
   dplyr::select(-sp.final) %>%
-  rename(dbh = dbhtot18,
+  rename(code = code18,
+         dbh = dbhtot18,
          h  = hght18,
          coi = liana18) %>%
+  filter(!grepl("Q",code),
+         !grepl("L",code)) %>%
   mutate(liana.cat = case_when(coi %in% c(0) ~ "no",
                                coi %in% c(1,2) ~ "low",
                                TRUE ~ "high")) %>%
@@ -647,7 +650,24 @@ Panama.ds <-
                             levels = c("no","low","high")),
          dbh = dbh/10) %>%
   dplyr::select(c(dbh,h,coi,sp,liana.cat)) %>%
+  mutate(sp = case_when(sp == "malogu" ~ "Manilkara longifolia",
+                        sp == "auloze" ~ "Aulomyrcia zeylanica",
+                        sp == "myrc3" ~ "Myrcia splendens",
+                        sp == "myrcfa" ~ "Myrcia fallax",
+                        sp == "tovopi" ~ "Tovomita polyantha",
+                        sp == "micrze" ~ "Micropholis zenkeri",
+                        sp == "corotu" ~ "Enterolobium cyclocarpum",
+                        TRUE ~ sp)) %>% # Personal findings online
   mutate(site = "Gigante")
+
+ggplot(data = Panama.ds,
+       aes(x = dbh, y = h, color = liana.cat, fill = liana.cat)) +
+  geom_point(size = 0.1) +
+  stat_smooth(method = "lm",
+              se = FALSE) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
 
 ####################################################################################################################################
 # Congo sites -- Grace data
@@ -953,6 +973,32 @@ ggplot(data = BCI.ds2keep.addi,
   scale_y_log10() +
   theme_bw()
 
+
+ggplot(data = cdf.Panama ,
+       aes(x = dbh, y = h, color = liana.cat,
+           fill = liana.cat)) +
+  geom_point(size = 0.1) +
+  stat_smooth(method = "lm", formula = y ~ x) +
+  facet_wrap(~site) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+cdf.Panama %>%
+  filter(site == "group_North") %>%
+  group_by(liana.cat) %>%
+  summarise(N = n())
+
+ggplot(data = BCI.ds2keep.addi,
+       aes(x = dbh, y = h, color = liana.cat,
+           fill = liana.cat)) +
+  geom_point(size = 0.1) +
+  stat_smooth(method = "lm", formula = y ~ x) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+
 # Tanzanian data
 
 file <- "./data/TanzaniaData_FoRCE_COI.csv"
@@ -1065,7 +1111,6 @@ all.df <- bind_rows(list(
   begum.ds,
   Pasoh.ds %>%
     ungroup() %>%
-    dplyr::select(-tag) %>%
     mutate(coi = round(coi + 0.1)),
   Australia.ds %>%
     dplyr::select(-canopy) %>%
@@ -1074,6 +1119,18 @@ all.df <- bind_rows(list(
                             levels = c("no","low","high"))) %>%
   mutate(sp = case_when(is.na(sp) ~ "Unknown",
                         TRUE ~ sp))
+
+# Check species name
+
+all.df <- all.df %>%
+  mutate(sp = case_when(tolower(sp) == "unknown" ~ paste0('Unknown_',
+                                                          site),
+                        sp == " " ~ "Unknown_Australia",
+                        sp == "Go" ~ "Unknown_Casa_Roubik",
+                        TRUE ~ sp))
+
+all.df %>%
+  filter(site == "Pasoh")
 
 saveRDS(all.df ,
         "./outputs/All.COI.data.RDS")
@@ -1244,5 +1301,5 @@ Slenderness %>%
 
 
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/All.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/data/rainfor.sites.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/data/
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/BCI.COI.data.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+

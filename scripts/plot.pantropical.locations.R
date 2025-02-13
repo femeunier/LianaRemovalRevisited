@@ -274,10 +274,38 @@ ggplot() +
 #   guides(size = "none") +
 #   theme(text = element_text(size = 20))
 
+site.groups <- all.df.md2plot %>%
+  mutate(site.group = case_when(lon < -30 & lat > 5 ~ "Panama",
+                                lon < -30 ~ "Amazon",
+                                lon < 45 ~ "Africa",
+                                TRUE ~ "Australasia"))
 
-
-saveRDS(all.df.md2plot,
+saveRDS(site.groups,
         "./outputs/site.loc.RDS")
+
+
+ggplot() +
+  geom_raster(data = df.r,
+              aes(x = lon, y = lat, fill = as.factor(LU)),
+              alpha = 0.4,show.legend = FALSE) +
+  geom_sf(data = world,
+          fill = NA,
+          color = "black",
+          alpha = 0.5) +
+  # geom_point(aes(x = lon, y = lat,size = sqrt(N)),
+  #            data = all.df.md2plot, shape = 1) +
+  geom_point(aes(x = lon, y = lat, color = site.group),
+             data = site.groups, shape = 1,
+             alpha = 1,
+             size = 1) +
+  scale_fill_manual(values = c("white",c("#72a83d"),"darkgreen")) +
+  scale_y_continuous(limits = c(-30,10)) +
+  scale_x_continuous(limits = c(-85,160),expand = c(0,0)) +
+  scale_size_continuous(range = c(0.1, 2)) +
+  labs(x = "", y = "") +
+  theme_map() +
+  guides(size = "none") +
+  theme(text = element_text(size = 20))
 
 
 # Amazon <- ggplot() +

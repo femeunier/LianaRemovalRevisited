@@ -169,7 +169,10 @@ ggplot(data = merged.data.filtered %>%
   theme_bw()
 
 saveRDS(merged.data.filtered %>%
-          dplyr::select(sp,dbh,height,coi,liana.cat.consensus),
+             mutate(sp.long = paste(Genus,species)) %>%
+          ungroup() %>%
+          dplyr::select(sp.long,dbh,height,coi,liana.cat.consensus) %>%
+          rename(sp = sp.long),
         file = "./data/Pasoh/data.merged.RDS")
 
 nrow(merged.data.filtered %>% filter(!is.na(liana.cat.consensus)))

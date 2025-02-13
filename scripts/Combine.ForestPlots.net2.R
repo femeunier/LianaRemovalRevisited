@@ -15,6 +15,7 @@ Dir <- "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/rainfor/"
 
 all.plot.files <- list.files(Dir,
                              full.names = TRUE)
+
 plots <- (str_sub(basename(all.plot.files),1,6))
 last.census <- as.numeric(sapply(strsplit(basename(all.plot.files),split='_', fixed=TRUE),"[[",4))
 
@@ -108,7 +109,8 @@ df2keep <- df.all.filt %>%
                         pull(group))) %>%
   filter(group != "TGS") %>% # Weird site where allometries are decreasing
   mutate(h = case_when(group == "VCR" & h > 30 & DBH <=30  ~ NA,
-                       TRUE ~ h))
+                       TRUE ~ h)) %>%
+  filter(site != "TAM_09") # Very weird flat allometry, different than all other TAM plots
 
 
 ggplot(data = df2keep,
@@ -118,8 +120,9 @@ ggplot(data = df2keep,
   scale_x_log10() +
   scale_y_log10() +
   stat_smooth(se = FALSE, method = "lm") +
-  facet_wrap(~ group, scales = "free") +
+  facet_wrap(~ group) +
   theme_bw()
+
 
 final.df <- df2keep
 Ntrees <- nrow(final.df)

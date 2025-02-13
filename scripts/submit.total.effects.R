@@ -35,7 +35,8 @@ all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
 
 dir.name <- "/data/gent/vo/000/gvo00074/felicien/R/data"
 csite.corrected <- csite <- "Total"
-cdir <- file.path(dir.name,paste0(csite.corrected,".re"))
+cdir <- file.path(dir.name,
+                  paste0(csite.corrected,".re"))
 
 # Create data file
 dir.create(cdir,

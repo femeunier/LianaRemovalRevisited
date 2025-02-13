@@ -201,7 +201,7 @@ df.all.effects <- df.r2 <- df.r2.single <- df.model.var <-
 all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd",
               "Prec.sd","srad","srad.sd")
 
-Var1 = "MAP" ; Var2 = "MCWD"
+Var1 = "VPD" ; Var2 = "MCWD"
 
 for (iDBHtarget in seq(1,length(DBHtargets))){
 

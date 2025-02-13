@@ -7,7 +7,9 @@ library(leafsync)
 library(ggplot2)
 
 data <- readxl::read_xlsx("./data/Panama/TreeHeightDataSmallPlotsCombined_2024-05-24.xlsx",
-                          sheet = "data")
+                          sheet = "data") %>%
+  filter(is.na(Q)) # non broken stem
+
 
 data.form <- data %>%
   rename(plot = Plotname,
@@ -100,7 +102,8 @@ ggplot() +
 data.form.name.plot <- data.form.name %>%
   left_join(plots %>%
               dplyr::select(plot,plot.group),
-            by = "plot")
+            by = "plot") %>%
+  filter(!(dbh > 100 & h < 5)) # Weird tiny tree..
 
 groupplots2keep <- (data.form.name.plot %>%
                  group_by(plot.group) %>%
@@ -153,18 +156,22 @@ ggplot(data = data.form.name.plot %>%
 #   group_by(liana.cat) %>%
 #   summarise(N = n())
 
-ggplot(data = data.form.name.plot %>%
+ggplot(data = data.form.name.plot, # %>%
          # filter(plot %in% c("P12","P14","P18"))
-         filter(plot %in% c("P25","P26"))
-       ,
+         # filter(plot %in% c("P32")),
        aes(x = dbh, y = h, color = liana.cat,
            fill = liana.cat)) +
   geom_point(size = 0.1) +
   stat_smooth(method = "lm", formula = y ~ x) +
-  facet_wrap(~ as.factor(plot),nrow = 1) +
+  facet_wrap(~ as.factor(plot)) +
   scale_x_log10() +
   scale_y_log10() +
   theme_bw()
+
+data.form.name.plot %>%
+  filter(plot == "P32") %>%
+  group_by(liana.cat) %>%
+  summarise(n())
 
 
 

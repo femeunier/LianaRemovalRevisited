@@ -13,7 +13,15 @@ alpha = 0.11
 all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
   mutate(sp = str_squish(sp)) %>%
   filter(dbh >= 10) %>%
-  mutate(site = "Total")
+  mutate(site = "Total.re")
+
+readRDS("./outputs/All.COI.data.RDS") %>%
+  dplyr::select(site,sp) %>%
+  # distinct() %>%
+  filter(nchar(sp) < 7) %>%
+  group_by(site)  %>%
+    summarise(N = n(),
+              all.sp = paste0(unique(sp),collapse = "_"))
 
 
 all.df.title <- all.df %>%
@@ -27,7 +35,7 @@ all.df.title <- all.df %>%
 
 Model.predictions <- readRDS("./outputs/Model.predictions.RDS") %>%
   ungroup() %>%
-  filter(site == "Total")
+  filter(site == "Total.re")
 
 
 df.residuals <- all.df %>%
@@ -141,14 +149,15 @@ ggplot() +
         axis.title.x = element_text(margin = margin(t = 10, r = 0, b = 0, l = 0))) +
   guides(color = "none")
 
-Main.OP <- bind_rows(readRDS("./outputs/Main.OP.SG.25.RDS") %>%
+Main.OP <- bind_rows(readRDS("./outputs/Main.OP.RDS") %>%
                        mutate(target = 25),
-                     readRDS("./outputs/Main.OP.SG.50.RDS") %>%
+                     readRDS("./outputs/Main.OP.RDS") %>%
                        mutate(target = 50),
-                     readRDS("./outputs/Main.OP.SG.100.RDS") %>%
+                     readRDS("./outputs/Main.OP.RDS") %>%
                        mutate(target = 100),
-                     readRDS("./outputs/Main.OP.SG.150.RDS") %>%
+                     readRDS("./outputs/Main.OP.RDS") %>%
                        mutate(target = 150)) %>%
+  filter(site == "Total.re") %>%
   mutate(site = "Total")
 
 ggplot(data = Main.OP,

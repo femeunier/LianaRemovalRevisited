@@ -22,7 +22,7 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                     readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
                       filter(dbh >= 10) %>%
-                      mutate(site = "Total"))
+                      mutate(site = "Total.re"))
 
 # all.df <- bind_rows(readRDS("./outputs/COI.mixed.RDS") %>%
 #                       mutate(sp = str_squish(sp)) %>%
@@ -38,7 +38,10 @@ all.df.title <- all.df %>%
          N.tot = length(site))
 
 sites <- unique(all.df.title$site)
-sites <- "Total"
+# sites <- c(readRDS("./data/rainfor.sites.RDS"),
+#            c("Dja North","Kisangani_all"),
+#            "Total.re")
+
 # sites <- c("BUL","DAN","LAM","SGW")
 # sites <- c("Loundoungou")
 # sites <- c("Sherman","Canal")
@@ -58,7 +61,7 @@ for (isite in seq(1,length(sites))){
   csite <- sites[isite]
   csite.corrected <- gsub(" ", "",csite, fixed = TRUE)
 
-  print(paste(csite))
+  print(paste0(csite," - ", isite,"/",length(sites)))
 
   df.site <- data.frame()
 

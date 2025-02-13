@@ -193,12 +193,12 @@ site.loc %>%
 
 ################################################################################
 
-DBHtargets <- c(25,50,100,150)
+DBHtargets <- c(50,100,150,300)
 
 all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd",
               "Prec.sd","srad","srad.sd")
 
-Var1 = "MAP" ; Var2 = "MCWD"
+Var1 = "MAP" ; Var2 = "srad"
 
 alpha = 0.11
 
@@ -214,7 +214,7 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
   print(cDBHtarget)
 
   Main.OP <- readRDS(paste0("./outputs/All.COI.data.RDS")) %>%
-    filter(dbh >= cDBHtarget) %>%
+    filter(dbh <= cDBHtarget) %>%
     group_by(site) %>%
     summarise(coi.m = mean(coi,
                            na.rm = TRUE),
@@ -230,8 +230,7 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
     mutate(continent = factor(continent,
                               levels = c("America","Africa","Australasia"))) %>%
     ungroup() %>%
-    mutate(w = Nlarge) %>%
-    filter(dbh.max >= cDBHtarget)
+    mutate(w = Nlarge)
 
   df.all.effects <- bind_rows(df.all.effects,
                               effect.site %>%

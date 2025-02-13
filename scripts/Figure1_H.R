@@ -14,6 +14,19 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                           site == "LAM" ~ "Lambir",
                           site == "SGW" ~ "Sungai Wain",
                           site == "BUL" ~ "	Barito Ulu Nagy",
+                          site == "Australia" ~ "WTWH, Queensland",
+
+                          site == "129" ~ "Santarém-Belterra 129",
+                          site == "357" ~ "Santarém-Belterra 357",
+                          site == "CRP" ~ "Cerro Pelao",
+                          site == "ALV" ~ "Alta Vista PPM2",
+                          site == "CUZ" ~ "Cuzco Amazonico",
+                          site == "HCC" ~ "Isla Huanchaca",
+                          site == "JBS" ~ "JBS-Chaqueño",
+                          site == "LFB" ~ "Los Fierros Bosque",
+                          site == "NXV" ~ "Parque do Bacaba, Nova Xavantina",
+                          site == "SOR" ~ "Sorriso MT",
+                          site == "TAM" ~ "Tambopata",
 
                           site == "Kisangani_all" ~ "Yoko",
                           site == "ALF" ~ "Parque Cristalino",
@@ -32,11 +45,11 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                           site == "group_Metro" ~ "Metropolitano",
                           site == "group_North" ~ "Plot 32",
                           site == "Sherman" ~ "Fort Sherman",
+
                           TRUE ~ site)) %>%
   ungroup() %>%
   mutate(site = factor(site,
                        levels = sort(unique(site),decreasing = TRUE))) %>%
-  filter(site != "Danum Valley") %>%
   mutate(site.group = case_when(site == "Mokabi" ~ "Africa",
                                 site == "Luki" ~ "Africa",
                                 TRUE ~ site.group))
@@ -124,7 +137,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = c(1-alpha),
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-15,20)) +
+  scale_x_continuous(limits = c(-25,20)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +
@@ -164,64 +177,6 @@ ggplot(data = Main.OP %>%
                                "low" = "orange",
                                "high"= "darkred"))
 
-
-ggplot(data = Main.OP %>%
-         filter(site.group == "Africa",
-                (site %in% c("Asenanyo","Cape Three Points","Cavalla","Dadieso"))),
-       aes(x = diff_h/no*100,
-           y = new.site,
-           color = liana.cat,
-           fill = liana.cat,
-           alpha = 0.5)) +
-  geom_vline(xintercept = 0,linetype = 1) +
-  stat_halfeye(color = NA, aes(alpha = signif_rel)) +
-  stat_pointinterval(aes(alpha = signif_rel2),
-                     .width = c(1-alpha),
-                     position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-30,5)) +
-  labs(y = "", color = "", fill = "",x = "") +
-  theme_minimal_hgrid() +
-  # facet_wrap(~ site.group, scales = "free_y") +
-  guides(alpha = "none", fill = "none", color = "none") +
-  theme(legend.position = c(0.1,0.9),
-        text = element_text(size = 24)) +
-  scale_color_manual(values = c("no" = "darkgreen",
-                                "low" = "orange",
-                                "high"= "darkred")) +
-  scale_fill_manual(values = c("no" = "darkgreen",
-                               "low" = "orange",
-                               "high"= "darkred"))
-
-
-ggplot(data = Main.OP %>%
-         filter(site.group == "Africa",
-                !(site %in% c("Asenanyo","Cape Three Points","Cavalla","Dadieso"))),
-       aes(x = diff_h/no*100,
-           y = new.site2,
-           color = liana.cat,
-           fill = liana.cat,
-           alpha = 0.5)) +
-  geom_vline(xintercept = 0,linetype = 1) +
-  stat_halfeye(color = NA, aes(alpha = signif_rel)) +
-  stat_pointinterval(aes(alpha = signif_rel2),
-                     .width = c(1-alpha),
-                     position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-30,5)) +
-  labs(y = "", color = "", fill = "",x = "") +
-  theme_minimal_hgrid() +
-  # facet_wrap(~ site.group, scales = "free_y") +
-  guides(alpha = "none", fill = "none", color = "none") +
-  theme(legend.position = c(0.1,0.9),
-        text = element_text(size = 24)) +
-  scale_color_manual(values = c("no" = "darkgreen",
-                                "low" = "orange",
-                                "high"= "darkred")) +
-  scale_fill_manual(values = c("no" = "darkgreen",
-                               "low" = "orange",
-                               "high"= "darkred"))
-
-
-
 ggplot(data = Main.OP %>%
          filter(site.group == "Australasia"),
        aes(x = diff_h/no*100,
@@ -249,11 +204,10 @@ ggplot(data = Main.OP %>%
                                "high"= "darkred"))
 
 
-Rainfor.md <- readRDS("./outputs/All.rainfor.RDS")
+# Rainfor.md <- readRDS("./outputs/All.rainfor.RDS")
 
 ggplot(data = Main.OP %>%
-         filter(site.group == "Amazon") %>%
-         filter(!(site %in% c(Rainfor.md$group))),
+         filter(site.group == "Amazon"),
        aes(x = diff_h/no*100,
            y = new.site2,
            color = liana.cat,
@@ -264,35 +218,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = c(1-alpha),
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-40,25)) +
-  labs(y = "", color = "", fill = "",x = "") +
-  theme_minimal_hgrid() +
-  # facet_wrap(~ site.group, scales = "free_y") +
-  guides(alpha = "none", fill = "none", color = "none") +
-  theme(legend.position = c(0.1,0.9),
-        text = element_text(size = 24)) +
-  scale_color_manual(values = c("no" = "darkgreen",
-                                "low" = "orange",
-                                "high"= "darkred")) +
-  scale_fill_manual(values = c("no" = "darkgreen",
-                               "low" = "orange",
-                               "high"= "darkred"))
-
-
-ggplot(data = Main.OP %>%
-         filter(site.group == "Amazon") %>%
-         filter((site %in% c(Rainfor.md$group))),
-       aes(x = diff_h/no*100,
-           y = new.site2,
-           color = liana.cat,
-           fill = liana.cat,
-           alpha = 0.5)) +
-  geom_vline(xintercept = 0,linetype = 1) +
-  stat_halfeye(color = NA, aes(alpha = signif_rel)) +
-  stat_pointinterval(aes(alpha = signif_rel2),
-                     .width = c(1-alpha),
-                     position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-40,25)) +
+  scale_x_continuous(limits = c(-30,30)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +
@@ -361,7 +287,7 @@ Main.OP %>%
 
 Main.OP %>%
   filter(site != 'Total') %>%
-  filter((site %in% c(unique(Rainfor.md$group)))) %>%
+  # filter((site %in% c(unique(Rainfor.md$group)))) %>%
   dplyr::select(site,liana.cat,signif_rel2,diff_h,no) %>%
   group_by(liana.cat,site) %>%
   summarise(Delta = mean(diff_h/no,na.rm = TRUE),

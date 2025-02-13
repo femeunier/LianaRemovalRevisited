@@ -126,7 +126,7 @@ plots2keep <- df.single %>%
             .groups = "keep") %>%
   pivot_wider(names_from = liana.cat,
               values_from = N) %>%
-  filter(no > 10 &
+  filter(no > 10 & low > 10 &
            high > 10 & (no + low + high) > 50) %>%
   mutate(type_site = paste0(type,'_',site))
 
@@ -142,6 +142,12 @@ ggplot(data = df.single %>%
   scale_y_log10() +
   facet_wrap(~ type_site) +
   theme_bw()
+
+df.single %>%
+  filter(type_site %in% plots2keep[["type_site"]]) %>%
+  group_by(h) %>%
+  summarise(N = n()) %>%
+  arrange(desc(N))
 
 nrow(df.single)
 df.single %>%

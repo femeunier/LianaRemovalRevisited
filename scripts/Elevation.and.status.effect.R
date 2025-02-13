@@ -5,7 +5,7 @@ library(xlsx)
 
 df.rainfor <- readRDS("./data/ForestPlots/data/df.Rainfor.RDS") %>%
   mutate(group = substr(site,1,3)) %>%
-  filter(!(group %in% c("GAU","SAT","VCR","FRP","POA"))) %>% # Repeated from the other data from forestplots
+  filter(!(site %in% c("VCR","GAU"))) %>% # Repeated from the other data from forestplots
   filter(DBH >= 10) %>%
   filter(!is.na(DBH)) %>%
   filter(!is.na(h)) %>%
@@ -16,8 +16,18 @@ Rainfor.plots <- df.rainfor %>%
   unique() %>%
   sort()
 
-df.rainfor2 <- readRDS("./data/rainfor2.loc.RDS") %>%
-  mutate(group = substr(site,1,3))
+df.rainfor2 <- readRDS("./data/rainfor2.trees.RDS") %>%
+  ungroup() %>%
+  rename(sp = Species,
+         coi = COI) %>%
+  dplyr::select(c(dbh,h,coi,sp,liana.cat,site,group)) %>%
+  filter(dbh > 0, h > 0) %>%
+  filter(dbh < 300) %>% # weird big tree
+  mutate(h = case_when(h> 50 & dbh < 25 ~ h/10,
+                       TRUE  ~ h)) %>%
+  filter(h > 3) %>%
+  filter(!(group %in% c("POA","SAT","FRP"))) # Repeated from the other data from forestplots
+
 
 Rainfor2.plots <- df.rainfor2 %>%
   pull(site) %>%
@@ -31,10 +41,10 @@ afritron.plots <- df.afritron %>%
   unique() %>%
   sort()
 
-df.Asia <- readRDS("./data/Asia/raw.data.all.RDS")
+df.Asia <- readRDS("./data/Asia/raw.data.RDS") %>%
+  dplyr::select(DBH,Species,h,COI,liana.cat,site)
 
 #######################################################
-
 
 all.inds <- bind_rows(df.rainfor %>%
                         ungroup() %>%
@@ -43,9 +53,9 @@ all.inds <- bind_rows(df.rainfor %>%
                                dbh = DBH),
                       df.rainfor2 %>%
                         ungroup() %>%
-                        dplyr::select(DBH,liana.cat,h,Species,site) %>%
+                        dplyr::select(dbh,liana.cat,h,sp,site) %>%
                         rename(plot = site,
-                               dbh = DBH),
+                               Species = sp),
 
                       df.afritron %>%
                         rename(plot = Plot.Code) %>%
@@ -76,7 +86,7 @@ all.plots <- bind_rows(
   data.frame(plot = Rainfor.plots,
              origin = "rainfor"),
   data.frame(plot = Rainfor2.plots,
-             origin = "rainfor2"),
+             origin = "rainfor"),
   data.frame(plot = afritron.plots,
              origin = "afritron")) %>%
   mutate(plot = sub("_","-",plot))
@@ -208,6 +218,13 @@ groups.with.multiple.elevation <-
   filter(Nelevation > 1) %>%
   arrange(desc(Nelevation))
 
+# groups with more than one edaphic
+groups.with.multiple.edaphic <-
+  all.plots.md.sum %>%
+  filter(keep) %>%
+  filter(Nedaphic > 1) %>%
+  arrange(desc(Nedaphic))
+
 
 all.plots.md %>%
   filter(group %in% groups.with.multiple.elevation[["group"]]) %>%
@@ -279,7 +296,8 @@ Effects.vs.cat <- all.plots.md %>%
                         filter(keep) %>%
                         pull(group))) %>%
   filter(!(group %in% c(groups.with.multiple.status[["group"]],
-                        groups.with.multiple.elevation[["group"]]))) %>%
+                        groups.with.multiple.elevation[["group"]],
+                        groups.with.multiple.edaphic[["group"]]))) %>%
   left_join(Afritron,
             by = 'group') %>%
   mutate(group = case_when(!is.na(site) ~ site,
@@ -291,14 +309,42 @@ Effects.vs.cat <- all.plots.md %>%
   distinct()
 
 
-ggplot(data = Effects.vs.cat %>%
-         filter(!is.na(status.recat)),
+ggplot(data = Effects.vs.cat,
+       aes(x = origin,
+           y = delta_H,
+           fill = origin,
+           color = origin)) +
+  geom_boxplot(alpha = 0.5,outlier.shape = NA) +
+  geom_hline(yintercept = 0,linetype = 2) +
+  geom_jitter() +
+  theme_bw() +
+  labs(x = "") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  guides(color = "none")
+
+
+ggplot(data = Effects.vs.cat,
+       aes(x = ForestMoistureName,
+           y = delta_H,
+           fill = ForestMoistureName,
+           color = ForestMoistureName)) +
+  geom_boxplot(alpha = 0.5,outlier.shape = NA) +
+  geom_jitter() +
+  geom_hline(yintercept = 0,linetype = 2) +
+  theme_bw() +
+  labs(x = "") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
+  guides(color = "none")
+
+
+ggplot(data = Effects.vs.cat,
        aes(x = status.recat,
            y = delta_H,
            fill = status.recat,
            color = status.recat)) +
   geom_boxplot(alpha = 0.5,outlier.shape = NA) +
   geom_jitter() +
+  geom_hline(yintercept = 0,linetype = 2) +
   theme_bw() +
   labs(x = "") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1)) +
@@ -306,10 +352,25 @@ ggplot(data = Effects.vs.cat %>%
 
 ggplot(data = Effects.vs.cat,
        aes(x = ForestElevationName,y = delta_H)) +
-  geom_boxplot() +
+  geom_boxplot(outlier.shape = NA) +
   geom_jitter() +
+  geom_hline(yintercept = 0,linetype = 2) +
   theme_bw() +
   labs(x = "") +
   theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
 
+
+ggplot(data = Effects.vs.cat,
+       aes(x = ForestEdaphicName,y = delta_H, fill = ForestEdaphicName, color = ForestEdaphicName)) +
+  geom_boxplot(alpha = 0.5,outlier.shape = NA) +
+  geom_jitter() +
+  geom_hline(yintercept = 0,linetype = 2) +
+  theme_bw() +
+  labs(x = "") +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust=1))
+
+Effects.vs.cat %>%
+  filter(delta_H > 0) %>%
+  dplyr::relocate(group,delta_H,origin) %>%
+  arrange(desc(delta_H))
 
