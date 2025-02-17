@@ -42,8 +42,6 @@ all.df %>% group_by(site) %>%
   arrange(Ndata)
 
 sites <- sort(unique(all.df$site))
-sites <- c("Canal","Casa_Roubik","Sherman","group_Metro","group_North",
-           "BCI")
 # sites <- readRDS("./data/rainfor.sites.RDS")
 # sites <- c("Dja North","Kisangani_all")
 # sites <- all.df %>% group_by(site) %>%

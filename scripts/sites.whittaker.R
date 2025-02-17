@@ -13,9 +13,8 @@ library(terra)
 library(SPEI)
 
 site.loc <- readRDS("./outputs/site.loc.RDS") %>%
-  mutate(continent = case_when(lon <= -35 ~ "America",
-                               lon <= 50 ~ "Africa",
-                               TRUE ~ "Australasia"))
+  mutate(continent = site.group)
+continents <- unique(site.loc$continent)
 
 days <- c(31,28,31,30,31,30,31,31,30,31,30,31)
 
@@ -232,7 +231,7 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
                               Qlow_high,Qhigh_high),
               by = "site") %>%
     mutate(continent = factor(continent,
-                              levels = c("America","Africa","Australasia"))) %>%
+                              levels = continents)) %>%
     ungroup() %>%
     mutate(w = Nlarge) %>%
     filter(dbh.max >= cDBHtarget)
@@ -403,10 +402,10 @@ df.all.effects %>%
             .groups = "keep")
 
 
-cols<-brewer.pal(3,"Dark2")
+cols<-brewer.pal(length(continents),"Dark2")
 
 
-ctarget <- DBHtargets[1]
+ctarget <- DBHtargets[2]
 ggplot() +
   geom_errorbar(data = df.all.effects.long %>%
                   filter(target == ctarget),
@@ -518,7 +517,7 @@ df.model.all.long2plot <-
   df.model.all.long %>%
   mutate(variable = relevel(as.factor(variable),ref = Var1))
 
-Target <- DBHtargets[1]
+Target <- DBHtargets[2]
 ggplot() +
   geom_errorbar(data = df.all.effects.long2plot %>%
                   filter(target == Target,

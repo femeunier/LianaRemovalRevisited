@@ -93,7 +93,7 @@ for (isite in seq(1,length(sites))){
 
   Diagnstocis.Bayesian.site <- raw.diagnosis %>%
     arrange((waic)) %>%
-    filter(rhat.max < 1.05)
+    filter(rhat.m < 1.5)
 
   Diagnstocis.Bayesian.site.best <-
     bind_rows(

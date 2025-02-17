@@ -15,6 +15,7 @@ Dir <- "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/rainfor/"
 
 all.plot.files <- list.files(Dir,
                              full.names = TRUE)
+all.plot.files <- all.plot.files[grepl("NXV",all.plot.files)]
 
 plots <- (str_sub(basename(all.plot.files),1,6))
 last.census <- as.numeric(sapply(strsplit(basename(all.plot.files),split='_', fixed=TRUE),"[[",4))
@@ -69,8 +70,8 @@ for (ifile in seq(1,length(all.plot.files))){
 
 hist(df.all$F5)
 
-saveRDS(df.all,
-        './data/rainfor2.loc.RDS')
+# saveRDS(df.all,
+#         './data/rainfor2.loc.RDS')
 
 # df.all2 <- df.all %>%
 #   group_by(site,TreeID) %>%
@@ -113,7 +114,9 @@ df2keep <- df.all.filt %>%
   filter(site != "TAM_09") # Very weird flat allometry, different than all other TAM plots
 
 
-ggplot(data = df2keep,
+ggplot(data = df2keep %>%
+         filter(site %in% c("NXV_02","NXV_11"),
+                h > 3),
          aes(x = DBH, y = h,
              color = as.factor(liana.cat))) +
   geom_point(size = 0.1) +
@@ -128,8 +131,8 @@ final.df <- df2keep
 Ntrees <- nrow(final.df)
 Nsites <- length(unique(final.df$group))
 
-saveRDS(df2keep,
-        "./outputs/All.rainfor.RDS")
+# saveRDS(df2keep,
+#         "./outputs/All.rainfor.RDS")
 
 
 

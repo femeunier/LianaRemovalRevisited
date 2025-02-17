@@ -45,13 +45,13 @@ site.Gigante <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisit
             lon = mean(X)) %>%
   mutate(Site = "Gigante-Us")
 
-site.Alain <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
-  dplyr::select(plotID, plotLat ,plotLon ) %>%
-  mutate(Site = sub("\\_.*", "", plotID)) %>%
-  filter(Site == "OKU") %>%
-  group_by(Site) %>%
-  summarise(lat = mean(plotLat),
-            lon = mean(plotLon))
+# site.Alain <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
+#   dplyr::select(plotID, plotLat ,plotLon ) %>%
+#   mutate(Site = sub("\\_.*", "", plotID)) %>%
+#   filter(Site == "OKU") %>%
+#   group_by(Site) %>%
+#   summarise(lat = mean(plotLat),
+#             lon = mean(plotLon))  # Not enough data when split into secondary/oldgroth
 
 
 site.Panama <- readRDS("./outputs/plots.panama.RDS") %>%
@@ -62,13 +62,20 @@ site.Panama <- readRDS("./outputs/plots.panama.RDS") %>%
   filter(Site != "BCI")
 
 site.Tan <- read.csv("./data/TanzaniaData_FoRCE_COI.csv") %>%
-  mutate(site = substr(plotID,1,4)) %>%
-  dplyr::select(c(site,forest,latitude,longitude)) %>%
+  mutate(regroup = case_when(longitude > 36.75 ~ "1",
+                             longitude > 36.25 ~ "2",
+                             longitude > 36 ~ "3",
+                             latitude > -8.5 ~ "4",
+                             TRUE ~ "4")) %>%
+  mutate(Site = case_when(regroup ==  "1" ~ "Tanzania_lowland",
+                          regroup ==  "2" ~ "Tanzania_montane",
+                          regroup ==  "4" ~ "Tanzania_lowermontane")) %>%
+  filter(!is.na(Site)) %>%
+  dplyr::select(c(Site,forest,latitude,longitude)) %>%
   distinct() %>%
-  # group_by(site) %>%
+  group_by(Site) %>%
   summarise(lat = mean(latitude),
-            lon = mean(longitude)) %>%
-  mutate(Site = "Tanzania")
+            lon = mean(longitude))
 
 site.Gigante2 <- data.frame(lat = 9+6/60+31/3600,
                             lon = -79-50/60-37/3600,
@@ -81,11 +88,15 @@ site.BCI <- data.frame(lat = (9.156129 + 9.152909)/2,
                        lon = (-79.852753 -79.846058)/2,
                        Site = "BCI")
 
-sites.Australia <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/COI_metadata_FoRCE_Australia.csv",
+sites.Australia <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/all_mFoRCEAU_plots_summary-V2.csv",
                            stringsAsFactors = FALSE) %>%
-  summarise(lat = -mean(centre_s),
-            lon = mean(centre_e)) %>%
-  mutate(Site = "Australia")
+  filter(!is.na(plot_num)) %>%
+  filter(elevation != "lower montane") %>%
+  group_by(elevation) %>%
+  summarise(lat = mean(Lat),
+            lon = mean(Lon)) %>%
+  mutate(Site = paste0("Australia_",elevation)) %>%
+  dplyr::select(-elevation)
 
 site.begum <- data.frame(lat = 2+27/60 + 11.87/3600,
                          lon = 17 +2/60 + 32.17/3600,
@@ -128,14 +139,44 @@ site.DV <- data.frame(lon = 117.7943,
                       Site = "Danum Valley")
 
 # Rainfor request 1
-site.rainfor <- readRDS("./data/ForestPlots/data/RainForMD.RDS") %>%
+tmp <- readRDS("./data/ForestPlots/data/RainForMD.RDS")
+site.rainfor <-  bind_rows(tmp %>%
+                             filter(group != "PEA"),
+                           tmp %>%
+                             filter(group == "PEA") %>%
+                             mutate(group = "PEA_Oldgrowth"),
+                           tmp %>%
+                             filter(group == "PEA") %>%
+                             mutate(group = "PEA_Mixed") ) %>%
   rename(Site = group) %>%
   rename(lat = lat.m,
          lon = lon.m) %>%
   filter(!(Site %in% c("GAU","SAT","VCR","FRP","POA"))) # repeated with the second census
 
+
+
 # Rainfor request 2
-site.rainfor2 <- readRDS("./data/rainfor2.md.RDS") %>%
+tmp2 <- readRDS("./data/rainfor2.md.RDS")
+site.rainfor2 <- bind_rows(tmp2 %>%
+                             filter(!(group %in% c("GAU","NXV"))),
+                           tmp2 %>%
+                             filter(group == "NXV") %>%
+                             mutate(group = "NXV_Mixed"),
+                           tmp2 %>%
+                             filter(group == "NXV") %>%
+                             mutate(group = "NXV_Oldgrowth_Dry"),
+                           tmp2 %>%
+                             filter(group == "NXV") %>%
+                             mutate(group = "NXV_Oldgrowth_Moist"),
+
+                           tmp2 %>%
+                             filter(group == "GAU") %>%
+                             mutate(group = "GAU_Mixed"),
+                           tmp2 %>%
+                             filter(group == "GAU") %>%
+                             mutate(group = "GAU_Oldgrowth"),
+
+                           ) %>%
   rename(Site = group) %>%
   rename(lat = Latitude,
          lon = Longitude) %>%
@@ -145,7 +186,7 @@ all.COI <- readRDS("./outputs/All.COI.data.RDS")
 
 all.sites <-  bind_rows(list(
   bind_rows(
-    site.Alain %>% mutate(site.common = Site),
+    # site.Alain %>% mutate(site.common = Site),
     site.Panama %>% mutate(site.common = Site),
     site.Tan %>% mutate(site.common = Site),
     # site.tapajos %>% mutate(site.common = Site),

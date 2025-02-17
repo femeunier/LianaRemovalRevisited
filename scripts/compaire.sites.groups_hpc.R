@@ -27,7 +27,7 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
               rename(site = site.common) %>%
               dplyr::select(site,site.group),
             by = "site") %>%
-  filter(site.group %in% c("Africa","Australasia","Panama")) %>%
+  # filter(site.group %in% c("Panama")) %>%
   group_by(site.group)
 
 all.df.title <- all.df %>%
@@ -134,7 +134,7 @@ for (isite in seq(1,length(site.groups))){
 }
 
 best.model.all <- all.diagnosis %>%
-  filter(rhat.max < 1.05) %>%
+  filter(rhat.m < 1.05) %>%
   group_by(site.group) %>%
   arrange(waic) %>%
   slice_head(n = 1) %>%
@@ -535,3 +535,4 @@ ggplot(data = temp3.title %>%
   theme_bw()
 
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/compaire.sites.groups_hpc.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/site.loc.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/

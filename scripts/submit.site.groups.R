@@ -33,8 +33,7 @@ all.df <- all.df %>%
   ungroup() %>%
   # mutate(sp = case_when(N <= 100 | sp == "" | tolower(sp) == "other" ~ "OTHER",
   #                       TRUE ~ sp)) %>%
-  dplyr::select(-N) %>%
-  filter(site.group %in% c("Panama"))
+  dplyr::select(-N)
 
 all.df %>%
   group_by(site.group) %>%

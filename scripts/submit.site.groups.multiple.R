@@ -34,8 +34,7 @@ all.df <- all.df %>%
   ungroup() %>%
   # mutate(sp = case_when(N <= 100 | sp == "" | tolower(sp) == "other" ~ "OTHER",
   #                       TRUE ~ sp)) %>%
-  dplyr::select(-N) %>%
-  filter(site.group %in% c("Amazon"))
+  dplyr::select(-N)
 
 site.groups <- all.df %>%
   group_by(site.group) %>%
@@ -47,8 +46,8 @@ site.groups <- all.df %>%
 dir.name <- "/data/gent/vo/000/gvo00074/felicien/R/data"
 
 Nchains <- 4
-Niter <- 5000
-control.list <- list(adapt_delta = 0.8,
+Niter <- 25000
+control.list <- list(adapt_delta = 0.95,
                      max_treedepth = 10)
 
 overwrite <- TRUE
@@ -145,3 +144,4 @@ dumb <- write_bash_submission(file = file.path(getwd(),
                               job_name = job.names)
 
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/submit.site.groups.multiple.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/site.loc.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/

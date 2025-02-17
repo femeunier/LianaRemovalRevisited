@@ -359,9 +359,9 @@ system2("rsync",c("-avz",
 temp.title <- readRDS("./outputs/Model.predictions.RDS")
 
 ggplot(data = temp.title %>%
-         filter(site == 'TAN')) +
+         filter(site == 'Total.re')) +
   geom_point(data = all.df.title %>%
-               filter(site %in% 'TAN'),
+               filter(site %in% 'Total.re'),
              aes(x = dbh,y = h, color = as.factor(liana.cat)),
              size = 0.5, alpha = 0.25) +
   # geom_ribbon(aes(x = dbh, y = h.pred.m, fill = as.factor(liana.cat),

@@ -55,6 +55,7 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                                 TRUE ~ site.group))
 
 
+
 diff.H.sites <- Main.OP %>%
   group_by(site,liana.cat) %>%
   summarise(m = median(diff_h/no*100,na.rm = TRUE),

@@ -48,9 +48,9 @@ saveRDS(all.df,
 
 Names <- c("gmm","weibull","power")
 
-Nchains <- 6
+Nchains <- 5
 Niter <- 5000
-control.list <- list(adapt_delta = 0.8,
+control.list <- list(adapt_delta = 0.95,
                      max_treedepth = 10)
 
 overwrite <- TRUE

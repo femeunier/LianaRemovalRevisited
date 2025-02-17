@@ -36,7 +36,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
                               mixed.effect.params))
 
 
-  addition <- ifelse(site.re,"(1 | site) + (1 | sp)","(1 | sp)")
+  addition <- ifelse(site.re,
+                     "(1 | site/sp)",
+                     "(1 | sp)")
 
   # Power function form
   if ("power" %in% tolower(names)){

@@ -13,6 +13,8 @@ library(caret)
 ########################################################
 # Australasia, forestplots
 raw.data.FP.Asia <- readRDS("./data/Asia/raw.data.RDS") %>%
+  filter(!(site %in% c("BUL_07","BUL_08", "BUL_40" # Remove white sand with almost no data
+                       ))) %>%
   dplyr::select(DBH,Species,h,COI,liana.cat,site.common) %>%
   rename(dbh = DBH, coi = COI,sp = Species, site = site.common)
 
@@ -165,7 +167,12 @@ ggplot(data = BCI.ds2keep,
 ################################################################################
 # Wannes Data
 
-df.Wannes <- readRDS("./data/Afritron.RDS")
+df.Wannes <- readRDS("./data/Afritron.RDS") %>%
+  filter(!(Plot.Code %in% c("LKM-01","LKM-04",  # Remove mixed forest status)
+                            "NGI-11",          # Remove premontane
+                            "NNP-01","NNP-02","NNP-03","NNP-05")  # Remove this cluster (not enough data)
+
+           ))
 
 # write.csv(read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
 #   filter(PlotID %in% df.Wannes[["PlotID"]]) %>%
@@ -332,7 +339,7 @@ ggplot() +
 
 # ################################################################################
 # # Tapajos
-#
+# #
 # data <- read.csv("./data/Tapajos.csv") %>%
 #   rename(sp = Species,
 #          dbh = DBH_2014,
@@ -349,15 +356,15 @@ ggplot() +
 #                                TRUE ~ NA_character_)) %>%
 #   dplyr::select(dbh,h,coi,sp,liana.cat) %>%
 #   mutate(site = "Tapajos")
-
+#
 # table(data$Plot)
 # table(data$liana.cat)
-
+#
 # data.tapajos <- data %>%
 #   filter(dbh >= 10,
 #          !is.na(liana.cat))
-
-# ggplot(data = data.filt,
+#
+# ggplot(data = data.tapajos,
 #        aes(x = dbh,
 #            y = h,
 #            color = liana.cat)) +
@@ -370,7 +377,10 @@ ggplot() +
 
 Rainfor.df <- readRDS("./data/ForestPlots/data/df.Rainfor.RDS") %>%
   ungroup() %>%
-  mutate(site = group) %>%
+  mutate(site = case_when(site %in% c("PEA_01","PEA_02","PEA_03",
+                                      "PEA_05","PEA_07","PEA_08") ~ "PEA_Mixed",
+                          site %in% c("PEA_04","PEA_06") ~ "PEA_Oldgrowth",
+                          TRUE ~ group)) %>%
   rename(dbh = DBH,
          sp = Species,
          coi = COI) %>%
@@ -382,8 +392,22 @@ Rainfor.df <- readRDS("./data/ForestPlots/data/df.Rainfor.RDS") %>%
 # All.rainfor.RDS
 
 Rainfor2.df <- readRDS("./data/rainfor2.trees.RDS") %>%
+  filter(!(site %in% c("JBS_02",                    # Seasonal flood plain with almost no data
+                       "TAM_03","TAM_06",           # Former floodplain and swamp almost no data
+                       "LFB-03",                    # Very different plot (flooded etc.)
+                       "GAU_03",                    # Savanna
+                       "NXV_06","NXV_07", "NXV_08"))) %>%   # Not enough data in those cat.
+  filter(!(dbh > 45 & h < 6 & site == "GAU_01")) %>% # Very small trees
   ungroup() %>%
-  mutate(site = group) %>%
+  mutate(site = case_when(site %in% c("GAU_01","GAU_06") ~ "GAU_Mixed",
+                          site %in% c("GAU_02","GAU_04",
+                                      "GAU_05","GAU_07") ~ "GAU_Oldgrowth",
+
+                          site %in% c("NXV_01") ~ "NXV_Mixed",
+                          site %in% c("NXV_03") ~ "NXV_Oldgrowth_Dry",
+                          site %in% c("NXV_02","NXV_11") ~ "NXV_Oldgrowth_Moist",
+
+                          TRUE ~ group)) %>%
   rename(sp = Species,
          coi = COI) %>%
   dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
@@ -393,7 +417,6 @@ Rainfor2.df <- readRDS("./data/rainfor2.trees.RDS") %>%
                        TRUE  ~ h)) %>%
   filter(h > 3) %>%
   filter(!(site %in% c("POA","SAT","FRP"))) # Repeated from the other data from forestplots
-
 
 
 # verify plots from both rainfor sources
@@ -877,11 +900,12 @@ Panama2.ds <- read.csv("~/Downloads/allwithspev4.csv") %>%
 
 ####################################################################################################################################
 # Australia
-md.australia <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/all_mFoRCEAU_plots_summary-1.csv")
+md.australia <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/all_mFoRCEAU_plots_summary-V2.csv") %>%
+  filter(!is.na(plot_num))
 
 Australia.ds <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisited/data/COI_data_FoRCE_Australia.csv",
            stringsAsFactors = FALSE) %>%
-  left_join(md.australia %>% dplyr::select(plot_name,canopy),
+  left_join(md.australia %>% dplyr::select(plot_name,canopy,elevation),
             by = "plot_name") %>%
   filter(form %in% c("tree"),
          bent_broken == 0) %>%
@@ -904,22 +928,24 @@ Australia.ds <- read.csv("/home/femeunier/Documents/projects/LianaRemovalRevisit
   filter(!is.na(h),
          !is.na(dbh),
          !is.na(liana.cat)) %>%
-  dplyr::select(c(dbh,h,coi,sp,site,liana.cat,canopy))
+  dplyr::select(c(dbh,h,coi,sp,site,liana.cat,canopy,elevation))
 
 Australia.ds.can <- bind_rows(Australia.ds,
                               Australia.ds %>%
-                                mutate(canopy = "all"))
+                                mutate(canopy = "all",
+                                       elevation = "all"))
 
 
 ggplot(data = Australia.ds.can %>%
-         filter(dbh >= 10) %>%
+         filter(dbh >= 10,
+                h > 3) %>%
          filter(!is.na(canopy)),
        aes(x = dbh, y = h, color = liana.cat)) +
   geom_point(alpha = 0.5, size = 0.5) +
-  facet_wrap(~ canopy,nrow = 1) +
+  facet_wrap(~ elevation,nrow = 1) +
   stat_smooth(se = FALSE,method = "lm") +
-  scale_x_log10(limits = c(10,200),breaks = c(10,30,50,100)) +
-  scale_y_log10(limits = c(1,50),breaks = seq(10,24,2)) +
+  scale_x_log10() +
+  scale_y_log10() +
   theme_bw()
 
 # Australia.ds <- Australia.ds %>%
@@ -928,8 +954,10 @@ ggplot(data = Australia.ds.can %>%
 #   dplyr::select(-canopy)
 
 ########################################################################################################################
+Cameroon.data <- read.csv("~/Downloads//Tree_COI_Data_Cameroon_MissingHeights.csv")
+unique(Cameroon.data$forest)
 
-Alain.ds <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
+Alain.ds <- Cameroon.data %>%
 
   rename(coi = COI,
          dbh = dbh_cm,
@@ -944,8 +972,19 @@ Alain.ds <- read.csv("./data/Tree_COI_Data_Cameroon_MissingHeights.csv") %>%
   filter(!is.na(h),
          !is.na(dbh),
          !is.na(liana.cat)) %>%
-  dplyr::select(c(dbh,h,coi,sp,site,liana.cat)) %>%
-  filter(site == "OKU") # The other site does not have high liana infestation data..
+  dplyr::select(c(dbh,h,coi,sp,site,liana.cat,forest)) %>%
+   filter(site == "OKU") # The other site does not have high liana infestation data..
+
+ggplot(data = Alain.ds,
+       aes(x = dbh,y = h, color = liana.cat)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  scale_x_log10() +
+  scale_y_log10() +
+  facet_wrap(~forest) +
+  theme_bw() # Not enough data ..
+
+
 
 # Other plots Panama
 
@@ -1005,9 +1044,44 @@ file <- "./data/TanzaniaData_FoRCE_COI.csv"
 # file <- "./data/TanzaniaData_microFoRCE_COI.csv"
 raw.data.Tan <- read.csv(file)
 
+dist <- raw.data.Tan %>%
+  dplyr::select(plotID,forest,elevation,latitude,longitude) %>%
+  distinct() %>%
+  mutate(group = substr(plotID,1,4)) %>%
+  filter(forest == "secondary") %>%
+  mutate(regroup = case_when(longitude > 36.75 ~ "1",
+                             longitude > 36.25 ~ "2",
+                             longitude > 36 ~ "3",
+                             latitude > -8.5 ~ "4",
+                             TRUE ~ "4"))
+
+dist %>%
+  filter(regroup == 4)
+
+
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot(data = dist %>%
+         filter(regroup != "3")) +
+  geom_point(aes(x = longitude, y = latitude, color = regroup),
+             shape = 1) +
+    geom_sf(data = world,
+            fill = NA,
+            color = "darkgrey") +
+  scale_x_continuous(limits = c(30,40)) +
+  scale_y_continuous(limits = c(-15,-5)) +
+  theme_bw()
+
+
 unique(sort(raw.data.Tan$plotID))
 
 data.Tan <-  raw.data.Tan %>%
+  mutate(regroup = case_when(longitude > 36.75 ~ "1",
+                             longitude > 36.25 ~ "2",
+                             longitude > 36 ~ "3",
+                             latitude > -8.5 ~ "4",
+                             TRUE ~ "4")) %>%
+  filter(!(regroup %in% c("3"))) %>% # Not enough data
   filter(!is.na(height_m)) %>%
   mutate(liana.cat = case_when(COI == 0 ~ "no",
                                COI < 3 ~ "low",
@@ -1022,7 +1096,10 @@ data.Tan <-  raw.data.Tan %>%
                             levels = c("no","low","high"))) %>%
   # dplyr::select(c(plotID,dbh,h,coi,sp,liana.cat)) %>%
   filter(dbh >= 10) %>%
-  mutate(site = "Tanzania") %>%
+  mutate(site = case_when(regroup ==  "1" ~ "Tanzania_lowland",
+                          regroup ==  "2" ~ "Tanzania_montane",
+                          regroup ==  "4" ~ "Tanzania_lowermontane")) %>%
+  # mutate(group = substr(plotID,1,4)) %>%
   # mutate(site = substr(plotID,1,4)) %>%
   # mutate(site = case_when(longitude < 36.1 ~ "Tan_1",
   #                         longitude < 36.6 ~ "Tan_2",
@@ -1036,8 +1113,8 @@ data.Tan <-  raw.data.Tan %>%
   filter(!is.na(h),
          !is.na(dbh),
          !is.na(liana.cat)) %>%
-  mutate(Elev = case_when(elevation < 1000 ~ "low",
-                          TRUE ~ "high")) %>%
+  # mutate(Elev = case_when(elevation < 1000 ~ "low",
+  #                         TRUE ~ "high")) %>%
   dplyr::select(c(dbh,h,coi,sp,site,liana.cat))
 
 # data.site.Tan <- data.Tan %>%
@@ -1056,11 +1133,12 @@ data.Tan <-  raw.data.Tan %>%
 #   geom_point(aes(x = longitude, y = latitude, color = site)) +
 #   theme_bw()
 
+
 ggplot(data.Tan,
        aes(x = dbh, y = h,
            color = liana.cat)) +
   geom_point(size = 0.1) +
-  # facet_wrap(~as.factor(elevation)) +
+  facet_wrap(~as.factor(site)) +
   scale_x_log10() +
   scale_y_log10() +
   stat_smooth(method = "lm", se = FALSE) +
@@ -1090,7 +1168,7 @@ all.df <- bind_rows(list(
   Rainfor.df,
   Rainfor2.df,
   # data.tapajos,
-  Alain.ds,
+  # Alain.ds,
   data.Tan,
   BCI.ds2keep.addi,
   ccdf.Panama,
@@ -1113,8 +1191,10 @@ all.df <- bind_rows(list(
     ungroup() %>%
     mutate(coi = round(coi + 0.1)),
   Australia.ds %>%
-    dplyr::select(-canopy) %>%
-    mutate(site = "Australia"))) %>%
+    filter(elevation != "lower montane") %>% # not enough data
+    dplyr::select(-c(canopy)) %>%
+    mutate(site = paste0("Australia_",elevation)) %>%
+    dplyr::select(-elevation))) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high"))) %>%
   mutate(sp = case_when(is.na(sp) ~ "Unknown",

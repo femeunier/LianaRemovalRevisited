@@ -96,7 +96,12 @@ for (isite in seq(1,length(site.groups))){
     fixed.effects <- sub(".*\\_", "",cmodel.name)
 
     # cwaic <- loo(fit.site)
-    cwaic <- waic(fit.site)
+    cwaic <- tryCatch(waic(fit.site),
+                      error = function(e) NULL)
+    if (is.null(cwaic)){
+      next()
+    }
+
     all.rhat <- rhat(fit.site)
     max.error <- max(predict(fit.site)[,2])
 

@@ -28,6 +28,21 @@ data.form <- data %>%
          !is.na(h)) %>%
   filter(dbh >= 10)
 
+ggplot(data.form %>%
+         filter(plot %in% c("P23","P24")),
+       aes(x = dbh, y = h, color = liana.cat, fill = liana.cat)) +
+  geom_point() +
+  stat_smooth(method = "lm") +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
+
+data.form %>%
+  filter(plot %in% c("P08","P09")) %>%
+  group_by(liana.cat) %>%
+  summarise(N = n()) %>%
+  ungroup()
+
 plots2keep <- (data.form %>%
                  group_by(plot) %>%
                  summarise(Ntot = n(),
@@ -76,11 +91,17 @@ plots <- read.csv("~/Downloads/Panama_Plot_Locations_-5492404959867224624.csv") 
   dplyr::filter(plot %in% unique(sort(data.form.name$plot))) %>%
   mutate(plot.group = case_when(plot %in% c("P32") ~ "group_North",
                                 plot %in% c("Casa Roubik") ~ "Casa_Roubik",
-                                plot %in% c("P14","P12","P18") ~ "BCI",
+
+                                plot %in% c("P14") ~ "BCI",
+                                plot %in% c("P12") ~ "BCI_secondary",
+                                plot %in% c("P18") ~ "BCI_mature",
+
                                 plot %in% c("Sherman") ~ "Sherman",
-                                # plot %in% c("P25","P26") ~ "South",
                                 grepl("Metro",plot) ~ "group_Metro",
-                                TRUE ~ "Canal"))
+
+                                plot %in% c("P08","P09") ~ "Canal_primary",
+                                plot %in% c("P23","P24") ~ "Canal_secondary",
+                                TRUE ~ "Canal_mature"))
 
 
 
@@ -222,10 +243,10 @@ ggplot() +
 
 
 ggplot() +
-  geom_point(aes(x = lon, y = AnnualPpt,
+  geom_point(aes(x = lon, y = lat,
                  color = plot.group),
              data = plots.prop) +
-  scale_color_manual(values = c("blue","red","black","yellow","pink","brown")) +
+  # scale_color_manual(values = c("blue","red","black","yellow","pink","brown")) +
   theme_bw()
 
 plots.prop %>%
@@ -233,3 +254,9 @@ plots.prop %>%
          lon <= -79.75)
 
 saveRDS(plots,"./outputs/plots.panama.RDS")
+
+
+plots %>%
+  dplyr::select(plot.group,plot) %>%
+  arrange(plot.group)
+
