@@ -181,7 +181,7 @@ df.Wannes <- readRDS("./data/Afritron.RDS") %>%
 #     arrange(PlotCode),
 #   "~/Documents/Afritron.csv")
 #
-#
+
 meta.data <- read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
   filter(PlotID %in% df.Wannes[["PlotID"]]) %>%
   dplyr::select(PlotCode,PlotID,Country,ClusterName,LatitudeDecimal,LongitudeDecimal) %>%
@@ -195,6 +195,12 @@ meta.data <- read.csv("./data/Afritron/africa_metadataforR_112017.csv") %>%
     grepl("Ogooue",ClusterName) ~ "Ogooue",
     grepl("Sangha",ClusterName) ~ "Sangha",
     grepl("Kisangani",ClusterName) ~ "Kisangani_all",
+
+    PlotCode %in% c("GBO-02","GBO-08") ~ "Grebo_oldgrowth",
+    PlotCode %in% c("GBO-04","GBO-11","GBO-11","GBO-15","GBO-19") ~ "Grebo_Mixed",
+
+    grepl("Nguti Cluster",ClusterName) ~ "Nguti Cluster",
+
     TRUE ~ ClusterName)) %>%
   mutate(lat = LatitudeDecimal,
          lon = LongitudeDecimal) %>%
@@ -449,8 +455,41 @@ ggplot(data = All.rainfor %>%
 # Karin Santos
 raw.data.Karin <- read_xlsx("./data/Karin/Karin data_Felicien.xlsx")
 
+df.karin.points <- raw.data.Karin %>%
+  dplyr::select(Coordinates,`Forest Fragment`) %>%
+  group_by(Coordinates,`Forest Fragment`) %>%
+  rename(Fragment = `Forest Fragment`) %>%
+  summarise(N = n(),
+            .groups = "keep") %>%
+  distinct() %>%
+  ungroup() %>%
+  rowwise() %>%
+  mutate(lat = -as.numeric(substr(Coordinates,1,2)) -
+              as.numeric(substr(Coordinates,4,5))/60,
+         lon = - as.numeric(substr(strsplit(Coordinates," ")[[1]][2],1,2)) -
+           as.numeric(substr(strsplit(Coordinates," ")[[1]][2],4,5))/60) %>%
+  left_join(read.csv("./data/meta.data.Karin.csv") %>%
+              dplyr::select(Fragment,Altitude..m.,
+                            Disturbanced),
+            by = "Fragment")
+
+
+world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
+
+ggplot() +
+  geom_point(data = df.karin.points,
+             aes(x = lon,y = lat, color = Altitude..m.)) +
+  geom_sf(data = world,
+          fill = NA,
+          color = "darkgrey") +
+  scale_x_continuous(limits = c(-48,-46)) +
+  scale_y_continuous(limits = c(-24,-22)) +
+  theme_bw()
+
+
 Karin.df <- raw.data.Karin %>%
   ungroup() %>%
+  rename(Fragment = `Forest Fragment`) %>%
   rename(sp = Species,
          dbh = `DBH (cm)`,
          COI = Lianas,
@@ -466,21 +505,28 @@ Karin.df <- raw.data.Karin %>%
                                TRUE ~ "high"),
          h = as.numeric(h),
          site = "Campinas") %>%
-  dplyr::select(c(dbh,h,coi,sp,liana.cat,site)) %>%
+  dplyr::select(c(dbh,h,coi,sp,liana.cat,site,Fragment)) %>%
   filter(dbh > 0, h > 0) %>%
   filter(!is.na(dbh),
          !is.na(h),
-         !is.na(coi))
+         !is.na(coi)) %>%
+  left_join(df.karin.points %>%
+              dplyr::select(Fragment,Disturbanced),
+            by = "Fragment") %>%
+  mutate(site = case_when(Fragment == "Avis rara" ~ "Campinas_secondary",
+                          TRUE ~ "Campinas_Mixed")) %>%
+  dplyr::select(-c(Fragment,Disturbanced))
 
-# ggplot(data = Karin.df %>%
-#          filter(dbh > 5),
-#        aes(x = dbh, y = h, color = as.factor(liana.cat),
-#            fill = as.factor(liana.cat))) +
-#   geom_point(alpha = 0.5, size = 0.1) +
-#   stat_smooth(method = "lm") +
-#   scale_x_log10() +
-#   scale_y_log10() +
-#   theme_bw()
+ggplot(data = Karin.df %>%
+         filter(dbh >= 10),
+       aes(x = dbh, y = h, color = as.factor(liana.cat),
+           fill = as.factor(liana.cat))) +
+  geom_point(alpha = 0.5, size = 0.1) +
+  stat_smooth(method = "lm") +
+  facet_wrap(~site) +
+  scale_x_log10() +
+  scale_y_log10() +
+  theme_bw()
 
 # raw.data.Karin <- read_xlsx("./data/Karin/Karin data_Felicien.xlsx")
 #
@@ -1048,7 +1094,7 @@ dist <- raw.data.Tan %>%
   dplyr::select(plotID,forest,elevation,latitude,longitude) %>%
   distinct() %>%
   mutate(group = substr(plotID,1,4)) %>%
-  filter(forest == "secondary") %>%
+  filter(forest == "secondary") %>%  # Not enought data in the primary
   mutate(regroup = case_when(longitude > 36.75 ~ "1",
                              longitude > 36.25 ~ "2",
                              longitude > 36 ~ "3",
@@ -1061,9 +1107,8 @@ dist %>%
 
 world <- rnaturalearth::ne_countries(scale = "medium", returnclass = "sf")
 
-ggplot(data = dist %>%
-         filter(regroup != "3")) +
-  geom_point(aes(x = longitude, y = latitude, color = regroup),
+ggplot(data = dist) +
+  geom_point(aes(x = longitude, y = latitude, color = elevation),
              shape = 1) +
     geom_sf(data = world,
             fill = NA,
@@ -1197,23 +1242,33 @@ all.df <- bind_rows(list(
     dplyr::select(-elevation))) %>%
   mutate(liana.cat = factor(liana.cat,
                             levels = c("no","low","high"))) %>%
-  mutate(sp = case_when(is.na(sp) ~ "Unknown",
+  mutate(sp = case_when(is.na(sp) ~ "",
                         TRUE ~ sp))
 
 # Check species name
 
 all.df <- all.df %>%
-  mutate(sp = case_when(tolower(sp) == "unknown" ~ paste0('Unknown_',
-                                                          site),
-                        sp == " " ~ "Unknown_Australia",
-                        sp == "Go" ~ "Unknown_Casa_Roubik",
+  ungroup() %>%
+  mutate(sp = str_replace_all(sp,"[[:punct:]]", "")) %>%
+  mutate(sp = case_when(tolower(sp) == "unknown" ~ "",
+                        sp == " " ~ "",
+                        sp == "Go" ~ "",
+                        sp == ("indet indet") ~ "",
+                        sp == ("Indet indet") ~ "",
                         TRUE ~ sp))
 
-all.df %>%
-  filter(site == "Pasoh")
+A <- all.df %>%
+  group_by(sp) %>%
+  summarise(Nspecies = n()) %>%
+  arrange(desc(Nspecies))
 
-saveRDS(all.df ,
+saveRDS(all.df,
         "./outputs/All.COI.data.RDS")
+
+all.df %>%
+  filter(site == "Australia_pre-montane") %>%
+  pull(sp) %>%
+  unique()
 
 all.df %>%
   filter(dbh >= 10) %>%

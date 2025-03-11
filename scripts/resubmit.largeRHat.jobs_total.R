@@ -20,18 +20,19 @@ library(purrr)
 dir.name <- "/data/gent/vo/000/gvo00074/felicien/R/data"
 
 # Load the data
-all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10),
-                    readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>%
-                      mutate(site = "Total.re"))
-
 # all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
 #                       mutate(sp = str_squish(sp)) %>%
-#                       filter(dbh >= 10))
-#
+#                       filter(dbh >= 10),
+#                     readRDS("./outputs/All.COI.data.RDS") %>%
+#                       mutate(sp = str_squish(sp)) %>%
+#                       filter(dbh >= 10) %>%
+#                       mutate(site = "Total.re"))
+
+all.df <-  readRDS("./outputs/All.COI.data.RDS") %>%
+  mutate(sp = str_squish(sp)) %>%
+  filter(dbh >= 10) %>%
+  mutate(site = "Total.re")
+
 # all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
 #                       mutate(sp = str_squish(sp)) %>%
 #                       filter(dbh >= 10) %>%
@@ -70,7 +71,7 @@ fixed.effect.2.test <- list(power = list("a","none","b","all"),
 
 Strong <- TRUE
 Nchains <- 4
-Niter <- 50000
+Niter <- 15000
 control.list <- list(adapt_delta = 0.95,
                      max_treedepth = 10)
 
@@ -154,6 +155,7 @@ for (isite in seq(1,length(sites))){
                    site.name = csite.corrected,
                    settings.location = settings.location,
                    strong = Strong,
+                   site.re = TRUE,
                    threads = TRUE)
 
       # Create job file
@@ -176,8 +178,8 @@ for (isite in seq(1,length(sites))){
   }
 }
 
-dumb <- write_bash_submission(file = file.path(getwd(),"largeRhat_jobs.sh"),
+dumb <- write_bash_submission(file = file.path(getwd(),"largeRhat_jobs_total.sh"),
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/resubmit.largeRHat.jobs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/resubmit.largeRHat.jobs_total.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

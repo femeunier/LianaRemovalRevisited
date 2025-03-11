@@ -9,6 +9,7 @@ library(stringr)
 library(scales)
 library(tidyr)
 library(ggforce)
+library(lubridate)
 library(dplyr)
 library(LianaRemovalRevisited)
 library(cowplot)
@@ -17,25 +18,19 @@ library(ggplot2)
 library(ED2scenarios)
 library(purrr)
 
+source("check.site.groups.R")
+
 dir.name <- "/data/gent/vo/000/gvo00074/felicien/R/data"
 
+site.groups <- readRDS("./outputs/site.loc.RDS")
 # Load the data
 all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10),
-                    readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>%
-                      mutate(site = "Total.re"))
-
-# all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
-#                       mutate(sp = str_squish(sp)) %>%
-#                       filter(dbh >= 10))
-#
-# all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
-#                       mutate(sp = str_squish(sp)) %>%
-#                       filter(dbh >= 10) %>%
-#                       mutate(site = "Total.re"))
+                      filter(dbh >= 10)) %>%
+  left_join(site.groups %>%
+              rename(site = site.common) %>%
+              dplyr::select(site,site.group),
+            by = "site")
 
 all.df.title <- all.df %>%
   group_by(site) %>%
@@ -46,17 +41,16 @@ all.df.title <- all.df %>%
          N.high = length(site[which(liana.cat == "high")]),
          N.tot = length(site))
 
-# transfer.files("Check.Bayesian.sites.RDS",
-#                base = "hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/",
-#                source = "",
-#                destination = file.path("./outputs/"),
-#                show.progress = TRUE)
+site.groups <- unique(all.df.title$site.group)
 
-sites <- all.df %>% group_by(site) %>%
+Check.Bayesian.sites <- readRDS("/data/gent/vo/000/gvo00074/felicien/R/Check.Bayesian.site.groups.RDS") %>%
+  mutate(time = case_when(is.na(time) ~ as.Date('01/01/2000'),
+                          TRUE ~ time))
+
+site.groups <- all.df %>% group_by(site.group) %>%
   summarise(Ndata = n(),
             Nspecies = length(unique(sp))) %>%
-  arrange(Ndata) %>% pull(site)
-# sites <- "Pasoh"
+  arrange(Ndata) %>% pull(site.group)
 
 Names <- c("gmm","power","weibull")
 
@@ -68,41 +62,32 @@ fixed.effect.2.test <- list(power = list("a","none","b","all"),
                                        c("a","b"),c("a","k"),c("b","k"),
                                        "all"))
 
-Strong <- TRUE
+
 Nchains <- 4
-Niter <- 50000
-control.list <- list(adapt_delta = 0.95,
+Niter <- 15000
+control.list <- list(adapt_delta = 0.9,
                      max_treedepth = 10)
 
-overwrite <- TRUE
+overwrite <- FALSE
 re <- "all"
 
 list_dir <- list() ; job.names <- c()
-all.Bayesian.sites <- data.frame()
 
-for (isite in seq(1,length(sites))){
+for (isite in seq(1,length(site.groups))){
 
-  csite <- sites[isite]
-  csite.corrected <- gsub(" ", "",csite, fixed = TRUE)
-  cdir <- file.path(dir.name,csite.corrected)
+  csite.group <- site.groups[isite]
+  csite.group.corrected <- gsub(" ", "",csite.group, fixed = TRUE)
+  cdir <- file.path(dir.name,csite.group.corrected)
 
-  diagn.file <- file.path("/data/gent/vo/000/gvo00074/felicien/R/data",
-                          csite.corrected,
-                          "Diagnostics.RDS")
-
-  if (!file.exists(diagn.file)) next()
-
-  Check.Bayesian.site <- readRDS(diagn.file)
-
-  all.Bayesian.sites <- bind_rows(all.Bayesian.sites,
-                                  Check.Bayesian.site)
+  dir.create(cdir,
+             showWarnings = FALSE)
 
   cdf <- all.df %>%
-    filter(site == csite)
+    filter(site.group == csite.group)
 
   saveRDS(cdf,
           file.path(cdir,
-                    paste0("data_",csite.corrected,".RDS")))
+                    paste0("data_",csite.group.corrected,".RDS")))
 
   for (iform in seq(1,length(Names))){
 
@@ -112,18 +97,17 @@ for (isite in seq(1,length(sites))){
     for (imodel in seq(1,length(cfixed.effect.2.test))){
 
       ceffect <- cfixed.effect.2.test[[imodel]]
-      op.check <- Check.Bayesian.site %>%
-        filter(site == csite,
+      op.check <- Check.Bayesian.sites %>%
+        filter(site.group == csite.group,
                model.form == cform,
-               fe == paste0(ceffect,collapse = ""))
+               fe == paste0(ceffect,
+                            collapse = ""))
 
-      if (nrow(op.check) == 0){
-
-      } else if (op.check[["rhat.max"]] < 1.05) {
-        next()
+      if (nrow(op.check) > 0){
+        if ((op.check$time) > as.Date("15/02/25")){
+          next()
+        }
       }
-
-      print(paste(csite,'-',cform,"-", paste0(ceffect,collapse = ""),"-",op.check[["rhat.max"]]))
 
       clist <- list(list(ceffect))
       names(clist) <- cform
@@ -151,10 +135,10 @@ for (isite in seq(1,length(sites))){
 
       write.script(file.name = script.name,
                    dir.name = cdir,
-                   site.name = csite.corrected,
+                   site.name = csite.group.corrected,
                    settings.location = settings.location,
-                   strong = Strong,
                    threads = TRUE)
+
 
       # Create job file
 
@@ -166,18 +150,20 @@ for (isite in seq(1,length(sites))){
 
       ED2scenarios::write_jobR(file = file.path(cdir,cjobname),
                                nodes = 1,ppn = 24,mem = 25,walltime = 72,
-                               prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
+                               prerun = "ml purge ; ml R-bundle-Bioconductor/3.15-foss-2021b-R-4.2.0",
                                CD = "/data/gent/vo/000/gvo00074/felicien/R/",
                                Rscript = Rscript.name)
 
-      list_dir[[paste0(csite,"_",cform,"_",paste0(ceffect,collapse = ""))]] = cdir
+      list_dir[[paste0(csite.group,"_",cform,"_",paste0(ceffect,collapse = ""))]] = cdir
+
+
 
     }
   }
 }
 
-dumb <- write_bash_submission(file = file.path(getwd(),"largeRhat_jobs.sh"),
+dumb <- write_bash_submission(file = file.path(getwd(),"unfinished_jobs.sh"),
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/resubmit.largeRHat.jobs.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/resubmit.unfinished.jobs.site.groups.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

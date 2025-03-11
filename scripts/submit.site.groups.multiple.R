@@ -46,7 +46,7 @@ site.groups <- all.df %>%
 dir.name <- "/data/gent/vo/000/gvo00074/felicien/R/data"
 
 Nchains <- 4
-Niter <- 25000
+Niter <- 5000
 control.list <- list(adapt_delta = 0.95,
                      max_treedepth = 10)
 
@@ -143,5 +143,5 @@ dumb <- write_bash_submission(file = file.path(getwd(),
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/submit.site.groups.multiple.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/site.loc.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/submit.site.groups.multiple.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

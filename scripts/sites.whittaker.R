@@ -13,15 +13,24 @@ library(terra)
 library(SPEI)
 
 site.loc <- readRDS("./outputs/site.loc.RDS") %>%
-  mutate(continent = site.group)
+  mutate(continent = site.group) %>%
+  dplyr::select(-group) %>%
+  distinct() %>%
+  # filter(continent == "Amazon") %>%
+  # filter(!grepl("Australia",site.common)) #%>%
+  filter(ForestElevationName == "Lowland",
+         Forest.status.plotview %in% c("Old-growth","Mature"))
+
 continents <- unique(site.loc$continent)
 
-days <- c(31,28,31,30,31,30,31,31,30,31,30,31)
+days <- c(31,28,31,30,31,30,
+          31,31,30,31,30,31)
 
 MAT <- t.sd <-
   MAP <- MCWD <- Prec.sd <-
   VPD <- VPD.sd <-
-  srad <- srad.sd <- c()
+  srad <- srad.sd <-
+  dry.season.length <- c()
 
 rastlist <- list.files(path = "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/WorldClim/vapr", pattern='.tif$',
                        all.files=TRUE, full.names=TRUE)
@@ -53,6 +62,12 @@ for (isite in seq(1,nrow(site.loc))){
   e.avg <- days*3.33
   e.avg <- SPEI::thornthwaite(t.avg,clat,verbose = FALSE)
 
+  dry.season <- rep(0,12)
+  dry.season[prec.avg < e.avg] <- 1
+
+  dry.season.rep <- cumsum(rep(dry.season,2))/sort(rep(1:2,12))
+  dry.season.length[isite] <- max(dry.season.rep)
+
   MCWD[isite] <- calc.MCWD(prec.avg - e.avg)
 
   MAP[isite] <- sum(prec.avg)
@@ -65,7 +80,7 @@ for (isite in seq(1,nrow(site.loc))){
   #                          clon,clat,
   #                          path = "./data/WorldClim/", version="2.1",res = 0.5)
   r.srad.avg <- as.numeric(as.vector(raster::extract(r.srad, xy)))
-  srad[isite] <- weighted.mean(r.srad.avg*days,days)
+  srad[isite] <- weighted.mean(r.srad.avg,days)
   srad.sd[isite] <- sd(r.srad.avg)/srad[isite]
 
   # VPD
@@ -81,12 +96,14 @@ for (isite in seq(1,nrow(site.loc))){
 site.loc$MAP <- NA ; site.loc$MAT <- NA ; site.loc$MCWD <- NA ; site.loc$t.sd <- NA
 site.loc$VPD <- NA ; site.loc$VPD.sd <- NA ; site.loc$Prec.sd <- NA
 site.loc$srad <- NA ; site.loc$srad.sd <- NA
+site.loc$dry.season.length <- NA
 
 site.loc$MAP[1:length(MAP)] <- MAP ; site.loc$MAT[1:length(MAT)] <- MAT
 site.loc$MCWD[1:length(MCWD)] <- -MCWD ; site.loc$t.sd[1:length(t.sd)] <- t.sd
 site.loc$VPD[1:length(VPD)] <- VPD ; site.loc$VPD.sd[1:length(VPD.sd)] <- VPD.sd
 site.loc$Prec.sd[1:length(Prec.sd)] <- Prec.sd
 site.loc$srad[1:length(srad)] <- srad ; site.loc$srad.sd[1:length(srad.sd)] <- srad.sd
+site.loc$dry.season.length[1:length(dry.season.length)] <- dry.season.length
 
 site.loc <- site.loc %>%
   mutate(forest.type = case_when(MCWD <= 250 ~ "Rainforest",
@@ -143,7 +160,7 @@ ggplot() +
 
 ggplot(data = site.loc %>%
          dplyr::select(site.common,continent,
-                       MAP,MAT,Prec.sd,MCWD,t.sd,VPD,VPD.sd,srad,srad.sd) %>%
+                       MAP,MAT,Prec.sd,MCWD,t.sd,VPD,VPD.sd,srad,srad.sd,coi.wm) %>%
          pivot_longer(cols = - c(site.common,continent))) +
   geom_density(aes(x = value, fill = continent),
                alpha = 0.5) +
@@ -190,17 +207,29 @@ site.loc %>%
             .groups = "keep")
 
 
+WD.sum <- readRDS("./outputs/WD.sum.RDS")
+
+site.loc <- site.loc %>%
+  left_join(WD.sum %>%
+              dplyr::select(site,WD.wm,H.wm,H.m) %>%
+              rename(site.common = site),
+            by = "site.common")
+
 ################################################################################
 
-DBHtargets <- c(25,50,100,150)
+DBHtargets <- c(25,50,100)
 
-df.all.effects <- df.r2 <- df.r2.single <- df.model.var <-
+all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd","coi.wm",
+              "Prec.sd","srad","srad.sd","dry.season.length","H.m",
+              "H.wm","WD.wm")
+
+Var1 = "srad" ; Var2 = "t.sd"
+PolyN <- 1
+
+df.all.effects <- df.r2 <-
+  df.r2.single <- df.model.var <-
   df.model.all <-
   data.frame()
-all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd",
-              "Prec.sd","srad","srad.sd")
-
-Var1 = "VPD" ; Var2 = "MCWD"
 
 for (iDBHtarget in seq(1,length(DBHtargets))){
 
@@ -213,13 +242,13 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
   alpha = 0.11
   diff.H.sites <- Main.OP %>%
     group_by(site,liana.cat) %>%
-    summarise(m = median(diff_h/no*100,na.rm = TRUE),
-              Qlow = quantile(diff_h/no*100,alpha/2,na.rm = TRUE),
-              Qhigh = quantile(diff_h/no*100,1-alpha/2,na.rm = TRUE),
+    summarise(m = median(diff_h/no,na.rm = TRUE),
+              Qlow = quantile(diff_h/no,alpha/2,na.rm = TRUE),
+              Qhigh = quantile(diff_h/no,1-alpha/2,na.rm = TRUE),
 
               m.abs = median(diff_h,na.rm = TRUE),
-              low.abs = quantile(diff_h,alpha/2,na.rm = TRUE),
-              high.abs = quantile(diff_h,1-alpha/2,na.rm = TRUE),
+              H.no = median(no,na.rm = TRUE),
+
               .groups = "keep") %>%
     pivot_wider(names_from = liana.cat,
                 values_from = -c(site,liana.cat))
@@ -227,14 +256,16 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
   effect.site <- site.loc %>%
     rename(site = site.common) %>%
     left_join(diff.H.sites %>%
-                dplyr::select(site,m_high,m.abs_high,
-                              Qlow_high,Qhigh_high),
+                dplyr::select(site,
+                              m_high,Qlow_high,Qhigh_high,
+                              m.abs_high,H.no_high),
               by = "site") %>%
     mutate(continent = factor(continent,
                               levels = continents)) %>%
     ungroup() %>%
-    mutate(w = Nlarge) %>%
-    filter(dbh.max >= cDBHtarget)
+    mutate(w = sqrt(Nno*Nhigh)) %>%
+    filter(dbh.max.no >= cDBHtarget,
+           dbh.max.high >= cDBHtarget)
 
   df.all.effects <- bind_rows(df.all.effects,
                               effect.site %>%
@@ -270,10 +301,9 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
                               df.predictions)
   }
 
-
   LM.all <- lm(data = effect.site,
-               formula = (m_high) ~ get(Var1) + get(Var2),
-               weights = w)
+               formula = m_high ~ (get(Var1)) +
+                 (get(Var2)), weights = w)
 
   Sum <- summary(LM.all)
 
@@ -331,7 +361,22 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
 
 }
 
+saveRDS(df.all.effects,
+        "./outputs/DeltaH.vs.climate.RDS")
+
 df.r2
+
+df.r2.single %>%
+  arrange(target,desc(r2)) %>%
+  group_by(target) %>%
+  mutate(pos = 1:n()) %>%
+  # filter(pos %in% c(1:10)) %>%
+  dplyr::select(target,variable,pos) %>%
+  # mutate(present = TRUE) %>%
+  pivot_wider(names_from = target,
+              values_from = pos)
+
+
 
 rownames(df.model.var) <- rownames(df.model.all) <- NULL
 
@@ -345,9 +390,11 @@ df.model.all.long <- df.model.all %>%
 
 df.all.effects.long <- df.all.effects %>%
   pivot_longer(cols = c(MAP,Prec.sd,MCWD,
-                        MAT,t.sd,
+                        WD.wm,H.wm,H.m,
+                        MAT,t.sd,coi.wm,
                         VPD,VPD.sd,
-                        srad,srad.sd),
+                        srad,srad.sd,
+                        dry.season.length),
                names_to = "variable",
                values_to = "value")
 
@@ -360,50 +407,8 @@ p.values <- df.all.effects.long %>%
             .groups = "keep")
 
 
-ggplot(data = df.all.effects) +
-  geom_boxplot(aes(y = m_high,
-                   x = continent, fill = continent)) +
-  geom_hline(yintercept = 0,linetype = 2, color = "black") +
-  labs(x = "") +
-  facet_wrap(~ target,nrow = 1) +
-  theme_bw()
-
-
-ggplot(data = df.all.effects) +
-  geom_boxplot(aes(y = m_high, x = forest.type, fill = forest.type)) +
-  geom_hline(yintercept = 0,linetype = 2, color = "black") +
-  facet_wrap(~ target,nrow = 1) +
-  theme_bw()
-
-ggplot(data = df.all.effects %>%
-         mutate(CZ = factor(CZ,
-                            levels = c("Humid1700","Humid","Humid_seasonal","Else"))) %>%
-         filter(target == DBHtargets[1])) +
-  geom_boxplot(aes(y = m_high, x = CZ, fill = CZ),
-               alpha = 0.8) +
-  geom_hline(yintercept = 0,linetype = 2, color = "black") +
-  # facet_wrap(~ target,nrow = 1) +
-  theme_bw() +
-  labs(x = "",y = "") +
-  guides(fill = "none") +
-  theme(text = element_text(size = 24)) +
-  scale_fill_manual(values = c(Humid1700 = "#1C2C04",
-                                Humid = "#345C0C",
-                                Humid_seasonal = "#4C8C14",
-                               Else = "lightyellow"))
-
-summary(lm(data = df.all.effects %>%
-         filter(target == DBHtargets[1]),
-       formula = m_high ~ CZ))
-
-df.all.effects %>%
-  group_by(target,CZ) %>%
-  summarise(N = n(),
-            .groups = "keep")
-
 
 cols<-brewer.pal(length(continents),"Dark2")
-
 
 ctarget <- DBHtargets[2]
 ggplot() +

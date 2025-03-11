@@ -81,9 +81,11 @@ data.filt %>%
   distinct()
 
 data.format <- data.filt %>%
+  filter(F2 == "1") %>%
   group_by(PlotID,TreeID) %>%
   arrange(desc(Census.No)) %>%
   slice_head(n = 1) %>%
+  filter(!grepl("b|c",F1)) %>%
   ungroup() %>%
   rename(dbh = D4,
          h = Height,

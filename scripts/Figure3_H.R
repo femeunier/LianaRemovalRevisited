@@ -170,7 +170,7 @@ ggplot(data = Main.OP,
   # scale_x_continuous(limits = c(-10,5)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal() +
-  facet_wrap(~ target, scales = "free_y",nrow = 1) +
+  facet_grid(~ target, scales = "free_x") +
   guides(alpha = "none", fill = "none", color = "none") +
   theme(legend.position = c(0.1,0.9),strip.text = element_blank(),
         text = element_text(size = 24),

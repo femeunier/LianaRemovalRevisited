@@ -21,11 +21,11 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       filter(dbh >= 10),
                     readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>% mutate(site = "Total"))
+                      filter(dbh >= 10) %>% mutate(site = "Total.re"))
 
-all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10))
+# all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
+#                       mutate(sp = str_squish(sp)) %>%
+#                       filter(dbh >= 10))
 
 all.df %>%
   group_by(liana.cat) %>%
@@ -354,14 +354,15 @@ sites <- unique(all.df.title$site)
 #                             levels = c("no","low","high")))
 
 system2("rsync",c("-avz",
-                  "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/Model.predictions.RDS",
+                  "hpc:/data/gent/vo/000/gvo00074/felicien/R/outputs/Model.predictions*",
                   "./outputs/"))
 temp.title <- readRDS("./outputs/Model.predictions.RDS")
 
+csite <- "LFB"
 ggplot(data = temp.title %>%
-         filter(site == 'Total.re')) +
+         filter(site == csite)) +
   geom_point(data = all.df.title %>%
-               filter(site %in% 'Total.re'),
+               filter(site %in% csite),
              aes(x = dbh,y = h, color = as.factor(liana.cat)),
              size = 0.5, alpha = 0.25) +
   # geom_ribbon(aes(x = dbh, y = h.pred.m, fill = as.factor(liana.cat),

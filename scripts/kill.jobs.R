@@ -1,4 +1,4 @@
-for (ijob in seq(26432269,
-                 26432288)){
+for (ijob in seq(26463506,
+                 26463525)){
   system2("qdel",ijob)
 }

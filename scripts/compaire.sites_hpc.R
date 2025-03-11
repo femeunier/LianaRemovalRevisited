@@ -42,16 +42,8 @@ all.df.title <- all.df %>%
          N.tot = length(site))
 
 sites <- unique(all.df.title$site)
-# sites <- c(readRDS("./data/rainfor2.md.RDS") %>%
-#   pull(group) %>% unique())
-# sites <- c("TGS","TAM","STN",
-#            "STL","STD","SAT","PND","PUY","PEC","JUV")
+# sites <- sites[sites != "Campinas_Mixed"]
 
-# sites <- c("Casa_Roubik","BCI","group_North",
-#            "Canal","group_Metro","Gigante",
-#            "Sherman")
-#
-# sites <- c("129","357")
 
 # Compile the outputs
 fit.all.sites <- list()
@@ -127,7 +119,12 @@ for (isite in seq(1,length(sites))){
   cfiles.filtered <- cfiles[tokeep]
   cnames.filtered <- tools::file_path_sans_ext(cfiles.filtered)
 
-  if (length(cfiles.filtered) == 0) next()
+  if (length(cfiles.filtered) > 0) {
+    sites2keep <- c(sites2keep,csite)
+  } else{
+    next()
+  }
+
 
   for (ifile in seq(1,length(cfiles.filtered))){
 
@@ -187,10 +184,10 @@ actual.df <- data.frame()
 
 print("Processing")
 best.model <- list()
-for (isite in seq(1,length(sites))){
+for (isite in seq(1,length(sites2keep))){
 
-  csite <- sites[isite]
-  print(paste(csite, "-",isite/length(sites)))
+  csite <- sites2keep[isite]
+  print(paste(csite, "-",isite/length(sites2keep)))
 
   actual.df <- bind_rows(list(actual.df,
                               all.df %>% filter(site == csite)))
@@ -206,6 +203,8 @@ for (isite in seq(1,length(sites))){
   #   best.model.names[isite] <- names(fit.all.sites[[isite]])
   # }
 
+  # pos <- which(sites == csite)
+
   best.model[[isite]] <- fit.all.sites[[isite]][[best.model.names[isite]]]
 
 }
@@ -215,18 +214,25 @@ alpha = 0.25
 
 null.models <- lapply(fit.all.sites, function(x){
   names.x = names(x)
-  return(x[[which(grepl("_none",names.x))]])})
+  pos.none <- which(grepl("_none",names.x))
+  if (!any(pos.none)){
+    return(NULL)
+  } else{
+    return(x[[pos.none]])
+  }
+  })
 
+# null.models <- Filter(length, null.models)
 
 # stop()
 # null.pred <- residuals(null.models[[1]],re_formula = NA)
 # best.pred <- predict(best.model[[1]])
 
-temp <- bind_rows((lapply(1:length(sites),
+temp <- bind_rows((lapply(1:length(sites2keep),
                           function(isite){
 
                             print(isite)
-                            csite <- sites[isite]
+                            csite <- sites2keep[isite]
                             cdf <- all.df %>%
                               filter(site == csite)
 
@@ -389,12 +395,12 @@ for (DBH2test in c(25,50,100,150)){
 
   print(DBH2test)
 
-  temp3 <- bind_rows((lapply(1:length(sites),
+  temp3 <- bind_rows((lapply(1:length(sites2keep),
                              function(isite){
 
                                print(isite)
                                cdf <- all.df %>%
-                                 filter(site == sites[isite])
+                                 filter(site == sites2keep[isite])
 
 
                                levels <- as.character(unique(cdf$liana.cat))
@@ -446,15 +452,18 @@ for (DBH2test in c(25,50,100,150)){
     mutate(N.cat = case_when(liana.cat == "low" ~ N.low,
                              liana.cat == "high" ~ N.high,
                              TRUE ~ NA)) %>%
-    mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia",
+    mutate(site.group = case_when(site %in% c("Pasoh","Danum Valley","Australia","Australia_lowland","Australia_pre-montane",
                                               "SGW","LAM","DAN","BUL") ~ "Australasia",
-                                  site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",Afritron.sites,"Tanzania","OKU") ~ "Africa",
-                                  site %in% c("Gigante","BCI",
+                                  site %in% c("Sand-F","Semi-F","Atla-F","Loundoungou",
+                                              Afritron.sites,"Tanzania","OKU",
+                                              "Grebo_Mixed","Grebo_oldgrowth",
+                                              "Tanzania_lowland","Tanzania_lowermontane","Tanzania_montane") ~ "Africa",
+                                  site %in% c("Gigante","BCI","BCI_mature","BCI_secondary",
                                               "group_North",
                                               "Casa_Roubik",
                                               "Sherman",
                                               "group_Metro",
-                                              "Canal") ~ "Panama",
+                                              "Canal","Canal_mature","Canal_secondary","Canal_primary") ~ "Panama",
                                   site %in% c("Total","Total.re") ~ "Total",
                                   TRUE ~ "Amazon")) %>%
     mutate(liana.cat = factor(liana.cat,

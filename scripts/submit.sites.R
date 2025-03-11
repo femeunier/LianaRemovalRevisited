@@ -42,27 +42,13 @@ all.df %>% group_by(site) %>%
   arrange(Ndata)
 
 sites <- sort(unique(all.df$site))
-# sites <- readRDS("./data/rainfor.sites.RDS")
-# sites <- c("Dja North","Kisangani_all")
-# sites <- all.df %>% group_by(site) %>%
-#   summarise(Ndata = n(),
-#             Nspecies = length(unique(sp))) %>%
-#   arrange(Ndata) %>% pull(site)
-# sites <- readRDS("./data/rainfor2.md.RDS") %>%
-#   pull(group) %>% unique()
-
-
-# sites <- c("Pasoh","Asenayo","Rio Grande")
-# sites <- c("Loundoungou")
-# sites <- c("Sherman","Canal")
-# sites <- c("BCI")
-# sites <- c("BUL","DAN","LAM","SGW")
+sites <- c("DAN","SGW")
 
 Names <- c("weibull","power","gmm")
 
 Nchains <- 4
 Niter <- 15000
-control.list <- list(adapt_delta = 0.8,
+control.list <- list(adapt_delta = 0.95,
                      max_treedepth = 10)
 
 overwrite <- TRUE
@@ -116,8 +102,8 @@ for (isite in seq(1,length(sites))){
 
   # Create job file
   ED2scenarios::write_jobR(file = file.path(cdir,jobname),
-                           nodes = 1,ppn = 4,mem = 25,walltime = 72,
-                           prerun = "ml purge ; ml R-bundle-Bioconductor/3.15-foss-2021b-R-4.2.0",
+                           nodes = 1,ppn = 4,mem = 25,walltime = 24,
+                           prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
                            CD = "/data/gent/vo/000/gvo00074/felicien/R/",
                            Rscript = Rscript.name)
   list_dir[[csite]] = cdir

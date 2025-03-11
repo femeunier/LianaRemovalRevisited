@@ -85,7 +85,7 @@ for (iplot in seq(1,length(plots))){
       }
 
       data.mut <- data %>%
-        # filter(F2 != 1) %>%
+        filter(as.character(F2) == "1") %>%
         mutate(COI = as.numeric(LI),
                h = as.numeric(Height),
                DBH = D4/10) %>%
@@ -98,18 +98,23 @@ for (iplot in seq(1,length(plots))){
 
       df.all <- bind_rows(list(df.all,
                                data.mut %>%
-                                 dplyr::select(TreeID, Tag.No,DBH,liana.cat,COI,h,Species) %>%
+                                 dplyr::select(TreeID, Tag.No,DBH,liana.cat,COI,h,Species,F1,F2,F5) %>%
                                  mutate(site = plots[iplot],
                                         lat = lats[iplot],
                                         lon = lons[iplot],
+                                        F5 = as.numeric(F5),
+
                                         census = icensus,
                                         last.census = clast.census)))
     }
   }
 }
 
-saveRDS(df.all,
-        './data/rainfor.loc.RDS')
+(df.all %>%
+       # filter(!grepl("b|c",F1)) %>%
+       group_by(site) %>%
+       dplyr::summarise(N = n()))
+
 
 df.all2 <- df.all %>%
   group_by(site,TreeID) %>%
@@ -125,19 +130,40 @@ df.all2
 
 print(c(nrow(df.all),
         nrow(df.all2),
-        nrow(df.all %>% filter(census == last.census))))
+        nrow(df.all %>%
+               filter(census == last.census))))
 
 df.all.filt <- df.all2 %>%
   filter(h > 0) %>%
-  filter(!(site %in% c("GAU_02","PEA_07","PEA_08"))) # no high liana infestation
+  filter(!grepl("b|c",F1)) %>% # no broken or leaning stems
+  filter(as.numeric(F5) > 1)  # %>% # living trees only
+  # filter(!(site %in% c("GAU_02",
+  #                      "PEA_07","PEA_08"))) # no high liana infestation
+
+nrow(df.all2)
+nrow(df.all.filt)
+
+
+sites2keep <- df.all.filt %>%
+  group_by(group,liana.cat) %>%
+  summarise(N = n(),
+            .groups = "keep") %>%
+  pivot_wider(names_from = 'liana.cat',
+              values_from = N) %>%
+  filter(no >= 10,low >= 10,high >= 10, (no+low+high)>= 50) %>%
+  pull(group)
+
+df.all.filt <- df.all.filt %>%
+  filter(group %in% sites2keep) %>%
+  filter(h >= 3)
 
 ggplot(df.all.filt %>%
          filter(DBH >= 10),
        aes(x = DBH, y = h,
            color = as.factor(liana.cat))) +
   geom_point() +
-  # scale_x_log10() +
-  # scale_y_log10() +
+  scale_x_log10() +
+  scale_y_log10() +
   stat_smooth(se = FALSE, method = "lm") +
   facet_wrap(~ group, scales = "free") +
   theme_bw()
@@ -225,8 +251,8 @@ ggplot() +
   theme(text = element_text(size = 20))
 
 
-# saveRDS(df.map,
-#         "./data/ForestPlots/data/RainForMD.RDS")
+saveRDS(df.map,
+        "./data/ForestPlots/data/RainForMD.RDS")
 #
-# saveRDS(df.all.filt,
-#         "./data/ForestPlots/data/df.Rainfor.RDS")
+saveRDS(df.all.filt,
+        "./data/ForestPlots/data/df.Rainfor.RDS")

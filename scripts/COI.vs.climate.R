@@ -12,10 +12,18 @@ library(YGB)
 library(terra)
 library(SPEI)
 
+
 site.loc <- readRDS("./outputs/site.loc.RDS") %>%
-  mutate(continent = case_when(lon <= -35 ~ "America",
-                               lon <= 50 ~ "Africa",
-                               TRUE ~ "Australasia"))
+  mutate(continent = site.group) %>%
+  dplyr::select(-group) %>%
+  distinct() %>%
+  # filter(continent == "Amazon") %>%
+  # filter(!grepl("Australia",site.common)) %>%
+  filter((ForestElevationName == "Lowland" &
+         Forest.status.plotview %in% c("Old-growth")))
+
+continents <- unique(site.loc$continent)
+
 
 days <- c(31,28,31,30,31,30,31,31,30,31,30,31)
 
@@ -193,12 +201,12 @@ site.loc %>%
 
 ################################################################################
 
-DBHtargets <- c(50,100,150,300)
+DBHtargets <- c(50,100)
 
 all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd",
               "Prec.sd","srad","srad.sd")
 
-Var1 = "MAP" ; Var2 = "srad"
+Var1 = "VPD.sd" ; Var2 = "srad"
 
 alpha = 0.11
 
@@ -208,29 +216,30 @@ df.all.effects <- df.r2 <- df.r2.single <- df.model.var <-
 
 for (iDBHtarget in seq(1,length(DBHtargets))){
 
-
   cDBHtarget <- DBHtargets[iDBHtarget]
 
   print(cDBHtarget)
 
-  Main.OP <- readRDS(paste0("./outputs/All.COI.data.RDS")) %>%
-    filter(dbh <= cDBHtarget) %>%
-    group_by(site) %>%
-    summarise(coi.m = mean(coi,
-                           na.rm = TRUE),
-              coi.wm = weighted.mean(coi,dbh**2,
-                                     na.rm = TRUE),
-              .groups = "keep")
+  # Main.OP <- readRDS(paste0("./outputs/All.COI.data.RDS")) %>%
+  #   # filter(dbh = cDBHtarget) %>%
+  #   group_by(site) %>%
+  #   summarise(coi.m = mean(coi,
+  #                          na.rm = TRUE),
+  #             coi.wm = weighted.mean(coi,dbh**2,
+  #                                    na.rm = TRUE),
+  #             .groups = "keep")
 
   effect.site <- site.loc %>%
     rename(site = site.common) %>%
-    left_join(Main.OP %>%
-                dplyr::select(site,coi.wm,coi.wm),
-              by = "site") %>%
+    # left_join(Main.OP %>%
+    #             dplyr::select(site,coi.wm,coi.wm),
+    #           by = "site") %>%
     mutate(continent = factor(continent,
-                              levels = c("America","Africa","Australasia"))) %>%
+                              levels = continents)) %>%
     ungroup() %>%
-    mutate(w = Nlarge)
+    mutate(w = sqrt(Nno*Nhigh)) %>%
+    filter(dbh.max.no >= cDBHtarget,
+           dbh.max.high >= cDBHtarget)
 
   df.all.effects <- bind_rows(df.all.effects,
                               effect.site %>%
@@ -329,8 +338,17 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
 }
 
 df.r2
+
 df.r2.single %>%
-  arrange(desc(r2))
+  arrange(target,desc(r2)) %>%
+  group_by(target) %>%
+  mutate(pos = 1:n()) %>%
+  filter(pos %in% c(1:10)) %>%
+  dplyr::select(target,variable,pos) %>%
+  # mutate(present = TRUE) %>%
+  pivot_wider(names_from = target,
+              values_from = pos)
+
 
 rownames(df.model.var) <- rownames(df.model.all) <- NULL
 
@@ -402,7 +420,7 @@ df.all.effects %>%
             .groups = "keep")
 
 
-cols<-brewer.pal(3,"Dark2")
+cols<-brewer.pal(length(continents),"Dark2")
 
 
 ctarget <- DBHtargets[1]

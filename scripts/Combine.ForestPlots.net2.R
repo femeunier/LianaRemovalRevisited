@@ -15,7 +15,7 @@ Dir <- "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/rainfor/"
 
 all.plot.files <- list.files(Dir,
                              full.names = TRUE)
-all.plot.files <- all.plot.files[grepl("NXV",all.plot.files)]
+# all.plot.files <- all.plot.files[grepl("VCR",all.plot.files)]
 
 plots <- (str_sub(basename(all.plot.files),1,6))
 last.census <- as.numeric(sapply(strsplit(basename(all.plot.files),split='_', fixed=TRUE),"[[",4))
@@ -43,6 +43,7 @@ for (ifile in seq(1,length(all.plot.files))){
     }
 
     data.mut <- data %>%
+      # filter(!grepl("b|c",F1)) %>%
       filter(F2 == 1) %>%
       mutate(COI = as.numeric(LI),
              h = as.numeric(Height),
@@ -60,8 +61,9 @@ for (ifile in seq(1,length(all.plot.files))){
 
     df.all <- bind_rows(list(df.all,
                              data.mut %>%
-                               dplyr::select(TreeID, Tag.No,DBH,liana.cat,COI,h,Species,F5) %>%
+                               dplyr::select(TreeID, Tag.No,DBH,liana.cat,COI,h,Species,F1,F5) %>%
                                mutate(site = plots[ifile],
+                                      F5 = as.numeric(F5),
                                       # lat = lats[iplot],
                                       # lon = lons[iplot],
                                       census = clast.census)))
@@ -89,11 +91,12 @@ df.all2 <- df.all %>%
   mutate(group.N = paste0(group,", N = ",length(DBH)))
 
 df.all.filt <- df.all2 %>%
-  filter(h > 0)
+  filter(h > 0) %>%
+  filter(F5 > 1) %>% # remove eye measurements ...
+  filter(!grepl("b|c",F1))   # remove broken and bending stems
 
 
 df.site.selected <- df.all.filt %>%
-  filter(F5 > 1) %>% # remove eye measurements ...
   group_by(group) %>%
   summarise(.groups = "keep",
             Ntot = n(),
@@ -101,8 +104,8 @@ df.site.selected <- df.all.filt %>%
             Nhigh = length(which(liana.cat == "high")),
             Nlow = length(which(liana.cat == "low")),
             Nno = length(which(liana.cat == "no"))) %>%
-  mutate(keep = (liana.cats == 3) & (Nhigh > 10) & (Nlow > 10)
-         & (Nno > 10))
+  mutate(keep = (liana.cats == 3) &
+           (Nhigh > 10) & (Nlow > 10) & (Nno > 10))
 
 df2keep <- df.all.filt %>%
   filter(group %in% c(df.site.selected %>%
@@ -115,14 +118,14 @@ df2keep <- df.all.filt %>%
 
 
 ggplot(data = df2keep %>%
-         filter(site %in% c("NXV_02","NXV_11"),
-                h > 3),
+         filter(DBH > 10) %>%
+         filter(h > 3),
          aes(x = DBH, y = h,
              color = as.factor(liana.cat))) +
   geom_point(size = 0.1) +
   scale_x_log10() +
   scale_y_log10() +
-  stat_smooth(se = FALSE, method = "lm") +
+  stat_smooth(se = TRUE, method = "lm") +
   facet_wrap(~ group) +
   theme_bw()
 
@@ -131,8 +134,8 @@ final.df <- df2keep
 Ntrees <- nrow(final.df)
 Nsites <- length(unique(final.df$group))
 
-# saveRDS(df2keep,
-#         "./outputs/All.rainfor.RDS")
+saveRDS(df2keep,
+        "./outputs/All.rainfor.RDS")
 
 
 

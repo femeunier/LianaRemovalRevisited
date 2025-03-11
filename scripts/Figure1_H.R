@@ -9,15 +9,30 @@ library(tidyr)
 
 alpha = 0.11
 
-Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
+site.locs <- readRDS("./outputs/site.loc.RDS") %>%
+  mutate(continent = site.group) %>%
+  dplyr::select(-group) %>%
+  distinct()
+
+target.DBH <- 50
+
+Main.OP <- readRDS(paste0("./outputs/Main.OP.",target.DBH,".RDS")) %>%
+  left_join(site.locs %>%
+              dplyr::select(site.common,dbh.max.no,dbh.max.low,dbh.max.high) %>%
+              rename(site = site.common),
+            by = "site") %>%
+  mutate(diff_h = case_when(liana.cat == "low" & dbh.max.no >= target.DBH & dbh.max.low >= target.DBH ~ diff_h,
+                            liana.cat == "high" & dbh.max.no >= target.DBH & dbh.max.high >= target.DBH ~ diff_h,
+                            TRUE ~ NA_real_)) %>%
+
   mutate(site = case_when(site == "DAN" ~ "Danum Valley",
                           site == "LAM" ~ "Lambir",
                           site == "SGW" ~ "Sungai Wain",
-                          site == "BUL" ~ "	Barito Ulu Nagy",
-                          site == "Australia" ~ "WTWH, Queensland",
+                          site == "BUL" ~ "Barito Ulu Nagy",
 
                           site == "129" ~ "Santarém-Belterra 129",
                           site == "357" ~ "Santarém-Belterra 357",
+                          site == "Rio Grande"  ~ "Rio Grande do Sul",
                           site == "CRP" ~ "Cerro Pelao",
                           site == "ALV" ~ "Alta Vista PPM2",
                           site == "CUZ" ~ "Cuzco Amazonico",
@@ -25,6 +40,10 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                           site == "JBS" ~ "JBS-Chaqueño",
                           site == "LFB" ~ "Los Fierros Bosque",
                           site == "NXV" ~ "Parque do Bacaba, Nova Xavantina",
+                          site == "NXV_Mixed" ~ "Parque do Bacaba, Nova Xavantina (Mixed: Old-growth and burned)",
+                          site == "NXV_Oldgrowth_Moist" ~ "Parque do Bacaba, Nova Xavantina (Old-growth, moist)",
+                          site == "NXV_Oldgrowth_Dry" ~ "Parque do Bacaba, Nova Xavantina (Old-growth, dry)",
+
                           site == "SOR" ~ "Sorriso MT",
                           site == "TAM" ~ "Tambopata",
 
@@ -33,8 +52,37 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                           site == "FLO" ~ "Fazenda Floresta",
                           site == "FRP" ~ "Fazenda Rio Preto",
                           site == "GAU" ~ "Gaúcha do Norte",
+                          site == "GAU_Mixed" ~ "Gaúcha do Norte (Mixed: old-growth and burned)",
+                          site == "GAU_Oldgrowth" ~ "Gaúcha do Norte (Old-growth)",
+
+                          site == "Tanzania_lowland" ~ "Kilombero Valley",
+                          site == "Tanzania_montane" ~ "Udzungwa Mountains (Montane)",
+                          site == "Tanzania_lowermontane" ~ "Udzungwa Mountains (Lower-montane)",
+
                           site == "OKU" ~ "Oku",
+                          site == "Grebo_oldgrowth" ~ "Grebo (Old-growth)",
+                          site == "Grebo_Mixed" ~ "Grebo (Mixed: old-growth and logged)",
+
+                          site == "Campinas_secondary" ~ "Campinas (Secondary)",
+                          site == "Campinas_Mixed" ~ "Campinas (Mixed: Old-groth and burned)",
+
+                          site == "Australia" ~ "WTWH, Queensland",
+                          site == "Australia_lowland" ~ "WTWH, Queensland (Lowland)",
+                          site == "Australia_pre-montane" ~ "WTWH, Queensland (Pre-montane)",
+
+                          site == "Canal_primary" ~ "Canal (Old-growth)",
+                          site == "Canal_mature" ~ "Canal (Old secondary)",
+                          site == "Canal_secondary" ~ "Canal (Secondary)",
+
+                          site == "BCI" ~ "Barro Colorado Island",
+                          site == "BCI_mature" ~ "Barro Colorado Island (Old secondary)",
+                          site == "BCI_secondary" ~ "Barro Colorado Island (Secondary)",
+
+                          site == "Nguti Cluster" ~ "Nguti",
+
                           site == "PEA" ~ "Parque Estadual do Araguaia",
+                          site == "PEA_Oldgrowth" ~ "Parque Estadual do Araguaia (Old-growth)",
+                          site == "PEA_Mixed" ~ "Parque Estadual do Araguaia (Mixed: old-growth and burned)",
                           site == "POA" ~ "Porto Alegre do Norte",
                           site == "SAA" ~ "Santana do Araguaia",
                           site == "SAT" ~ "Santa Terezinha",
@@ -52,9 +100,8 @@ Main.OP <- readRDS("./outputs/Main.OP.50.RDS") %>%
                        levels = sort(unique(site),decreasing = TRUE))) %>%
   mutate(site.group = case_when(site == "Mokabi" ~ "Africa",
                                 site == "Luki" ~ "Africa",
-                                TRUE ~ site.group))
-
-
+                                TRUE ~ site.group)) %>%
+  filter(!is.na(diff_h))
 
 diff.H.sites <- Main.OP %>%
   group_by(site,liana.cat) %>%
@@ -190,7 +237,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = 1-alpha,
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-50,15)) +
+  scale_x_continuous(limits = c(-60,30)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +
@@ -232,7 +279,6 @@ ggplot(data = Main.OP %>%
   scale_fill_manual(values = c("no" = "darkgreen",
                                "low" = "orange",
                                "high"= "darkred"))
-
 
 Main.OP %>%
   group_by(site) %>%
@@ -294,8 +340,9 @@ Main.OP %>%
   summarise(Delta = mean(diff_h/no,na.rm = TRUE),
             Delta_low = quantile(diff_h/no,0.055,na.rm = TRUE),
             Delta_high = quantile(diff_h/no,1-0.055,na.rm = TRUE)) %>%
-  filter(liana.cat == "high") %>%
-  summarise(Nsignif.low = length(which((Delta_high < 0))),
+  group_by(liana.cat) %>%
+  summarise(Ntot = length(unique(site)),
+            Nsignif.low = length(which((Delta_high < 0))),
             Nnoliana = length(which((Delta_high == 0))),
             Nsignif.high = length(which((Delta_low > 0))),
             Nnosignif = length(which((Delta_low < 0) & (Delta_high > 0))))

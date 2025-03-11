@@ -24,9 +24,10 @@ all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       filter(dbh >= 10) %>%
                       mutate(site = "Total.re"))
 
-# all.df <- bind_rows(readRDS("./outputs/COI.mixed.RDS") %>%
+# all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
 #                       mutate(sp = str_squish(sp)) %>%
 #                       filter(dbh >= 10))
+
 
 all.df.title <- all.df %>%
   group_by(site) %>%
@@ -52,6 +53,7 @@ sites <- unique(all.df.title$site)
 models <- c("weibull","power","gmm")
 model.forms <- c("all","none","a","b","ab","bk","ak","k")
 
+overwite <- TRUE
 # Compile the outputs
 # fit.site <- list()
 
@@ -62,6 +64,11 @@ for (isite in seq(1,length(sites))){
   csite.corrected <- gsub(" ", "",csite, fixed = TRUE)
 
   print(paste0(csite," - ", isite,"/",length(sites)))
+
+  OP.file <- file.path("./data/",csite.corrected,"Diagnostics.RDS")
+  if (!overwite & file.exists(OP.file)){
+    next()
+  }
 
   df.site <- data.frame()
 
@@ -133,7 +140,7 @@ for (isite in seq(1,length(sites))){
 
   }
   saveRDS(df.site,
-          file.path("./data/",csite.corrected,"Diagnostics.RDS"))
+          OP.file)
 }
 
 # scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/process.sites.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

@@ -114,7 +114,8 @@ site.Arildo <- data.frame(lat = mean(c(-22-45/60, -23)),
 raw.data.Karin <- read_xlsx("./data/Karin/Karin data_Felicien.xlsx")
 
 coords <- raw.data.Karin %>%
-  dplyr::select(Coordinates) %>%
+  rename(Fragment = `Forest Fragment`) %>%
+  dplyr::select(Coordinates,Fragment) %>%
   mutate(lat.string = sub("\"S .*", "", Coordinates),
          lon.string = str_sub(str_match(Coordinates, " 4\\s*(.*?)\\s*W")[,1],
                               end = -3)) %>%
@@ -123,12 +124,14 @@ coords <- raw.data.Karin %>%
            as.numeric(sub(".*’", "", lat.string))/3600,
          lon =   as.numeric(substr(lon.string,2,3)) +
            as.numeric(substr(lon.string,5,6))/60 +
-           as.numeric(sub(".*’", "", lon.string))/3600)
+           as.numeric(sub(".*’", "", lon.string))/3600) %>%
+  mutate(Site = case_when(Fragment == "Avis rara" ~ "Campinas_secondary",
+                          TRUE ~ "Campinas_Mixed"))
 
 site.Karin <- coords %>%
+  group_by(Site) %>%
   summarise(lat = -mean(lat),
-            lon = -mean(lon)) %>%
-  mutate(Site = "Campinas")
+            lon = -mean(lon))
 
 site.pasoh <- data.frame(lat = 2 + 58/60,
                          lon = 102+18/60,
@@ -211,19 +214,31 @@ all.sites <-  bind_rows(list(
               group_by(site) %>%
               dplyr::summarise(N = length(dbh),
                                dbh.max = max(dbh,na.rm = TRUE),
+                               dbh.max.high = max(dbh[liana.cat == "high"],na.rm = TRUE),
+                               dbh.max.low = max(dbh[liana.cat == "low"],na.rm = TRUE),
+                               dbh.max.no = max(dbh[liana.cat == "no"],na.rm = TRUE),
+
                                Nlarge = length(dbh[dbh >= 10]),
+                               Nno = length(dbh[dbh >= 10 & liana.cat == "no"]),
+                               Nlow = length(dbh[dbh >= 10 & liana.cat == "low"]),
+                               Nhigh = length(dbh[dbh >= 10 & liana.cat == "high"]),
                                .groups = "keep") %>%
               rename(Site = site) %>% ungroup(),
             by = "Site") %>%
   dplyr::select(-Country)
 
-
-
 all.df.md <- all.sites %>%
   group_by(site.common) %>%
   summarise(N = sum(N),
             Nlarge = sum(Nlarge),
+            Nno = sum(Nno),
+            Nlow = sum(Nlow),
+            Nhigh = sum(Nhigh),
             dbh.max = max(dbh.max),
+            dbh.max.high = max(dbh.max.high),
+            dbh.max.low = max(dbh.max.low),
+            dbh.max.no = max(dbh.max.no),
+
             lat = mean(lat),
             lon = mean(lon),
             .groups = "keep")
@@ -319,11 +334,31 @@ site.groups <- all.df.md2plot %>%
   mutate(site.group = case_when(lon < -30 & lat > 5 ~ "Panama",
                                 lon < -30 ~ "Amazon",
                                 lon < 45 ~ "Africa",
-                                TRUE ~ "Australasia"))
+                                TRUE ~ "Australasia")) %>%
+  left_join(read.csv("./data/Meta.data.all.plots.csv") %>%
+            rename(site.common = site),
+            by = "site.common") %>%
+  ungroup()
 
-saveRDS(site.groups,
+
+raw.data <-  readRDS("./outputs/All.COI.data.RDS")
+coi.m <- raw.data %>%
+  group_by(site) %>%
+  summarise(coi.wm = weighted.mean(coi,dbh**2,
+                                   na.rm = TRUE),
+            .groups = "keep") %>%
+  rename(site.common = site)
+
+unique(raw.data$site[!(raw.data$site %in% all.sites$Site)])
+
+saveRDS(site.groups %>%
+          left_join(coi.m,
+                    by = "site.common"),
         "./outputs/site.loc.RDS")
 
+
+site.groups %>%
+  filter(Nno < 10)
 
 ggplot() +
   geom_raster(data = df.r,
@@ -347,6 +382,56 @@ ggplot() +
   theme_map() +
   guides(size = "none") +
   theme(text = element_text(size = 20))
+
+
+ggplot(data = site.groups %>%
+         group_by(site.group, Forest.status.plotview) %>%
+         summarise(N = n(),
+                   .groups = "keep")) +
+  geom_bar(aes(x = site.group, y = N, fill = Forest.status.plotview),
+           stat = "identity") +
+  theme_bw()
+
+
+ggplot(data = site.groups %>%
+         group_by(site.group, ForestElevationName) %>%
+         summarise(N = n(),
+                   .groups = "keep")) +
+  geom_bar(aes(x = site.group, y = N, fill = ForestElevationName),
+           stat = "identity") +
+  theme_bw()
+
+
+site.groups %>%
+  filter(ForestElevationName == "Lowland",
+         Forest.status.plotview == "Old-growth") %>%
+  summarise(Nlarge = sum(Nlarge),
+            Nsite = length(unique(site.common)))
+
+
+ggplot() +
+  geom_raster(data = df.r,
+              aes(x = lon, y = lat, fill = as.factor(LU)),
+              alpha = 0.4,show.legend = FALSE) +
+  geom_sf(data = world,
+          fill = NA,
+          color = "black",
+          alpha = 0.5) +
+  # geom_point(aes(x = lon, y = lat,size = sqrt(N)),
+  #            data = all.df.md2plot, shape = 1) +
+  geom_point(aes(x = lon, y = lat, color = ForestElevationName),
+             data = site.groups, shape = 1,
+             alpha = 1,
+             size = 1) +
+  scale_fill_manual(values = c("white",c("#72a83d"),"darkgreen")) +
+  scale_y_continuous(limits = c(-30,10)) +
+  scale_x_continuous(limits = c(-85,160),expand = c(0,0)) +
+  scale_size_continuous(range = c(0.1, 2)) +
+  labs(x = "", y = "") +
+  theme_map() +
+  guides(size = "none") +
+  theme(text = element_text(size = 20),
+        legend.position = "bottom")
 
 
 # Amazon <- ggplot() +
@@ -412,7 +497,7 @@ levels.ordered <- all.sites %>%
   arrange(lon) %>%
   pull(Site)
 
-summary.num <- readRDS("./outputs/All.COI.data.RDS") %>%
+summary.num <- raw.data %>%
   group_by(site,liana.cat) %>%
   dplyr::summarise(N = length(dbh),
                    Nlarge = length(dbh[dbh >= 10]),
@@ -534,6 +619,5 @@ frac %>%
             max = max(fraction)*100,
             site.max = Site[which.max(fraction)])
 
-# frac %>%
-#   filter(fraction > 0.2,
-#          liana.cat == "high")
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/outputs/site.loc.RDS hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/outputs/
+

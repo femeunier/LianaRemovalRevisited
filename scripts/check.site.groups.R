@@ -15,14 +15,18 @@ library(cowplot)
 library(ggdist)
 library(ggplot2)
 
+
+site.groups <- readRDS("./outputs/site.loc.RDS")
+
+
 # Load the data
 all.df <- bind_rows(readRDS("./outputs/All.COI.data.RDS") %>%
                       mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10),
-                    readRDS("./outputs/All.COI.data.RDS") %>%
-                      mutate(sp = str_squish(sp)) %>%
-                      filter(dbh >= 10) %>%
-                      mutate(site = "Total.re"))
+                      filter(dbh >= 10)) %>%
+  left_join(site.groups %>%
+              rename(site = site.common) %>%
+              dplyr::select(site,site.group),
+            by = "site")
 
 all.df.title <- all.df %>%
   group_by(site) %>%
@@ -33,8 +37,7 @@ all.df.title <- all.df %>%
          N.high = length(site[which(liana.cat == "high")]),
          N.tot = length(site))
 
-sites <- unique(all.df.title$site)
-# sites <- c("BCI")
+site.groups <- unique(all.df.title$site.group)
 
 models <- c("weibull","power","gmm")
 model.forms <- c("all","none","a","b","ab","bk","ak","k")
@@ -43,21 +46,21 @@ model.forms <- c("all","none","a","b","ab","bk","ak","k")
 fit.all.sites <- list()
 
 df.all <- data.frame()
-for (isite in seq(1,length(sites))){
+for (isite in seq(1,length(site.groups))){
 
-  csite <- sites[isite]
-  csite.corrected <- gsub(" ", "",csite, fixed = TRUE)
+  csite.group <- site.groups[isite]
+  csite.group.corrected <- gsub(" ", "",csite.group, fixed = TRUE)
 
-  print(paste(csite))
+  print(paste(csite.group))
 
   print("- Reading")
   fit.all.sites[[isite]] <- list()
 
-  all.possible.files <- crossing(sites[isite], models,model.forms) %>%
+  all.possible.files <- crossing(csite.group, models,model.forms) %>%
     mutate(n = paste0("Fit.",
-                      ifelse(csite.corrected == "Total.re",
+                      ifelse(csite.group.corrected == "Total.re",
                              "Total",
-                             as.character(csite.corrected)),
+                             as.character(csite.group.corrected)),
                       ".",
                       as.character(models),
                       "_",
@@ -65,7 +68,7 @@ for (isite in seq(1,length(sites))){
                       ".RDS")) %>%
     pull(n)
 
-  cfiles <- list.files(file.path("./data/",csite.corrected),
+  cfiles <- list.files(file.path("./data/",csite.group.corrected),
                        full.names = TRUE,pattern = "*.RDS")
 
   tokeep <- basename(cfiles) %in% all.possible.files
@@ -95,7 +98,7 @@ for (isite in seq(1,length(sites))){
     fixed.effects <- sub(".*\\_", "",cmodel.name)
 
     df.all <- bind_rows(list(df.all,
-                             data.frame(site = csite,
+                             data.frame(site.group = csite.group,
                                         time = file.info(paste0(cfile,".RDS"))[["mtime"]],
                                         model.name = cmodel.name,
                                         model.form = cmodelform,
@@ -104,6 +107,6 @@ for (isite in seq(1,length(sites))){
 }
 
 saveRDS(df.all,
-        "Check.Bayesian.sites.RDS")
+        "Check.Bayesian.site.groups.RDS")
 
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/check.sites.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/check.site.groups.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/

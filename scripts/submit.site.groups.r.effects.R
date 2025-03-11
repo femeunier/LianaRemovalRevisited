@@ -124,7 +124,7 @@ for (isite.group in seq(1,length(site.groups))){
 
       ED2scenarios::write_jobR(file = file.path(cdir,cjobname),
                                nodes = 1,ppn = 4,mem = 25,walltime = 72,
-                               prerun = "ml purge ; ml R-bundle-Bioconductor/3.15-foss-2021b-R-4.2.0",
+                               prerun = "ml purge ; ml R-bundle-Bioconductor/3.20-foss-2024a-R-4.4.2",
                                CD = "/data/gent/vo/000/gvo00074/felicien/R/",
                                Rscript = Rscript.name)
 
