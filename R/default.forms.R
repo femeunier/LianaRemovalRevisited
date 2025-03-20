@@ -12,8 +12,6 @@ default.forms <- function(names = c("weibull","power","gmm"),
     power.h = paste0(model.output," ~ a + b * log(dbh) + k*log(h)")
   )
 
-
-
   if (any(fixed.effect == "all")){
     fixed.effect.params <- c("a","b","k")
   } else {
