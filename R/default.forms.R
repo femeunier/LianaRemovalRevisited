@@ -44,7 +44,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b")]
-    missing.params <- missing.params[missing.params %in% c("a","b")]
+    cmissing.params <- missing.params[missing.params %in% c("a","b")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -71,9 +71,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
                      f.fixed.effect,
                      f.random.effect)
 
-    if (length(missing.params) >= 1){
+    if (length(cmissing.params) >= 1){
       all.effects <- c(all.effects,
-                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+                       paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
 
     if (length(all.effects) == 1){
@@ -96,7 +96,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b","k")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b","k")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b","k")]
-    missing.params <- missing.params[missing.params %in% c("a","b","k")]
+    cmissing.params <- missing.params[missing.params %in% c("a","b","k")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -124,9 +124,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
                      f.random.effect)
 
 
-    if (length(missing.params) >= 1){
+    if (length(cmissing.params) >= 1){
       all.effects <- c(all.effects,
-                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+                       paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
 
     if (length(all.effects) == 1){
@@ -153,7 +153,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b","k")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b","k")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b","k")]
-    missing.params <- missing.params[missing.params %in% c("a","b","k")]
+    cmissing.params <- missing.params[missing.params %in% c("a","b","k")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -182,9 +182,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
                      f.random.effect)
 
 
-    if (length(missing.params) >= 1){
+    if (length(cmissing.params) >= 1){
       all.effects <- c(all.effects,
-                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+                       paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
 
     if (length(all.effects) == 1){
@@ -211,7 +211,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
     cmixed.effect.params <- mixed.effect.params[mixed.effect.params %in% c("a","b","k")]
     cfixed.effect.params <- fixed.effect.params[fixed.effect.params %in% c("a","b","k")]
     crandom.effect.params <- random.effect.params[random.effect.params %in% c("a","b","k")]
-    missing.params <- missing.params[missing.params %in% c("a","b","k")]
+    cmissing.params <- missing.params[missing.params %in% c("a","b","k")]
 
     if (length(cmixed.effect.params) == 0){
       f.mixed.effect <- cmixed.effect.params
@@ -239,9 +239,9 @@ default.forms <- function(names = c("weibull","power","gmm"),
                      f.random.effect)
 
 
-    if (length(missing.params) >= 1){
+    if (length(cmissing.params) >= 1){
       all.effects <- c(all.effects,
-                       paste(paste(missing.params, collapse = "+"), "~ 1"))
+                       paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
 
     if (length(all.effects) == 1){
