@@ -3,7 +3,8 @@ Opt.Bayes.Model <- function(dir.name,
                             site.name,
                             strong = FALSE,
                             site.re = FALSE,
-                            threads = FALSE){
+                            threads = FALSE,
+                            nested = FALSE){
 
   Names <- settings[["Names"]]
   fixed.effect.2.test <- settings[["fixed.effect.2.test"]]
@@ -38,10 +39,20 @@ Opt.Bayes.Model <- function(dir.name,
         next()
       }
 
-      form.list <- default.forms(names = Names,
-                                 fixed.effect = cfixed.effect.2.test[[model.form]],
-                                 random.effect = re,
-                                 site.re = site.re)
+
+      if (nested){
+        form.list <- default.forms.nested(names = Names,
+                                          fixed.effect = cfixed.effect.2.test[[model.form]],
+                                          random.effect = re,
+                                          site.re = site.re)
+      } else {
+        form.list <- default.forms(names = Names,
+                                   fixed.effect = cfixed.effect.2.test[[model.form]],
+                                   random.effect = re,
+                                   site.re = site.re)
+      }
+
+
 
       priors.list <- default.priors(names = model,
                                     fixed.effect = cfixed.effect.2.test[[model.form]],

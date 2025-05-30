@@ -36,7 +36,7 @@ all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
 dir.name <- "./data/"
 csite.corrected <- csite <- "Total"
 cdir <- file.path(dir.name,
-                  paste0(csite.corrected,".re"))
+                  paste0(csite.corrected,".nested.re"))
 
 # Create data file
 dir.create(cdir,
@@ -76,13 +76,13 @@ for (iname in seq(1,length(Names))){
     names(clist) <- cname
 
     csettings <- list(Names = cname,
-                     fixed.effect.2.test = clist,
-                     overwrite = overwrite,
-                     re = re,
-                     Nchains = Nchains,
-                     Niter = Niter,
-                     backend = "rstan",           # rstan
-                     control.list = control.list)
+                      fixed.effect.2.test = clist,
+                      overwrite = overwrite,
+                      re = re,
+                      Nchains = Nchains,
+                      Niter = Niter,
+                      backend = "rstan",           # rstan
+                      control.list = control.list)
 
     settings.location <- file.path(dir.name,paste0("current.settings.",
                                                    cname,".",paste0(ceffect,collapse = ""),
@@ -94,12 +94,12 @@ for (iname in seq(1,length(Names))){
                                                          cname,".",paste0(ceffect,collapse = ""),
                                                          ".R"))
 
-    write.script(file.name = script.name,
-                 dir.name = cdir,
-                 site.name = csite.corrected,
-                 settings.location = settings.location,
-                 site.re = TRUE,
-                 threads = TRUE)
+    write.script.nested(file.name = script.name,
+                        dir.name = cdir,
+                        site.name = csite.corrected,
+                        settings.location = settings.location,
+                        site.re = TRUE,
+                        threads = TRUE)
 
 
     # Create job file
@@ -126,4 +126,4 @@ dumb <- write_bash_submission(file = file.path(dir.name,
                               list_files = list_dir,
                               job_name = job.names)
 
-# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/submit.total.effects.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
+# scp /home/femeunier/Documents/projects/LianaRemovalRevisited/scripts/submit.total.effects.nested.R hpc:/kyukon/data/gent/vo/000/gvo00074/felicien/R/
