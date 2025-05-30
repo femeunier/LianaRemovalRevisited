@@ -237,7 +237,7 @@ ggplot(data = Main.OP %>%
   stat_pointinterval(aes(alpha = signif_rel2),
                      .width = 1-alpha,
                      position = position_dodge(width = 0)) +
-  scale_x_continuous(limits = c(-60,30)) +
+  scale_x_continuous(limits = c(-80,30)) +
   labs(y = "", color = "", fill = "",x = "") +
   theme_minimal_hgrid() +
   # facet_wrap(~ site.group, scales = "free_y") +

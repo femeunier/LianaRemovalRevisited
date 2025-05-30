@@ -358,9 +358,13 @@ system2("rsync",c("-avz",
                   "./outputs/"))
 temp.title <- readRDS("./outputs/Model.predictions.RDS")
 
-csite <- "LFB"
+sites
+# csite <- sites[1:10]
+csite <- c("DAN","TAM","FRP", "CUZ", "NXV_Oldgrowth_Moist", "Rio Grande", "357", "GAU_Oldgrowth")
+csite <- c("Rio Grande")
+
 ggplot(data = temp.title %>%
-         filter(site == csite)) +
+         filter(site %in% csite)) +
   geom_point(data = all.df.title %>%
                filter(site %in% csite),
              aes(x = dbh,y = h, color = as.factor(liana.cat)),
@@ -372,7 +376,7 @@ ggplot(data = temp.title %>%
   # geom_ribbon(aes(x = dbh, y = h.null.pred.m,
   #                 ymin = h.null.pred.low, ymax = h.null.pred.high), color = NA, alpha = 0.5, fill = "darkgrey") +
   geom_line(aes(x = dbh,y = h.null.pred.m), color = "black") +
-  facet_wrap(~ site.N, scales = "free") +
+  facet_wrap(~ site, scales = "free") +
   # scale_x_log10(limits = c(10,300),
   #                    breaks = c(10,20,50,100,200)) +
   # scale_y_log10(limits = c(1,60)) +
@@ -380,6 +384,9 @@ ggplot(data = temp.title %>%
   theme_bw() +
   theme(text = element_text(size = 20))
 
+
+
+# FRP, CUZ, NXV_Oldgrowth_Moist, Rio Grande, 357, GAU_Oldgrowth
 
 ################################################################################
 
@@ -564,6 +571,6 @@ ggplot(data = temp3.title %>%
   stat_pointinterval( .width = c(1-alpha),
                       position = position_dodge(width = 0.1)) +
   facet_wrap(~ liana.cat) +
-  # scale_x_continuous(limits = c(-20,10)) +
+  scale_x_continuous(limits = c(-20,10)) +
   theme_bw()
 

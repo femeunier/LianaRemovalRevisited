@@ -15,11 +15,11 @@ library(SPEI)
 site.loc <- readRDS("./outputs/site.loc.RDS") %>%
   mutate(continent = site.group) %>%
   dplyr::select(-group) %>%
-  distinct()  #%>%
-  # filter(continent == "Amazon") %>%
-  # filter(!grepl("Australia",site.common)) #%>%
-  # filter(ForestElevationName == "Lowland",
-  #        Forest.status.plotview %in% c("Old-growth","Mature"))
+  distinct()  %>%
+# filter(continent == "Amazon") %>%
+# filter(!grepl("Australia",site.common)) #%>%
+  filter(ForestElevationName == "Lowland",
+         Forest.status.plotview %in% c("Old-growth","Mature"))
 
 continents <- unique(site.loc$continent)
 
@@ -32,14 +32,6 @@ MAT <- t.sd <-
   srad <- srad.sd <-
   dry.season.length <- c()
 
-rastlist <- list.files(path = "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/WorldClim/vapr", pattern='.tif$',
-                       all.files=TRUE, full.names=TRUE)
-rastlist2 <- list.files(path = "/home/femeunier/Documents/projects/LianaRemovalRevisited/data/WorldClim/srad", pattern='.tif$',
-                       all.files=TRUE, full.names=TRUE)
-
-#import all raster files in folder using lapply
-r.vapr <- rast(lapply(rastlist, rast))
-r.srad <- rast(lapply(rastlist2, rast))
 
 for (isite in seq(1,nrow(site.loc))){
 
@@ -48,17 +40,14 @@ for (isite in seq(1,nrow(site.loc))){
   xy <- rbind(c(clon,clat))
   p <- vect(xy, crs="+proj=longlat +datum=WGS84")
 
-  r.tavg <- worldclim_tile("tavg",
-                           clon,clat,
-                           path = "./data/WorldClim/", version="2.1",res = 0.5)
-  t.avg <- as.numeric(as.vector(raster::extract(r.tavg, xy)))
+  r.tavg <- stack("./outputs/ERA5/tmp.tif")
+  t.avg <- as.numeric(as.vector(raster::extract(r.tavg, xy))) - 273.15
+
   MAT[isite] <- weighted.mean(t.avg,days)
   t.sd[isite] <- sd(t.avg)/MAT[isite]
 
-  r.prec <- worldclim_tile("prec",
-                clon,clat,
-                 path = "./data/WorldClim/", version="2.1",res = 0.5)
-  prec.avg <- as.numeric(as.vector(raster::extract(r.prec, xy)))
+  r.prec <- stack("./outputs/ERA5/pre.tif")
+  prec.avg <- as.numeric(as.vector(raster::extract(r.prec, xy)))*8*days
   e.avg <- days*3.33
   e.avg <- SPEI::thornthwaite(t.avg,clat,verbose = FALSE)
 
@@ -76,20 +65,17 @@ for (isite in seq(1,nrow(site.loc))){
   ##############################################################################
   # Incident solar radiation
 
-  # r.srad <- worldclim_tile("srad",
-  #                          clon,clat,
-  #                          path = "./data/WorldClim/", version="2.1",res = 0.5)
+  r.srad <- stack("./outputs/ERA5/dswrf.tif")
   r.srad.avg <- as.numeric(as.vector(raster::extract(r.srad, xy)))
   srad[isite] <- weighted.mean(r.srad.avg,days)
   srad.sd[isite] <- sd(r.srad.avg)/srad[isite]
 
   # VPD
+  r.vapr <- stack("./outputs/ERA5/VPD.tif")
   r.vapr.avg <- as.numeric(as.vector(raster::extract(r.vapr, xy)))
-  vpsat = 610.7*10**((7.5*t.avg)/(237.3 + t.avg))/1000
-  vpd <- vpsat - r.vapr.avg
 
-  VPD[isite] <- weighted.mean(vpd,days)
-  VPD.sd[isite] <- sd(vpd)/VPD[isite]
+  VPD[isite] <- weighted.mean(r.vapr.avg,days)
+  VPD.sd[isite] <- sd(r.vapr.avg)/VPD[isite]
 
 }
 
@@ -223,7 +209,7 @@ all.vars <- c("t.sd","MAP","MCWD","MAT","VPD","VPD.sd","coi.wm",
               "Prec.sd","srad","srad.sd","dry.season.length","H.m",
               "H.wm","WD.wm")
 
-Var1 = "srad" ; Var2 = "t.sd"
+Var1 = "MAP" ; Var2 = "srad"
 PolyN <- 1
 
 df.all.effects <- df.r2 <-
@@ -318,8 +304,8 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
                                 N = nrow(effect.site)))
 
   vars1 <- seq(min(effect.site[[Var1]]),
-              max(effect.site[[Var1]]),
-              length.out=1000)
+               max(effect.site[[Var1]]),
+               length.out=1000)
   varm2 <- weighted.mean(effect.site[[Var2]],
                          effect.site[["Nlarge"]])
 
@@ -336,7 +322,7 @@ for (iDBHtarget in seq(1,length(DBHtargets))){
                        data.frame(A = varm1,
                                   B = vars2,
                                   constant = Var1)
-                       )
+  )
   colnames(newdata)[1:2] <- c(Var1,Var2)
 
   predictions <- predict(LM.all,newdata = newdata,
@@ -376,6 +362,9 @@ df.r2.single %>%
   pivot_wider(names_from = target,
               values_from = pos)
 
+df.r2.single %>%
+  filter(variable == "MAP")
+
 
 
 rownames(df.model.var) <- rownames(df.model.all) <- NULL
@@ -401,7 +390,7 @@ df.all.effects.long <- df.all.effects %>%
 p.values <- df.all.effects.long %>%
   group_by(variable,target) %>%
   summarise(p.value = summary(lm(formula = m_high ~ value,
-                                     weights = w))[["coefficients"]][2,4],
+                                 weights = w))[["coefficients"]][2,4],
             r2 = summary(lm(formula = m_high ~ value,
                             weights = w))[["r.squared"]],
             .groups = "keep")

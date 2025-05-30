@@ -81,6 +81,7 @@ for (iname in seq(1,length(Names))){
                      re = re,
                      Nchains = Nchains,
                      Niter = Niter,
+                     backend = "cmdstanr",
                      control.list = control.list)
 
     settings.location <- file.path(dir.name,paste0("current.settings.",

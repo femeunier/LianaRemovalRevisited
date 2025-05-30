@@ -10,11 +10,12 @@ library(tidyr)
 srad <- worldclim_global("srad",
                            path = "./data/WorldClim/", version="2.1",res = 10)
 
+
 Panama <- extent(c(-80,-79,9,10))
 Tropics <- extent(c(-180,180,-23.25,23.25))
 CoreTropics <- extent(c(-180,180,-5,5))
 
-df <- data.frame()
+df <- data.frame() ; df.lat <- data.frame()
 for (i in seq(1,12)){
   crast <- srad[[i]]
 
@@ -27,7 +28,33 @@ for (i in seq(1,12)){
                             na.rm = TRUE),
              month = i))
 
+  cvar <- paste0("wc2.1_10m_srad_",sprintf("%02d",i))
+
+  df.lat <- bind_rows(df.lat,
+                      as.data.frame(crast,
+                xy = TRUE) %>%
+    mutate(lat = round(y)) %>%
+    rename(value := cvar) %>%
+    group_by(lat) %>%
+    summarise(value.m = mean(value,na.rm = TRUE)) %>%
+      mutate(month = i))
+
 }
+
+df.lat.m <- df.lat %>%
+  group_by(lat) %>%
+  summarise(value.m = mean(value.m),
+            .groups = "keep")
+
+ggplot() +
+  geom_line(data = df.lat,
+            aes(y = value.m, x = lat, group = month,
+                color = (month))) +
+  geom_line(data = df.lat.m,
+            aes(y = value.m, x = lat), color = "red") +
+  scale_x_continuous(limits = c(-1,1)*23.25) +
+  coord_flip() +
+  theme_bw()
 
 df.long <- df %>%
   pivot_longer(cols = -c(month),
@@ -52,6 +79,26 @@ ggplot() +
   theme_bw()
 
 A <- readRDS("/home/femeunier/Documents/data/monthly.climate.pantropical.ERA5.RDS")
+
+A.lat <- A %>%
+  mutate(lat = round(lat)) %>%
+  group_by(lat,month) %>%
+  summarise(dswrf.m = mean(dswrf),
+             .groups = "keep")
+
+A.lat.m <- A.lat %>%
+  group_by(lat) %>%
+  summarise(dswrf.m = mean(dswrf.m,na.rm = TRUE),
+            .groups = "keep")
+
+ggplot() +
+  geom_line(data = A.lat,
+            aes(y = dswrf.m, x = lat, group = month,color = (month))) +
+  geom_line(data = A.lat.m,
+            aes(y = dswrf.m, x = lat),
+            color = "red") +
+  coord_flip() +
+  theme_bw()
 
 A.sum <- A %>%
   filter(year %in% c(1981:2010)) %>%

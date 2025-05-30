@@ -12,6 +12,7 @@ Opt.Bayes.Model <- function(dir.name,
   Nchains <- settings[["Nchains"]]
   Niter <- settings[["Niter"]]
   control.list <- settings[["control.list"]]
+  backend <- settings[["backend"]]
 
   data.file <- file.path(dir.name,
                          paste0("data_",site.name,".RDS"))
@@ -67,6 +68,7 @@ Opt.Bayes.Model <- function(dir.name,
                     prior = priors.list[[model]],
                     control = control.list,
                     chains = Nchains,
+                    backend = backend,
                     iter = Niter,
                     silent = 2)
       } else{
@@ -80,6 +82,7 @@ Opt.Bayes.Model <- function(dir.name,
                     chains = Nchains,
                     threads = threading(floor(parallel::detectCores()/Nchains)),
                     iter = Niter,
+                    backend = backend,
                     silent = 2)
       }
 

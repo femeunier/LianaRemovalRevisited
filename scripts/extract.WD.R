@@ -29,7 +29,6 @@ all.df <- (readRDS(  "./outputs/All.COI.data.RDS") %>%
               distinct(),
             by = "site")
 
-
 all.df %>%
   group_by(site,sp,liana.cat) %>%
   summarise(N = n(),
@@ -133,7 +132,8 @@ saveRDS(all.df.sum %>%
 df <- readRDS("./outputs/DeltaH.vs.climate.RDS") %>%
   filter(target == 50) %>%
   dplyr::select(-any_of(c("WD.m","WD.wm","H.m","H.wm"))) %>%
-  left_join(all.df.sum,
+  left_join(all.df.sum %>%
+              dplyr::select(-coi.wm),
             by = "site")
 
 cols<-brewer.pal(length(unique(df$continent)),"Dark2")
@@ -148,22 +148,56 @@ df2plot <- df %>%
                           TRUE ~ "2"))
 
 ggplot(data = cdf,
-       aes(x = WD.wm, y = m_high, color = continent)) +
+       aes(x = srad, y = m_high, color = continent)) +
+  geom_hline(yintercept = 0,linetype = 2) +
+  geom_errorbar(aes(ymin = Qlow_high, ymax = Qhigh_high),
+                width = 0) +
+  geom_point(data = df2plot,
+             aes(size = sqrt(Nno*Nhigh))) +
+  scale_color_manual(values = cols) +
+  # geom_smooth(aes(weight = sqrt(Nno*Nhigh)),
+  #             method = "lm", se = FALSE) +
+  geom_smooth(aes(weight = sqrt(Nno*Nhigh)),
+              color = "black",fill = "lightgrey",
+              method = "lm", se = TRUE) +
+  theme_bw() +
+  guides(size = "none")
+
+
+summary(lm(data = cdf,
+           formula = m_high ~ MAP,
+           weights = sqrt(Nno*Nhigh)))
+
+summary(lm(data = cdf,
+           formula = m_high ~ MAP))
+
+ggplot(data = cdf) +
+  geom_density(aes(x = MAP, fill = continent),
+               alpha = 0.5, color = NA) +
+  theme_bw()
+
+
+ggplot(data = cdf,
+       aes(x = MAP, y = coi.wm, color = continent)) +
+  geom_hline(yintercept = 0,linetype = 2) +
   geom_point() +
   scale_color_manual(values = cols) +
-  stat_smooth(method = "lm", se = FALSE) +
-  stat_smooth(color = "black",fill = "lightgrey",
+  geom_smooth(aes(weight = sqrt(Nno*Nhigh)),
+              method = "lm", se = FALSE) +
+  geom_smooth(aes(weight = sqrt(Nno*Nhigh)),
+              color = "black",fill = "lightgrey",
               method = "lm", se = TRUE) +
   theme_bw()
 
 summary(lm(data = cdf,
-           formula = m_high ~ srad,
+           formula = coi.wm ~ MAT,
            weights = sqrt(Nno*Nhigh)))
 
 
 ggplot(data = cdf,
        aes(x = H.wm, y = m_high, color = continent)) +
   geom_point() +
+  geom_hline(yintercept = 0,linetype = 2) +
   scale_color_manual(values = cols) +
   stat_smooth(method = "lm", se = FALSE) +
   stat_smooth(color = "black",fill = "lightgrey",
@@ -231,6 +265,7 @@ df.PCA <- cdf %>%
                 m.abs_high,WD.m,
                 MAP,MAT,Prec.sd,MCWD,t.sd,VPD,VPD.sd,srad,srad.sd,
                 H.no_high,H.wm,H.m,
+                coi.wm,
                 WD.wm,frac.high)
 
 res.pca <- PCA(df.PCA, scale.unit = TRUE, ncp = 5, graph = FALSE,
@@ -243,7 +278,8 @@ fviz_pca_biplot(res.pca,
                 pointshape = 21,
                 pointsize = 2.5,
                 fill.ind = cdf$continent,
-                addEllipses = TRUE,ellipse.type = "confidence",
+                addEllipses = TRUE,
+                ellipse.type = "confidence",
                 col.ind = "black",
                 col.var = "black",
                 # Color variable by groups
@@ -296,7 +332,7 @@ ggplot(data = df.all,
   theme(legend.position = c(0.15,0.8))
 
 summary(lm(data = df.all,
-           formula = m_high ~ Dim.1 + Dim.2,
+           formula = m_high ~ Dim.1+Dim.2,
            weights = sqrt(Nno*Nhigh)))
 
 var <- get_pca_var(res.pca_nolianaeffect)

@@ -42,7 +42,7 @@ all.df %>% group_by(site) %>%
   arrange(Ndata)
 
 sites <- sort(unique(all.df$site))
-sites <- c("DAN","SGW")
+sites <- c("Rio Grande")
 
 Names <- c("weibull","power","gmm")
 
@@ -71,9 +71,23 @@ settings <- list(Names  = Names,
                  re = re,
                  Nchains = Nchains,
                  Niter = Niter,
+                 backend = "cmdstanr",
                  control.list = control.list)
 settings.location <- file.path(dir.name,"current.settings.RDS")
 saveRDS(settings,settings.location)
+
+
+settings.none <- list(Names  = Names,
+                 fixed.effect.2.test = fixed.effect.2.test,
+                 overwrite = overwrite,
+                 re = c("none"),
+                 Nchains = Nchains,
+                 Niter = Niter,
+                 control.list = control.list)
+settings.location.none <- file.path(dir.name,"current.settings.none.RDS")
+saveRDS(settings.none,
+        settings.location.none)
+
 
 list_dir <- list() ; jobname <- "job.sh"
 
@@ -95,10 +109,18 @@ for (isite in seq(1,length(sites))){
 
   # Create script file
   Rscript.name <- file.path(cdir,script.name <- "Rscript.R")
-  write.script(file.name = script.name,
-               dir.name = cdir,
-               site.name = csite.corrected,
-               settings.location = settings.location)
+
+  if (csite %in% c("Rio Grande")){
+    write.script(file.name = script.name,
+                 dir.name = cdir,
+                 site.name = csite.corrected,
+                 settings.location = settings.location.none)
+  } else {
+    write.script(file.name = script.name,
+                 dir.name = cdir,
+                 site.name = csite.corrected,
+                 settings.location = settings.location)
+  }
 
   # Create job file
   ED2scenarios::write_jobR(file = file.path(cdir,jobname),

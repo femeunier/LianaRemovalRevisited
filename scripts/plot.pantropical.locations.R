@@ -1,7 +1,6 @@
 rm(list = ls())
 
 # Meta-data
-# Add other meta-data
 
 library(dplyr)
 library(ggplot2)
@@ -300,6 +299,40 @@ ggplot() +
   theme_map() +
   guides(size = "none") +
   theme(text = element_text(size = 20))
+
+df2plot <- site.groups %>%
+  mutate(type = case_when(ForestElevationName == "Lowland" & Forest.status.plotview %in% c("Old-growth","Mature") ~ "Main",
+                          TRUE ~ "Else"))
+
+ggplot() +
+  geom_raster(data = df.r,
+              aes(x = lon, y = lat, fill = as.factor(LU)),
+              alpha = 0.4,show.legend = FALSE) +
+  geom_sf(data = world,
+          fill = NA,
+          color = "black",
+          alpha = 0.5) +
+  # geom_point(aes(x = lon, y = lat,size = sqrt(N)),
+  #            data = all.df.md2plot, shape = 1) +
+  geom_point(aes(x = lon, y = lat, color = type),
+             data = df2plot, color = "black", alpha = 0.8) +
+  geom_point(aes(x = lon, y = lat, color = type),
+             data = df2plot %>%
+               filter(type == "Main"), color = "red",fill = NA,
+             shape = 1) +
+  scale_fill_manual(values = c("white",c("#72a83d"),"darkgreen")) +
+  scale_y_continuous(limits = c(-30,10)) +
+  scale_x_continuous(limits = c(-85,160),expand = c(0,0)) +
+  scale_size_continuous(range = c(0.1, 2)) +
+  labs(x = "", y = "") +
+  theme_map() +
+  guides(size = "none") +
+  theme(text = element_text(size = 20),
+        legend.position = "bottom")
+
+
+df2plot %>%
+  filter(Forest.status.plotview == "Mature")
 
 
 # ggplot() +
