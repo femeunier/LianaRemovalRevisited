@@ -8,8 +8,8 @@ default.forms <- function(names = c("weibull","power","gmm"),
   form.list <- list()
   f.functional.form <- list(
     power = paste0(model.output," ~ a + b*log(dbh)"),
-    weibull = paste0(model.output," ~ a + log(1 - exp(-b*(dbh^k)))"),
-    gmm = paste0(model.output," ~ (a + b * log(dbh))-log(k+(dbh^b))"),
+    weibull = paste0(model.output," ~ a + log(1 - exp(-b*(dbh^k)) + delta)"),
+    gmm = paste0(model.output," ~ (a + b * log(dbh))-log(k+(dbh^b) + delta)"),
     power.h = paste0(model.output," ~ a + b * log(dbh) + k*log(h)")
   )
 

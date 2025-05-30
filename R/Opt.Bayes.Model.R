@@ -77,6 +77,7 @@ Opt.Bayes.Model <- function(dir.name,
         cfit <- brm(form.list[[model]],
                     data=data %>%
                       mutate(logh = log(h),
+                             delta = 1e-5,
                              sp = as.factor(sp)),
                     cores = Nchains,
                     prior = priors.list[[model]],
