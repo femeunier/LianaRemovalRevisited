@@ -2,7 +2,8 @@ default.forms <- function(names = c("weibull","power","gmm"),
                           fixed.effect = "all",
                           random.effect = "all",
                           model.output = "logh",
-                          site.re = FALSE){
+                          site.re = FALSE,
+                          nested = FALSE){
 
   form.list <- list()
   f.functional.form <- list(
@@ -34,9 +35,17 @@ default.forms <- function(names = c("weibull","power","gmm"),
                               mixed.effect.params))
 
 
-  addition <- ifelse(site.re,
-                     "(1 | site/sp)",
-                     "(1 | sp)")
+  if (nested){
+    addition <- ifelse(site.re,
+                       "(liana.cat | site/sp)",
+                       "(liana.cat | sp)")
+  } else {
+    addition <- ifelse(site.re,
+                       "(1 | site/sp)",
+                       "(1 | sp)")
+  }
+
+
 
   # Power function form
   if ("power" %in% tolower(names)){

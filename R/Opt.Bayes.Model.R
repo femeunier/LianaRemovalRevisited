@@ -39,20 +39,11 @@ Opt.Bayes.Model <- function(dir.name,
         next()
       }
 
-
-      if (nested){
-        form.list <- default.forms.nested(names = Names,
-                                          fixed.effect = cfixed.effect.2.test[[model.form]],
-                                          random.effect = re,
-                                          site.re = site.re)
-      } else {
-        form.list <- default.forms(names = Names,
-                                   fixed.effect = cfixed.effect.2.test[[model.form]],
-                                   random.effect = re,
-                                   site.re = site.re)
-      }
-
-
+      form.list <- default.forms(names = Names,
+                                 fixed.effect = cfixed.effect.2.test[[model.form]],
+                                 random.effect = re,
+                                 site.re = site.re,
+                                 nested = nested)
 
       priors.list <- default.priors(names = model,
                                     fixed.effect = cfixed.effect.2.test[[model.form]],
