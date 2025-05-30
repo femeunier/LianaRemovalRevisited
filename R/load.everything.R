@@ -15,5 +15,6 @@ load.everything <- function(){
   library(tidybayes)
   library(rstan)
   library(LianaRemovalRevisited)
+  library(cmdstanr)
 
 }
