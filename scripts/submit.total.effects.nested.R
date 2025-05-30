@@ -33,7 +33,7 @@ all.df <- readRDS("./outputs/All.COI.data.RDS") %>%
   #                       TRUE ~ sp)) %>%
   dplyr::select(-N)
 
-dir.name <- "./data/"
+dir.name <- "/data/gent/vo/000/gvo00074/felicien/R/data/"
 csite.corrected <- csite <- "Total"
 cdir <- file.path(dir.name,
                   paste0(csite.corrected,".nested.re"))
@@ -121,7 +121,7 @@ for (iname in seq(1,length(Names))){
   }
 }
 
-dumb <- write_bash_submission(file = file.path(dir.name,
+dumb <- write_bash_submission(file = file.path(getwd(),
                                                "all_jobs_Bayesian.sh"),
                               list_files = list_dir,
                               job_name = job.names)
