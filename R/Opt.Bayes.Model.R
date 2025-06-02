@@ -12,6 +12,18 @@ Opt.Bayes.Model <- function(dir.name,
   re <- settings[["re"]]
   Nchains <- settings[["Nchains"]]
   Niter <- settings[["Niter"]]
+  warmup <- settings[["warmup"]]
+
+  if (is.null(warmup)){
+    warmup <- floor(Niter/2)
+  }
+
+  thin <- settings[["thin"]]
+
+  if (is.null(thin)){
+    thin <- 1
+  }
+
   control.list <- settings[["control.list"]]
   backend <- settings[["backend"]]
 
@@ -74,6 +86,7 @@ Opt.Bayes.Model <- function(dir.name,
                     chains = Nchains,
                     backend = backend,
                     iter = Niter,
+                    warmup = warmup,
                     silent = 2)
       } else{
         cfit <- brm(form.list[[model]],
@@ -88,6 +101,7 @@ Opt.Bayes.Model <- function(dir.name,
                     chains = Nchains,
                     threads = threading(floor(parallel::detectCores()/Nchains)),
                     iter = Niter,
+                    warmup = warmup,
                     backend = backend,
                     silent = 2)
       }
