@@ -18,6 +18,12 @@ Opt.Bayes.Model <- function(dir.name,
     warmup <- floor(Niter/2)
   }
 
+  refresh <- settings[["refresh"]]
+
+  if (is.null(refresh)){
+    refresh <- round(Niter/10)
+  }
+
   thin <- settings[["thin"]]
 
   if (is.null(thin)){
@@ -45,7 +51,8 @@ Opt.Bayes.Model <- function(dir.name,
       )
 
       cname <- paste(model,paste(cfixed.effect.2.test[[model.form]],collapse = ""),sep = "_")
-      op.file <- file.path(dir.name,paste0("Fit.",site.name,".",cname,".RDS"))
+      op.file <- file.path(dir.name,
+                           paste0("Fit.",site.name,".",cname,".RDS"))
 
       if (!overwrite & file.exists(op.file)){
         next()
@@ -85,6 +92,7 @@ Opt.Bayes.Model <- function(dir.name,
                     init = 0,
                     chains = Nchains,
                     backend = backend,
+                    refresh = refresh,
                     iter = Niter,
                     warmup = warmup,
                     silent = 2)
@@ -101,6 +109,7 @@ Opt.Bayes.Model <- function(dir.name,
                     chains = Nchains,
                     threads = threading(floor(parallel::detectCores()/Nchains)),
                     iter = Niter,
+                    refresh = refresh,
                     warmup = warmup,
                     backend = backend,
                     silent = 2)
