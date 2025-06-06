@@ -3,7 +3,8 @@ default.forms <- function(names = c("weibull","power","gmm"),
                           random.effect = "all",
                           model.output = "logh",
                           site.re = FALSE,
-                          nested = FALSE){
+                          nested = FALSE,
+                          crossed = FALSE){
 
   form.list <- list()
   f.functional.form <- list(
@@ -35,7 +36,7 @@ default.forms <- function(names = c("weibull","power","gmm"),
                               mixed.effect.params))
 
 
-  if (nested){
+  if (nested & !crossed){
     addition <- ifelse(site.re,
                        "(liana.cat | site/sp)",
                        "(liana.cat | sp)")
@@ -44,7 +45,16 @@ default.forms <- function(names = c("weibull","power","gmm"),
                        "(1 | site/sp)",
                        "(1 | sp)")
 
-  } else {
+  } else  if (!nested & crossed){
+    addition <- ifelse(site.re,
+                       "(1 | site) + (1 | sp)",
+                       "(1 | sp")
+
+    addition2 <- ifelse(site.re,
+                        "(1 | site) + (1 | sp)",
+                        "(1 | sp)")
+
+  }else {
     addition <- addition2 <- ifelse(site.re,
                        "(1 | site/sp)",
                        "(1 | sp)")

@@ -4,7 +4,8 @@ Opt.Bayes.Model <- function(dir.name,
                             strong = FALSE,
                             site.re = FALSE,
                             threads = FALSE,
-                            nested = FALSE){
+                            nested = FALSE,
+                            crossed = FALSE){
 
   Names <- settings[["Names"]]
   fixed.effect.2.test <- settings[["fixed.effect.2.test"]]
@@ -62,7 +63,8 @@ Opt.Bayes.Model <- function(dir.name,
                                  fixed.effect = cfixed.effect.2.test[[model.form]],
                                  random.effect = re,
                                  site.re = site.re,
-                                 nested = nested)
+                                 nested = nested,
+                                 crossed = crossed)
 
       priors.list <- default.priors(names = model,
                                     fixed.effect = cfixed.effect.2.test[[model.form]],
