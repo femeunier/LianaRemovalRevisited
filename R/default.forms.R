@@ -47,14 +47,22 @@ default.forms <- function(names = c("weibull","power","gmm"),
 
   } else  if (!nested & crossed){
     addition <- ifelse(site.re,
+                       "(liana.cat | site) + (liana.cat | sp)",
+                       "(liana.cat | sp")
+
+    addition2 <- ifelse(site.re,
+                        "(1 | site) + (1 | sp)",
+                        "(1 | sp)")
+
+  } else if (crossed & nested){
+    addition <- ifelse(site.re,
                        "(1 | site) + (1 | sp)",
                        "(1 | sp")
 
     addition2 <- ifelse(site.re,
                         "(1 | site) + (1 | sp)",
                         "(1 | sp)")
-
-  }else {
+  } else {
     addition <- addition2 <- ifelse(site.re,
                        "(1 | site/sp)",
                        "(1 | sp)")
