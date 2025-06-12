@@ -79,21 +79,27 @@ default.priors <- function(names,
           set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.catlow") +
           set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.cathigh")
 
-      } else if ("a" %in% tolower(fixed.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("normal(0,1)",  nlpar = "a", coef = "liana.catlow") +
-          set_prior("normal(0,1)",  nlpar = "a", coef = "liana.cathigh")
+      } else {
+        if ("a" %in% tolower(fixed.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("normal(0,1)",  nlpar = "a", coef = "liana.catlow") +
+            set_prior("normal(0,1)",  nlpar = "a", coef = "liana.cathigh")
 
-      } else if ("b" %in% tolower(fixed.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.catlow") +
-          set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.cathigh")
+        }
 
-      } else if ("k" %in% tolower(fixed.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.catlow") +
-          set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.cathigh")
+        if ("b" %in% tolower(fixed.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.catlow") +
+            set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.cathigh")
 
+        }
+
+        if ("k" %in% tolower(fixed.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.catlow") +
+            set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.cathigh")
+
+        }
       }
 
       # Add prior for random effect
@@ -112,22 +118,28 @@ default.priors <- function(names,
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
 
-      } else if ("a" %in% tolower(random.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sigma", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
+      } else {
+        if ("a" %in% tolower(random.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sigma", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
 
-      } else if ("b" %in% tolower(random.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
+        }
 
-      }  else if ("k" %in% tolower(random.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+        if ("b" %in% tolower(random.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
 
+        }
+
+        if ("k" %in% tolower(random.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+
+        }
       }
 
     }
@@ -151,23 +163,29 @@ default.priors <- function(names,
           set_prior("normal(0,10)",  nlpar = "k", coef = "liana.catlow") +
           set_prior("normal(0,10)",  nlpar = "k", coef = "liana.cathigh")
 
-      } else if ("a" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("normal(0,1)",  nlpar = "a", coef = "liana.catlow") +
-          set_prior("normal(0,1)",  nlpar = "a", coef = "liana.cathigh")
+      } else {
+        if ("a" %in% tolower(fixed.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("normal(0,1)",  nlpar = "a", coef = "liana.catlow") +
+            set_prior("normal(0,1)",  nlpar = "a", coef = "liana.cathigh")
 
-      } else if ("b" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("normal(0,0.25)",  nlpar = "b", coef = "liana.catlow") +
-          set_prior("normal(0,0.25)",  nlpar = "b", coef = "liana.cathigh")
+        }
 
-      } else if ("k" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("normal(0,10)",  nlpar = "k", coef = "liana.catlow") +
-          set_prior("normal(0,10)",  nlpar = "k", coef = "liana.cathigh")
+        if ("b" %in% tolower(fixed.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("normal(0,0.25)",  nlpar = "b", coef = "liana.catlow") +
+            set_prior("normal(0,0.25)",  nlpar = "b", coef = "liana.cathigh")
+
+        }
+
+        if ("k" %in% tolower(fixed.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("normal(0,10)",  nlpar = "k", coef = "liana.catlow") +
+            set_prior("normal(0,10)",  nlpar = "k", coef = "liana.cathigh")
+
+        }
 
       }
-
 
       # Add prior for random effect
 
@@ -185,21 +203,27 @@ default.priors <- function(names,
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
 
-      } else if ("a" %in% tolower(random.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
+      } else{
+        if ("a" %in% tolower(random.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
 
-      } else if ("b" %in% tolower(random.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
+        }
 
-      }  else if ("k" %in% tolower(random.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+        if ("b" %in% tolower(random.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
 
+        }
+
+        if ("k" %in% tolower(random.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+
+        }
       }
 
     }
@@ -277,20 +301,27 @@ default.priors <- function(names,
           set_prior("normal(0,0.025)",  nlpar = "k", coef = "liana.catlow") +
           set_prior("normal(0,0.025)",  nlpar = "k", coef = "liana.cathigh")
 
-      } else if ("a" %in% tolower(fixed.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("normal(0,0.05)",  nlpar = "a", coef = "liana.catlow") +
-          set_prior("normal(0,0.05)",  nlpar = "a", coef = "liana.cathigh")
+      } else {
+        if ("a" %in% tolower(fixed.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("normal(0,0.05)",  nlpar = "a", coef = "liana.catlow") +
+            set_prior("normal(0,0.05)",  nlpar = "a", coef = "liana.cathigh")
 
-      } else if ("b" %in% tolower(fixed.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("normal(0,0.0025)",  nlpar = "b", coef = "liana.catlow") +
-          set_prior("normal(0,0.0025)",  nlpar = "b", coef = "liana.cathigh")
+        }
 
-      } else if ("k" %in% tolower(fixed.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("normal(0,0.025)",  nlpar = "k", coef = "liana.catlow") +
-          set_prior("normal(0,0.025)",  nlpar = "k", coef = "liana.cathigh")
+        if ("b" %in% tolower(fixed.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("normal(0,0.0025)",  nlpar = "b", coef = "liana.catlow") +
+            set_prior("normal(0,0.0025)",  nlpar = "b", coef = "liana.cathigh")
+
+        }
+
+        if ("k" %in% tolower(fixed.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("normal(0,0.025)",  nlpar = "k", coef = "liana.catlow") +
+            set_prior("normal(0,0.025)",  nlpar = "k", coef = "liana.cathigh")
+
+        }
 
       }
 
@@ -310,24 +341,29 @@ default.priors <- function(names,
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
 
-      } else if ("a" %in% tolower(random.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sigma", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
+      } else {
+        if ("a" %in% tolower(random.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sigma", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
 
-      } else if ("b" %in% tolower(random.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
+        }
 
-      }  else if ("k" %in% tolower(random.effect)){
-        priors.list[["weibull"]] <- priors.list[["weibull"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+        if ("b" %in% tolower(random.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
 
+        }
+
+        if ("k" %in% tolower(random.effect)){
+          priors.list[["weibull"]] <- priors.list[["weibull"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+
+        }
       }
-
     }
 
     if ("gmm" %in% tolower(names)){
@@ -349,23 +385,28 @@ default.priors <- function(names,
           set_prior("normal(0,0.5)",  nlpar = "k", coef = "liana.catlow") +
           set_prior("normal(0,0.5)",  nlpar = "k", coef = "liana.cathigh")
 
-      } else if ("a" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.catlow") +
-          set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.cathigh")
+      } else{
+        if ("a" %in% tolower(fixed.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.catlow") +
+            set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.cathigh")
 
-      } else if ("b" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("normal(0,0.05)",  nlpar = "b", coef = "liana.catlow") +
-          set_prior("normal(0,0.05)",  nlpar = "b", coef = "liana.cathigh")
+        }
 
-      } else if ("k" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("normal(0,0.5)",  nlpar = "k", coef = "liana.catlow") +
-          set_prior("normal(0,0.5)",  nlpar = "k", coef = "liana.cathigh")
+        if ("b" %in% tolower(fixed.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("normal(0,0.05)",  nlpar = "b", coef = "liana.catlow") +
+            set_prior("normal(0,0.05)",  nlpar = "b", coef = "liana.cathigh")
 
+        }
+
+        if ("k" %in% tolower(fixed.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("normal(0,0.5)",  nlpar = "k", coef = "liana.catlow") +
+            set_prior("normal(0,0.5)",  nlpar = "k", coef = "liana.cathigh")
+
+        }
       }
-
 
       # Add prior for random effect
 
@@ -383,30 +424,31 @@ default.priors <- function(names,
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
           set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
 
-      } else if ("a" %in% tolower(random.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
+      } else {
+        if ("a" %in% tolower(random.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "a", lb = 0, group = "sp")
 
-      } else if ("b" %in% tolower(random.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
+        }
 
-      }  else if ("k" %in% tolower(random.effect)){
-        priors.list[["gmm"]] <- priors.list[["gmm"]] +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
-          set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+        if ("b" %in% tolower(random.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "b", lb = 0, group = "sp")
 
+        }
+
+        if ("k" %in% tolower(random.effect)){
+          priors.list[["gmm"]] <- priors.list[["gmm"]] +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0) +
+            set_prior("student_t(3, 0, 2.5)", class = "sd", nlpar = "k", lb = 0, group = "sp")
+
+        }
       }
-
-
     }
-
-
-
   }
 
-
   return(priors.list)
+
 }
