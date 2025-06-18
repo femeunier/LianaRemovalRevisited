@@ -28,23 +28,23 @@ write.script.crossed2.re <- function(file.name,
 
   if (!threads){
     if (strong & site.re){
-      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE,nested = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE,nested = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     } else if (strong & !site.re){
-      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     } else if (!strong & site.re) {
-      write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     } else {
-      write("Opt.Bayes.Model(dir.name,settings,site.name,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     }
   } else {
     if (strong & site.re){
-      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,TRUE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     } else if (strong & !site.re){
-      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,TRUE,FALSE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     } else if (!strong & site.re) {
-      write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,FALSE,TRUE,TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     } else {
-      write("Opt.Bayes.Model(dir.name,settings,site.name,threads = TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'none')",file=file,append=TRUE)
+      write("Opt.Bayes.Model(dir.name,settings,site.name,threads = TRUE,nested = TRUE, crossed = TRUE, include.re.prior = 'all')",file=file,append=TRUE)
     }
   }
 }
