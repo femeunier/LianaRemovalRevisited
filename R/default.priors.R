@@ -227,9 +227,9 @@ default.priors <- function(names,
 
     if ("gmm" %in% tolower(names)){
 
-      priors.list[["gmm"]] <- c(set_prior("normal(4, 1.5)",  nlpar = "a", coef = "Intercept"),
-                                set_prior("normal(0.75,0.25)", nlpar = "b", coef = "Intercept"),
-                                set_prior("normal(25,8)", nlpar = "k", coef = "Intercept"))
+      priors.list[["gmm"]] <- c(set_prior("lognormal(1.4, 0.35)",  nlpar = "a", coef = "Intercept"),
+                                set_prior("lognormal(-0.35,0.33)", nlpar = "b", coef = "Intercept"),
+                                set_prior("lognormal(3.2,0.3)", nlpar = "k", coef = "Intercept"))
 
       # gMM
       if ("all" %in% tolower(fixed.effect)){
@@ -577,9 +577,9 @@ default.priors <- function(names,
 
     if ("gmm" %in% tolower(names)){
 
-      priors.list[["gmm"]] <- c(set_prior("normal(4, 0.5)",  nlpar = "a", coef = "Intercept"),
-                                set_prior("normal(0.75,0.08)", nlpar = "b", coef = "Intercept"),
-                                set_prior("normal(25,2)", nlpar = "k", coef = "Intercept"))
+      priors.list[["gmm"]] <- c(set_prior("lognormal(1.4, 0.12)",  nlpar = "a", coef = "Intercept"),
+                                set_prior("lognormal(-0.3,0.1)", nlpar = "b", coef = "Intercept"),
+                                set_prior("lognormal(3.2,0.08)", nlpar = "k", coef = "Intercept"))
 
       # gMM
       if ("all" %in% tolower(fixed.effect)){
