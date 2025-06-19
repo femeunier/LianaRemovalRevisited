@@ -20,6 +20,12 @@ Opt.Bayes.Model <- function(dir.name,
     warmup <- floor(Niter/2)
   }
 
+  init <- settings[["init"]]
+  if (is.null(warmup)){
+    init <- 0
+  }
+
+
   refresh <- settings[["refresh"]]
 
   if (is.null(refresh)){
@@ -92,7 +98,7 @@ Opt.Bayes.Model <- function(dir.name,
                                 parallel::detectCores() - 1),
                     prior = priors.list[[model]],
                     control = control.list,
-                    init = 0,
+                    init = init,
                     chains = Nchains,
                     backend = backend,
                     refresh = refresh,
