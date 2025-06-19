@@ -21,9 +21,11 @@ Opt.Bayes.Model <- function(dir.name,
   }
 
   init <- settings[["init"]]
-  if (is.null(warmup)){
+  if (is.null(init)){
     init <- 0
   }
+
+  init_r <- settings[["init_r"]]
 
 
   refresh <- settings[["refresh"]]
@@ -99,6 +101,7 @@ Opt.Bayes.Model <- function(dir.name,
                     prior = priors.list[[model]],
                     control = control.list,
                     init = init,
+                    init_r = init_r,
                     chains = Nchains,
                     backend = backend,
                     refresh = refresh,
@@ -114,6 +117,7 @@ Opt.Bayes.Model <- function(dir.name,
                     cores = Nchains,
                     prior = priors.list[[model]],
                     init = init,
+                    init_r = init_r,
                     control = control.list,
                     chains = Nchains,
                     threads = threading(floor(parallel::detectCores()/Nchains)),
