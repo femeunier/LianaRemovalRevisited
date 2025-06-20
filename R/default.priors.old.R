@@ -92,9 +92,9 @@ default.priors <- function(names,
 
     if ("weibull" %in% tolower(names)){
 
-      priors.list[["weibull"]] <-  c(set_prior("lognormal(1.3,0.4)",  nlpar = "a", coef = "Intercept"),
-                                     set_prior("lognormal(-3.5,0.3)", nlpar = "b", coef = "Intercept"),
-                                     set_prior("lognormal(-0.4,0.3)", nlpar = "k", coef = "Intercept"))
+      priors.list[["weibull"]] <-  c(set_prior("normal(4,1.5)",  nlpar = "a", coef = "Intercept"),
+                                     set_prior("normal(0.03,0.01)", nlpar = "b", coef = "Intercept"),
+                                     set_prior("normal(0.7,0.2)", nlpar = "k", coef = "Intercept"))
 
       # Weibull
       if ("all" %in% tolower(fixed.effect)){
@@ -443,9 +443,9 @@ default.priors <- function(names,
 
     if ("weibull" %in% tolower(names)){
 
-      priors.list[["weibull"]] <-  c(set_prior("lognormal(1.4,0.1)",  nlpar = "a", coef = "Intercept"),
-                                     set_prior("lognormal(-1.2,0.1)", nlpar = "b", coef = "Intercept"),
-                                     set_prior("lognormal(-0.35,0.01)", nlpar = "k", coef = "Intercept"))
+      priors.list[["weibull"]] <-  c(set_prior("normal(4,0.5)",  nlpar = "a", coef = "Intercept"),
+                                     set_prior("normal(0.03,0.0033)", nlpar = "b", coef = "Intercept"),
+                                     set_prior("normal(0.7,0.08)", nlpar = "k", coef = "Intercept"))
 
       # Weibull
       if ("all" %in% tolower(fixed.effect)){
