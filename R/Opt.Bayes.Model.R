@@ -27,6 +27,10 @@ Opt.Bayes.Model <- function(dir.name,
 
   init_r <- settings[["init_r"]]
 
+  if (is.null(init_r)){
+    init_r <- 2
+  }
+
 
   refresh <- settings[["refresh"]]
 
