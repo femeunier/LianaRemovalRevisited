@@ -1,4 +1,4 @@
-default.priors <- function(names,
+default.priors.old <- function(names,
                            fixed.effect = "all",
                            random.effect = "all",    # or none
                            strong = FALSE){
