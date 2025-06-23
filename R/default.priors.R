@@ -93,7 +93,7 @@ default.priors <- function(names,
     if ("weibull" %in% tolower(names)){
 
       priors.list[["weibull"]] <-  c(set_prior("lognormal(1.3,0.4)",  nlpar = "a", coef = "Intercept"),
-                                     set_prior("lognormal(-3.5,0.3)", nlpar = "b", coef = "Intercept"),
+                                     set_prior("lognormal(-3.6,0.33)", nlpar = "b", coef = "Intercept"),
                                      set_prior("lognormal(-0.4,0.3)", nlpar = "k", coef = "Intercept"))
 
       # Weibull
