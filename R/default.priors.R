@@ -93,7 +93,7 @@ default.priors <- function(names,
     if ("weibull" %in% tolower(names)){
 
       priors.list[["weibull"]] <-  c(set_prior("lognormal(1.3,0.4)",  nlpar = "a", coef = "Intercept"),
-                                     set_prior("lognormal(-3.6,0.33)", nlpar = "b", coef = "Intercept"),
+                                     set_prior("lognormal(-1.5,0.3)", nlpar = "b", coef = "Intercept"),
                                      set_prior("lognormal(-0.4,0.3)", nlpar = "k", coef = "Intercept"))
 
       # Weibull
@@ -103,8 +103,8 @@ default.priors <- function(names,
           set_prior("normal(0,1.5)",  nlpar = "a", coef = "liana.catlow") +
           set_prior("normal(0,1.5)",  nlpar = "a", coef = "liana.cathigh") +
 
-          set_prior("normal(0,0.3)",  nlpar = "b", coef = "liana.catlow") +
-          set_prior("normal(0,0.3)",  nlpar = "b", coef = "liana.cathigh") +
+          set_prior("normal(0,0.2)",  nlpar = "b", coef = "liana.catlow") +
+          set_prior("normal(0,0.2)",  nlpar = "b", coef = "liana.cathigh") +
 
           set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.catlow") +
           set_prior("normal(0,0.2)",  nlpar = "k", coef = "liana.cathigh")
@@ -118,10 +118,10 @@ default.priors <- function(names,
             set_prior("student_t(3, 0, 1.5)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "site") +
             set_prior("student_t(3, 0, 1.5)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "sp") +
 
-            set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "site") +
-            set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "sp") +
-            set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "site") +
-            set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "sp") +
+            set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "site") +
+            set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "sp") +
+            set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "site") +
+            set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "sp") +
 
             set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.catlow", nlpar = "k", group = "site") +
             set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.catlow", nlpar = "k", group = "sp") +
@@ -151,18 +151,18 @@ default.priors <- function(names,
 
         if ("b" %in% tolower(fixed.effect)){
           priors.list[["weibull"]] <- priors.list[["weibull"]] +
-            set_prior("normal(0,0.3)",  nlpar = "b", coef = "liana.catlow") +
-            set_prior("normal(0,0.3)",  nlpar = "b", coef = "liana.cathigh")
+            set_prior("normal(0,0.2)",  nlpar = "b", coef = "liana.catlow") +
+            set_prior("normal(0,0.2)",  nlpar = "b", coef = "liana.cathigh")
 
 
           if (!("none" %in% tolower(random.effect))){
 
             priors.list[["weibull"]] <- priors.list[["weibull"]] +
 
-              set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "site") +
-              set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "sp") +
-              set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "site") +
-              set_prior("student_t(3, 0, 0.3)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "sp")
+              set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "site") +
+              set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "sp") +
+              set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "site") +
+              set_prior("student_t(3, 0, 0.2)", class = "sd", coef = "liana.cathigh", nlpar = "b", group = "sp")
           }
 
 
@@ -195,8 +195,8 @@ default.priors <- function(names,
         priors.list[["weibull"]] <- priors.list[["weibull"]] +
           set_prior("student_t(3, 0, 1.5)", class = "sd", nlpar = "a", group = "site") +
           set_prior("student_t(3, 0, 1.5)", class = "sd", nlpar = "a", group = "sp") +
-          set_prior("student_t(3, 0, 0.01)", class = "sd", nlpar = "b", group = "site") +
-          set_prior("student_t(3, 0, 0.01)", class = "sd", nlpar = "b", group = "sp") +
+          set_prior("student_t(3, 0, 0.2)", class = "sd", nlpar = "b", group = "site") +
+          set_prior("student_t(3, 0, 0.2)", class = "sd", nlpar = "b", group = "sp") +
           set_prior("student_t(3, 0, 0.2)", class = "sd", nlpar = "k", group = "site") +
           set_prior("student_t(3, 0, 0.2)", class = "sd", nlpar = "k", group = "sp")
 
@@ -210,8 +210,8 @@ default.priors <- function(names,
 
         if ("b" %in% tolower(random.effect)){
           priors.list[["weibull"]] <- priors.list[["weibull"]] +
-            set_prior("student_t(3, 0, 0.01)", class = "sd", nlpar = "b", group = "site") +
-            set_prior("student_t(3, 0, 0.01)", class = "sd", nlpar = "b", group = "sp")
+            set_prior("student_t(3, 0, 0.2)", class = "sd", nlpar = "b", group = "site") +
+            set_prior("student_t(3, 0, 0.2)", class = "sd", nlpar = "b", group = "sp")
 
         }
 
