@@ -93,7 +93,7 @@ default.priors <- function(names,
     if ("weibull" %in% tolower(names)){
 
       priors.list[["weibull"]] <-  c(set_prior("lognormal(1.3,0.4)",  nlpar = "a", coef = "Intercept"),
-                                     set_prior("lognormal(-1.5,0.3)", nlpar = "b", coef = "Intercept"),
+                                     set_prior("lognormal(-2.8,0.5)", nlpar = "b", coef = "Intercept"),
                                      set_prior("lognormal(-0.4,0.3)", nlpar = "k", coef = "Intercept"))
 
       # Weibull
@@ -358,7 +358,6 @@ default.priors <- function(names,
     }
 
   } else {  # Strong priors
-
     if ("power" %in% tolower(names)){
 
       priors.list[["power"]] <- c(set_prior("normal(1,0.1)",  nlpar = "a", coef = "Intercept"),
@@ -438,14 +437,13 @@ default.priors <- function(names,
             set_prior("student_t(3, 0, 0.033)", class = "sd", nlpar = "b", group = "sp")
         }
       }
-
     }
 
     if ("weibull" %in% tolower(names)){
 
       priors.list[["weibull"]] <-  c(set_prior("lognormal(1.4,0.1)",  nlpar = "a", coef = "Intercept"),
-                                     set_prior("lognormal(-1.5,0.1)", nlpar = "b", coef = "Intercept"),
-                                     set_prior("lognormal(-0.35,0.01)", nlpar = "k", coef = "Intercept"))
+                                     set_prior("lognormal(-3.07,0.38)", nlpar = "b", coef = "Intercept"),
+                                     set_prior("lognormal(-0.4,0.08)", nlpar = "k", coef = "Intercept"))
 
       # Weibull
       if ("all" %in% tolower(fixed.effect)){
@@ -583,7 +581,7 @@ default.priors <- function(names,
 
       # gMM
       if ("all" %in% tolower(fixed.effect)){
-        priors.list[["gmm"]] <-   priors.list[["gmm"]] +
+        priors.list[["gmm"]] <- priors.list[["gmm"]] +
 
           set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.catlow") +
           set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.cathigh") +
