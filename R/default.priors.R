@@ -446,20 +446,20 @@ default.priors <- function(names,
           set_prior("normal(0,0.1)",  nlpar = "a", coef = "liana.catlow") +
           set_prior("normal(0,0.1)",  nlpar = "a", coef = "liana.cathigh") +
 
-          set_prior("normal(0,0.004)",  nlpar = "b", coef = "liana.catlow") +
-          set_prior("normal(0,0.004)",  nlpar = "b", coef = "liana.cathigh") +
+          set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.catlow") +
+          set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.cathigh") +
 
-          set_prior("normal(0,0.02)",  nlpar = "k", coef = "liana.catlow") +
-          set_prior("normal(0,0.02)",  nlpar = "k", coef = "liana.cathigh")
+          set_prior("normal(0,0.1)",  nlpar = "k", coef = "liana.catlow") +
+          set_prior("normal(0,0.1)",  nlpar = "k", coef = "liana.cathigh")
 
 
         if (!("none" %in% tolower(random.effect))){
 
           priors.list[["weibull"]] <- priors.list[["weibull"]] +
-            set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "site") +
-            set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "sp") +
-            set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "site") +
-            set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "sp") +
+            set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "site") +
+            set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "sp") +
+            set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "site") +
+            set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "sp") +
 
             set_prior("student_t(3, 0, 0.004)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "site") +
             set_prior("student_t(3, 0, 0.004)", class = "sd", coef = "liana.catlow", nlpar = "b", group = "sp") +
@@ -484,18 +484,18 @@ default.priors <- function(names,
 
             priors.list[["weibull"]] <- priors.list[["weibull"]] +
 
-              set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "site") +
-              set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "sp") +
-              set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "site") +
-              set_prior("student_t(3, 0, 0.1)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "sp")
+              set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "site") +
+              set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.catlow", nlpar = "a", group = "sp") +
+              set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "site") +
+              set_prior("student_t(3, 0, 0.02)", class = "sd", coef = "liana.cathigh", nlpar = "a", group = "sp")
           }
 
         }
 
         if ("b" %in% tolower(fixed.effect)){
           priors.list[["weibull"]] <- priors.list[["weibull"]] +
-            set_prior("normal(0,0.004)",  nlpar = "b", coef = "liana.catlow") +
-            set_prior("normal(0,0.004)",  nlpar = "b", coef = "liana.cathigh")
+            set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.catlow") +
+            set_prior("normal(0,0.02)",  nlpar = "b", coef = "liana.cathigh")
 
 
           if (!("none" %in% tolower(random.effect))){
@@ -513,8 +513,8 @@ default.priors <- function(names,
 
         if ("k" %in% tolower(fixed.effect)){
           priors.list[["weibull"]] <- priors.list[["weibull"]] +
-            set_prior("normal(0,0.02)",  nlpar = "k", coef = "liana.catlow") +
-            set_prior("normal(0,0.02)",  nlpar = "k", coef = "liana.cathigh")
+            set_prior("normal(0,0.1)",  nlpar = "k", coef = "liana.catlow") +
+            set_prior("normal(0,0.1)",  nlpar = "k", coef = "liana.cathigh")
 
           if (!("none" %in% tolower(random.effect))){
 
@@ -540,8 +540,8 @@ default.priors <- function(names,
           set_prior("student_t(3, 0, 0.5)", class = "sd", nlpar = "a", group = "sp") +
           set_prior("student_t(3, 0, 0.02)", class = "sd", nlpar = "b", group = "site") +
           set_prior("student_t(3, 0, 0.02)", class = "sd", nlpar = "b", group = "sp") +
-          set_prior("student_t(3, 0, 0.08)", class = "sd", nlpar = "k", group = "site") +
-          set_prior("student_t(3, 0, 0.08)", class = "sd", nlpar = "k", group = "sp")
+          set_prior("student_t(3, 0, 0.1)", class = "sd", nlpar = "k", group = "site") +
+          set_prior("student_t(3, 0, 0.1)", class = "sd", nlpar = "k", group = "sp")
 
       } else {
         if ("a" %in% tolower(random.effect)){
@@ -560,8 +560,8 @@ default.priors <- function(names,
 
         if ("k" %in% tolower(random.effect)){
           priors.list[["weibull"]] <- priors.list[["weibull"]] +
-            set_prior("student_t(3, 0, 0.08)", class = "sd", nlpar = "k", group = "site") +
-            set_prior("student_t(3, 0, 0.08)", class = "sd", nlpar = "k", group = "sp")
+            set_prior("student_t(3, 0, 0.1)", class = "sd", nlpar = "k", group = "site") +
+            set_prior("student_t(3, 0, 0.1)", class = "sd", nlpar = "k", group = "sp")
 
         }
       }
@@ -577,8 +577,8 @@ default.priors <- function(names,
       if ("all" %in% tolower(fixed.effect)){
         priors.list[["gmm"]] <- priors.list[["gmm"]] +
 
-          set_prior("normal(0,0.25)",  nlpar = "a", coef = "liana.catlow") +
-          set_prior("normal(0,0.25)",  nlpar = "a", coef = "liana.cathigh") +
+          set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.catlow") +
+          set_prior("normal(0,0.5)",  nlpar = "a", coef = "liana.cathigh") +
 
           set_prior("normal(0,0.08)",  nlpar = "b", coef = "liana.catlow") +
           set_prior("normal(0,0.08)",  nlpar = "b", coef = "liana.cathigh") +
