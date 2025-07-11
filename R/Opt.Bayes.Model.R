@@ -73,19 +73,6 @@ Opt.Bayes.Model <- function(dir.name,
       op.file <- file.path(dir.name,
                            paste0("Fit.",site.name,".",cname,".RDS"))
 
-      does.file.exist <- file.exists(op.file)
-      count <- 1
-
-      if (file.exists(op.file) & make.a.copy){
-        while (does.file.exist){
-          op.file <- file.path(dir.name,
-                               paste0("Fit.",site.name,".",cname,".",count,".RDS"))
-          count = count + 1
-
-          does.file.exist <- file.exists(op.file)
-        }
-      }
-
       if (!overwrite & file.exists(op.file)){
         next()
       }
@@ -149,6 +136,20 @@ Opt.Bayes.Model <- function(dir.name,
                     backend = backend,
                     silent = 2)
       }
+
+      does.file.exist <- file.exists(op.file)
+      count <- 1
+
+      if (file.exists(op.file) & make.a.copy){
+        while (does.file.exist){
+          op.file <- file.path(dir.name,
+                               paste0("Fit.",site.name,".",cname,".",count,".RDS"))
+          count = count + 1
+
+          does.file.exist <- file.exists(op.file)
+        }
+      }
+
 
       saveRDS(cfit,
               op.file)
