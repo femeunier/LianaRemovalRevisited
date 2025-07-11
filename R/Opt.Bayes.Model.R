@@ -16,6 +16,11 @@ Opt.Bayes.Model <- function(dir.name,
   Niter <- settings[["Niter"]]
   warmup <- settings[["warmup"]]
 
+  make.a.copy <- settings[["make.a.copy"]]
+  if (is.null(make.a.copy)){
+    make.a.copy <- FALSE
+  }
+
   if (is.null(warmup)){
     warmup <- floor(Niter/2)
   }
@@ -67,6 +72,19 @@ Opt.Bayes.Model <- function(dir.name,
       cname <- paste(model,paste(cfixed.effect.2.test[[model.form]],collapse = ""),sep = "_")
       op.file <- file.path(dir.name,
                            paste0("Fit.",site.name,".",cname,".RDS"))
+
+      does.file.exist <- file.exists(op.file)
+      count <- 1
+
+      if (file.exists(op.file) & make.a.copy){
+        while (does.file.exist){
+          op.file <- file.path(dir.name,
+                               paste0("Fit.",site.name,".",cname,".",count,".RDS"))
+          count = count + 1
+
+          does.file.exist <- file.exists(op.file)
+        }
+      }
 
       if (!overwrite & file.exists(op.file)){
         next()
@@ -132,7 +150,8 @@ Opt.Bayes.Model <- function(dir.name,
                     silent = 2)
       }
 
-      saveRDS(cfit,op.file)
+      saveRDS(cfit,
+              op.file)
     }
   }
 }
