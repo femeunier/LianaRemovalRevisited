@@ -39,11 +39,11 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
   if (nested & !crossed){
     addition <- ifelse(site.re,
                        "(liana.cat | site)",
-                       "1")
+                       "")
 
     addition2 <- ifelse(site.re,
                         "(1 | site)",
-                        "1")
+                        "")
 
   } else  if (!nested & crossed){
     addition <- ifelse(site.re,
@@ -52,12 +52,12 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
 
     addition2 <- ifelse(site.re,
                         "(1 | site)",
-                        "1")
+                        "")
 
   } else if (crossed & nested){
     addition <- ifelse(site.re,
                        "(liana.cat | site)",
-                       "1")
+                       "")
 
     addition2 <- ifelse(site.re,
                         "(1 | site)",
@@ -65,10 +65,8 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
   } else {
     addition <- addition2 <- ifelse(site.re,
                                     "(1 | site)",
-                                    "1")
+                                    "")
   }
-
-
 
   # Power function form
   if ("power" %in% tolower(names)){
@@ -108,6 +106,8 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
                        paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
 
+    all.effects <- sub("\\+$", "", sub("[[:space:]]+$", "", all.effects))
+
     if (length(all.effects) == 1){
 
       form.list[["power"]] <- brmsformula(f.functional.form[["power"]],
@@ -119,8 +119,6 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
                                           all.effects[1],all.effects[2],
                                           nl = TRUE)
     }
-
-
   }
 
   # Weibull
@@ -160,6 +158,8 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
       all.effects <- c(all.effects,
                        paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
+
+    all.effects <- sub("\\+$", "", sub("[[:space:]]+$", "", all.effects))
 
     if (length(all.effects) == 1){
 
@@ -218,6 +218,8 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
       all.effects <- c(all.effects,
                        paste(paste(cmissing.params, collapse = "+"), "~ 1"))
     }
+
+    all.effects <- sub("\\+$", "", sub("[[:space:]]+$", "", all.effects))
 
     if (length(all.effects) == 1){
 
