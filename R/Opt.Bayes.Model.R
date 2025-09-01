@@ -150,7 +150,6 @@ Opt.Bayes.Model <- function(dir.name,
         }
       }
 
-
       saveRDS(cfit,
               op.file)
     }
