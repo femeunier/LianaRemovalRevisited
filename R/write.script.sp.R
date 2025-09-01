@@ -20,7 +20,7 @@ write.script.sp <- function(file.name,
   write(paste0("dir.name <- \"",dir.name,"\""),
         file=file,append=TRUE)
 
-  write(paste0("site.name <- \"",site.name,"\""),
+  write(paste0("sp.name <- \"",sp.name,"\""),
         file=file,append=TRUE)
 
 
@@ -28,23 +28,23 @@ write.script.sp <- function(file.name,
 
   if (!threads){
     if (strong & site.re){
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,TRUE,TRUE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,TRUE,TRUE)",file=file,append=TRUE)
     } else if (strong & !site.re){
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,TRUE,FALSE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,TRUE,FALSE)",file=file,append=TRUE)
     } else if (!strong & site.re) {
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,FALSE,TRUE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,FALSE,TRUE)",file=file,append=TRUE)
     } else {
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name)",file=file,append=TRUE)
     }
   } else {
     if (strong & site.re){
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,TRUE,TRUE,TRUE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,TRUE,TRUE,TRUE)",file=file,append=TRUE)
     } else if (strong & !site.re){
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,TRUE,FALSE,TRUE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,TRUE,FALSE,TRUE)",file=file,append=TRUE)
     } else if (!strong & site.re) {
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,FALSE,TRUE,TRUE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,FALSE,TRUE,TRUE)",file=file,append=TRUE)
     } else {
-      write("Opt.Bayes.Model.sp(dir.name,settings,site.name,threads = TRUE)",file=file,append=TRUE)
+      write("Opt.Bayes.Model.sp(dir.name,settings,sp.name,threads = TRUE)",file=file,append=TRUE)
     }
   }
 }

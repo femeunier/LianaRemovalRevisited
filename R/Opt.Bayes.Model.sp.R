@@ -1,6 +1,6 @@
 Opt.Bayes.Model.sp <- function(dir.name,
                             settings,
-                            site.name,
+                            sp.name,
                             strong = FALSE,
                             site.re = FALSE,
                             threads = FALSE,
@@ -53,7 +53,7 @@ Opt.Bayes.Model.sp <- function(dir.name,
   backend <- settings[["backend"]]
 
   data.file <- file.path(dir.name,
-                         paste0("data_",site.name,".RDS"))
+                         paste0("data_",sp.name,".RDS"))
 
   data <- readRDS(data.file)
 
@@ -63,7 +63,7 @@ Opt.Bayes.Model.sp <- function(dir.name,
 
     for (model.form in seq(1,length(cfixed.effect.2.test))){
 
-      print(paste(site.name,"-",
+      print(paste(sp.name,"-",
                   paste0("Model (",model,"):"),paste0(which(Names == model),"/",length(Names)),"-",
                   paste0("Model Form (",paste(cfixed.effect.2.test[[model.form]],collapse = ""),"):"),paste0(model.form,"/",length(cfixed.effect.2.test))
       )
@@ -71,7 +71,7 @@ Opt.Bayes.Model.sp <- function(dir.name,
 
       cname <- paste(model,paste(cfixed.effect.2.test[[model.form]],collapse = ""),sep = "_")
       op.file <- file.path(dir.name,
-                           paste0("Fit.",site.name,".",cname,".RDS"))
+                           paste0("Fit.",sp.name,".",cname,".RDS"))
 
       if (!overwrite & file.exists(op.file)){
         next()
@@ -143,7 +143,7 @@ Opt.Bayes.Model.sp <- function(dir.name,
       if (file.exists(op.file) & make.a.copy){
         while (does.file.exist){
           op.file <- file.path(dir.name,
-                               paste0("Fit.",site.name,".",cname,".",count,".RDS"))
+                               paste0("Fit.",sp.name,".",cname,".",count,".RDS"))
           count = count + 1
 
           does.file.exist <- file.exists(op.file)
