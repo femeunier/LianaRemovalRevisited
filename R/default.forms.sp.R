@@ -39,11 +39,11 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
   if (nested & !crossed){
     addition <- ifelse(site.re,
                        "(liana.cat | site)",
-                       "")
+                       "1")
 
     addition2 <- ifelse(site.re,
                         "(1 | site)",
-                        "")
+                        "1")
 
   } else  if (!nested & crossed){
     addition <- ifelse(site.re,
@@ -52,12 +52,12 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
 
     addition2 <- ifelse(site.re,
                         "(1 | site)",
-                        "")
+                        "1")
 
   } else if (crossed & nested){
     addition <- ifelse(site.re,
                        "(liana.cat | site)",
-                       "")
+                       "1")
 
     addition2 <- ifelse(site.re,
                         "(1 | site)",
@@ -65,7 +65,7 @@ default.forms.sp <- function(names = c("weibull","power","gmm"),
   } else {
     addition <- addition2 <- ifelse(site.re,
                                     "(1 | site)",
-                                    "")
+                                    "1")
   }
 
 
